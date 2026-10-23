@@ -1,0 +1,6 @@
+{
+  "name": "worldforge", "version": "1.0.0", "private": true,
+  "description": "A private, local worldbuilding encyclopedia",
+  "scripts": {"start": "node server.js", "test": "playwright test"},
+  "devDependencies": {"@playwright/test": "1.61.1"}
+}
