@@ -26,7 +26,7 @@ By default, the server creates a **data** folder beside `server.js`:
 
 ```text
 data/
-  worldforge.sqlite       Entries, maps, pins, image metadata, migration history
+  worldforge.sqlite       Entries, categories, maps, pins, image metadata, migration history
   worldforge.sqlite-wal   SQLite working files (may exist while running)
   worldforge.sqlite-shm
   images/                 Original image files with generated names
@@ -55,19 +55,43 @@ Use that same location each time. The terminal prints the active data folder at 
 
 ## Entries and maps
 
-Click **New entry** to create a character, location, historical event, or faction. Entries support descriptions, tags, and an optional image. Click a card to edit or delete it. Search finds titles, descriptions, tags and years. History can be sorted chronologically. A new empty library receives eight sample entries.
+Click **New entry** to write a character, location, historical event, faction, magic entry or creature. A new empty library receives eight sample entries. **Magic** and **Bestiary** are included as categories alongside the original four.
 
-Click **Maps → New map**, add a title and optional description, and select one or several PNG, JPEG, or WebP files. The editor fills the browser viewport automatically.
+Each entry has a title, full description, tags, optional image, and optional **Short description** (up to 500 characters). Use one or two sentences for the short description: this appears on encyclopedia cards and in map hover previews. The full description appears when reading the entry or clicking a linked map pin. Older entries work without a short description. Search includes both descriptions, titles, tags and years; History retains its chronological view.
 
-- **Images** opens/collapses the thumbnail panel. Select a thumbnail to switch canvases. Each image has its own pins.
-- **Add images** accepts several files at once. Rename images, move them up/down in the list, or replace their artwork using the image panel. Replacement preserves normalized pin positions; different artwork may need manual repositioning.
-- **Remove image** asks for confirmation and removes that canvas and its pins. The last image cannot be removed; delete the map instead. Original files remain in the image library and backups.
-- **Add pin**: click the image, enter a title/description and choose a color, then save. Click a pin to read, edit or delete it. Drag pins to move them, or choose **Reposition pin** and click a new location.
-- Use the mouse wheel or zoom buttons to zoom; drag the background to pan. **Reset view** fits the image. Arrow keys pan a focused canvas; Escape exits a placement tool.
-- **Images** and **Pin details** collapse the side panels to maximize space. **Browser fullscreen**, where supported, also hides browser controls.
-- Changes save automatically; **Save** explicitly saves the map again. **Edit map** changes its title/description. **Exit editor** returns to the map collection, where the encyclopedia category buttons are available again.
+Choose **Manage categories** below the sidebar navigation to add your own category and choose a symbol. The same dialog lets you edit a category's name/icon; renaming updates its entries in the same save. Category definitions are stored in SQLite and included in portable backups. Category deletion is not included in this version. The History timeline currently follows the category named “History”; keep that name to retain its special year controls.
 
-Pin positions remain normalized fractions between 0 and 1 relative to their own image, so they stay attached while resizing and zooming. Zoom/pan are temporary view settings. Independent canvases are supported; transparent image overlays/layers are not included yet.
+Click **Maps → New map** and enter a title. Description and images are **optional**. An empty map is saved immediately; add artwork later using **Add images**. A map can contain independent PNG, JPEG or WebP canvases, each with its own pins.
+
+The editor fills the browser viewport. Controls use compact square SVG icons; hover or focus one to see its function, and accessible labels are provided for screen readers.
+
+| Control / location | What it does |
+| --- | --- |
+| Back arrow, top left | Exit the editor and return to your map collection |
+| Save / pencil / trash, header | Save explicitly, edit map details, or delete the whole map with confirmation |
+| Picture icon, canvas top left | Open/close the image manager; select a thumbnail to switch canvases |
+| Map-pin icon, canvas top left | Activate Add pin; click a position on the image |
+| Hand icon | Return to browsing; drag the background to pan, or drag a marker to move it |
+| List icon | Open/close the pin list and reading panel |
+| Magnifiers, right edge | Zoom in/out; mouse-wheel zoom also works |
+| Fit / fullscreen icons, right edge | Fit the image or toggle browser fullscreen where supported |
+| Upload / replace / trash, bottom right | Add images in a batch, replace the current artwork, or remove its canvas |
+| Pencil / arrows in image manager | Rename or reorder the selected canvas |
+
+Removing an image asks for confirmation, including its pin count. The last canvas may also be removed; the empty map remains saved. Removing a canvas deletes its markers, but original image files remain in the managed library and backups. Replacement keeps normalized pin positions; different artwork may require manually repositioning them. Renaming a canvas changes its display name, not its original filename.
+
+When creating or editing a pin:
+
+1. Choose an existing encyclopedia entry using **Find entry** and **Link to entry**, or leave **Standalone pin** selected.
+2. Linked pins automatically use the entry's title, short description, full description and image. These fields are read-only in the pin form; use **Open encyclopedia entry → Edit entry** to change the source. Updates appear on linked pins immediately.
+3. Choose a marker symbol (person, house, castle, magic, beast, dragon, sword, shield, book, scroll, flag, mountain, tree, skull, gem, potion, portal, sun, moon or generic pin) and a color. New linked markers suggest the category's icon.
+4. Save. Hover or focus the marker for a compact title/image/short-description preview; click to read the full story in the tall left-hand panel.
+
+Use the panel's pencil, reposition or trash icons to edit, move or delete a marker. Close the panel with its × button to maximize the canvas. Dragging a marker also moves it. **Cancel tool** keeps its original position. Arrow keys pan a focused canvas; Escape cancels placement and hides the hover preview. Each icon button has a descriptive tooltip.
+
+Deleting an entry keeps its linked markers as standalone pins with copies of its current title, descriptions and image; it does not delete those pins. A backup containing an unavailable entry link displays the saved pin information and an explanation instead of failing to open the map. Linking a different entry refreshes the pin's source information.
+
+Changes save automatically. Pin positions remain normalized fractions between 0 and 1 relative to their own image, so they stay attached while resizing, zooming and switching canvases. Zoom/pan are temporary view settings. Independent canvases are supported; transparent image overlays/layers are not included yet.
 
 ## Appearance
 
@@ -86,7 +110,7 @@ Uploaded image bytes are stored as ordinary files, **not base64 in browser stora
 
 ## Portable backups and restore
 
-**Export backup** downloads a version-4 ZIP containing `manifest.json` (all database records, migration history and image metadata) and `images/` (all registered image files). It is a complete portable library; it does not require the original computer's paths or a raw SQLite database copy. Image bytes stream from disk, so the browser does not need to assemble the entire library in memory. Verify your browser reports that the download completed, then keep copies on another drive.
+**Export backup** downloads a version-5 ZIP containing `manifest.json` (entries, category definitions, summaries, maps, linked pins, migration history and image metadata) and `images/` (all registered image files). It is a complete portable library; it does not require the original computer's paths or a raw SQLite database copy. Image bytes stream from disk, so the browser does not need to assemble the entire library in memory. Verify your browser reports that the download completed, then keep copies on another drive.
 
 To restore on this or a different computer:
 
@@ -100,7 +124,7 @@ Restores require free disk space for the uploaded ZIP, extracted images, newly i
 
 The default import limit is **1 TB** compressed and expanded, 100,000 image files, and a 64 MB manifest. Set `WORLDFORGE_BACKUP_LIMIT_GB` to adjust the archive size ceiling. Individual image limits still apply. Upload requests allow up to 30 minutes. These are safeguards, not a claim that terabyte libraries have been benchmarked.
 
-Previous version-3 ZIP backups are accepted and their maps become single-image canvases. Older app versions cannot import version-4 backups.
+Previous version-3 and version-4 ZIP backups are accepted. Version-3 maps become single-image canvases; both older formats receive the standard categories. Exports now use version 5 so empty maps, custom categories, marker symbols, entry links and short descriptions are preserved. Older app versions cannot import version-5 backups.
 
 Legacy version-1 and version-2 JSON backups are still accepted (up to 64 MB): embedded image data is validated and converted to files. Version-1 imports replace entries and preserve current maps; version-2 imports replace entries and maps. Always export the current world before importing.
 
@@ -108,9 +132,14 @@ Legacy version-1 and version-2 JSON backups are still accepted (up to 64 MB): em
 
 ### Upgrading existing SQLite maps
 
-Before starting this update, export a portable backup and stop the old server. Keep your existing `data` folder. On first startup, schema version 3 is copied to `data/backups/before-canvases-<id>.sqlite` using SQLite's consistent snapshot operation **before** any schema changes. If that backup fails, startup stops. A transaction then upgrades to schema version 4: every existing map becomes a container with one “Original image” canvas, preserving image IDs, pins, normalized coordinates and entries. Image files are unchanged. Reload any older browser tabs; their saves are rejected to prevent overwriting the new format.
+Before starting this update, export a portable backup and stop the old server. Keep your existing `data` folder. On first startup, the server makes a consistent SQLite snapshot **before** any schema changes:
 
-To roll back this schema upgrade, stop the server and preserve the entire current data folder separately. Make another copy for recovery; in that recovery copy only, replace `worldforge.sqlite` with the `before-canvases` snapshot and remove any copied `worldforge.sqlite-wal` and `worldforge.sqlite-shm` files. Keep its `images` folder. Run the previous SQLite app (commit `ab26471`) with `WORLDFORGE_DATA_DIR` pointing to this recovery copy. The snapshot restores the state from before upgrading; newer edits remain in your preserved current folder. Starting the new app on the recovery copy would upgrade it again. A portable ZIP is the preferred way to restore into the current app.
+- Version 4: `data/backups/before-atlas-<id>.sqlite`.
+- Version 3: `data/backups/before-canvases-<id>.sqlite`.
+
+If this snapshot fails, startup stops. A transaction upgrades to schema version 5, preserving entries, image IDs, ordered canvases, pins and their normalized coordinates. A category table is added with the original categories plus Magic and Bestiary. Maps can now have no image. Older pins continue to work with a generic pin symbol; no existing entry needs a short description. Image files are unchanged. Reload older browser tabs: saves from older clients are rejected to protect the new data format.
+
+To roll back, stop the server and preserve the entire current data folder separately. Make another copy for recovery; in that recovery copy only, replace `worldforge.sqlite` with the pre-upgrade snapshot and remove any copied `worldforge.sqlite-wal` and `worldforge.sqlite-shm` files. Keep its `images` folder. For a version-4 snapshot, run the previous multi-image app (commit `89272de`); for version 3, use commit `ab26471`. Set `WORLDFORGE_DATA_DIR` to the recovery copy. The snapshot restores the state from before upgrading; newer edits remain in your preserved current folder. Starting the new app on that copy upgrades it again. A portable ZIP is the preferred way to restore into the current app.
 
 ### Migrating older browser-only data
 
@@ -139,14 +168,14 @@ npx playwright install chromium
 npm test
 ```
 
-The prepared cloud environment uses its installed `/usr/bin/chromium` and does not need a browser download. Tests start isolated servers with temporary data folders; they never reset the working library. `npm test` covers encyclopedia CRUD, image uploads, map/pin interactions, backup compatibility, migration, restart/fresh-browser persistence, fullscreen entry/exit, batch uploads, separate canvas pins, image rename/reorder/replace/remove, themes, schema-3 snapshots and upgrades, archive validation, real filesystem permission errors, stale writes, cross-site write rejection, and a 1,000-small-image library. A disk-full UI response is simulated; the tests do not fill the host drive.
+The prepared cloud environment uses its installed `/usr/bin/chromium` and does not need a browser download. Tests start isolated servers with temporary data folders; they never reset the working library. `npm test` covers encyclopedia CRUD, image uploads, map/pin interactions, backup compatibility, migration, restart/fresh-browser persistence, fullscreen entry/exit, batch uploads, separate canvas pins, image rename/reorder/replace/remove, themes, schema-3/4 snapshots and upgrades, optional map artwork, custom categories, linked entry previews, source-entry editing/deletion, archive validation, real filesystem permission errors, stale writes, cross-site write rejection, and a 1,000-small-image library. A disk-full UI response is simulated; the tests do not fill the host drive.
 
-Existing runtime dependencies (none added for the fullscreen/multi-image update):
+Existing runtime dependencies (none added for the atlas interface, linked pins or category update):
 
 - `sharp`: inspect and decode image contents safely and enforce pixel limits.
 - `archiver`: stream portable ZIP backups from disk, including ZIP64 support.
 - `yauzl`: inspect and extract ZIPs entry-by-entry into a controlled staging directory.
 
-Modules: `storage.js` owns SQLite and managed image files; `backups.js` owns migration/archive validation and rollback; `server.js` exposes the local API; `api-client.js` connects the existing `app.js` and `maps.js` editors to it.
+Modules: `storage.js` owns SQLite and managed image files; `backups.js` owns migration/archive validation and rollback; `server.js` exposes the local API; `api-client.js` connects the existing `app.js` and `maps.js` editors to it. `symbols.js` provides a fixed set of local SVG symbols shared with server validation; no remote icon font is used.
 
-Known limits: testing was on Linux/Chromium, not Windows/macOS or all browsers; 1,000 tiny files and an image over 5 MB were exercised, not thousands of 50 MB maps or power-loss recovery. The UI loads all record metadata and saves a full metadata revision, which is reasonable for a personal library but will benefit from pagination and per-record APIs at much larger scales. No standalone image-library gallery, unused-file cleanup, image overlays/layers, or pinch-to-zoom yet. The local server has no accounts and should not be exposed to a network.
+Known limits: testing was on Linux/Chromium, not Windows/macOS or all browsers; 1,000 tiny files and an image over 5 MB were exercised, not thousands of 50 MB maps or power-loss recovery. The UI loads all record metadata and saves a full metadata revision, which is reasonable for a personal library but will benefit from pagination and per-record APIs at much larger scales. No standalone image-library gallery, unused-file cleanup, image overlays/layers, category deletion, or pinch-to-zoom yet. Rich-text formatting and user-uploaded marker symbols are not implemented. Hover previews require a mouse or keyboard focus; click/tap opens the full panel. The local server has no accounts and should not be exposed to a network.

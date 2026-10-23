@@ -11,7 +11,7 @@ const backupGB=Number(process.env.WORLDFORGE_BACKUP_LIMIT_GB||1024);
 if(!Number.isFinite(backupGB)||backupGB<=0||backupGB>100000)throw new Error('WORLDFORGE_BACKUP_LIMIT_GB must be between 0 and 100000.');
 const ARCHIVE_LIMIT=backupGB*1024*1024*1024;
 async function exportZip(store,destination){
-  const manifest={format:'worldforge',version:4,exportedAt:new Date().toISOString(),...store.state(),images:store.imageList(),migrations:store.db.prepare('SELECT hash FROM migrations').all().map(r=>r.hash)};
+  const manifest={format:'worldforge',version:5,exportedAt:new Date().toISOString(),...store.state(),images:store.imageList(),migrations:store.db.prepare('SELECT hash FROM migrations').all().map(r=>r.hash)};
   // Immutable image files allow a consistent records snapshot without copying blobs into RAM.
   for(const image of manifest.images)await fsp.access(path.join(store.images,image.filename));
   const zip=new ZipArchive({zlib:{level:0},forceZip64:true});
@@ -52,8 +52,8 @@ async function restoreZip(store,file,revision){
   try{
     const files=await unpack(file,directory);const manifestFile=files.get('manifest.json');if(!manifestFile)fail('Backup manifest is missing.');
     let manifest;try{manifest=JSON.parse(await fsp.readFile(manifestFile.path,'utf8'));}catch{fail('Backup manifest is not valid JSON.');}
-    if(manifest.format!=='worldforge'||![3,4].includes(manifest.version)||!Array.isArray(manifest.images)||!Array.isArray(manifest.migrations)||!manifest.migrations.every(h=>/^[a-f0-9]{64}$/.test(h)))fail('Unsupported or malformed backup.');
-    if(manifest.version===3)manifest=normalizeState(manifest);
+    if(manifest?.format!=='worldforge'||![3,4,5].includes(manifest.version)||!Array.isArray(manifest.images)||!Array.isArray(manifest.migrations)||!manifest.migrations.every(h=>/^[a-f0-9]{64}$/.test(h)))fail('Unsupported or malformed backup.');
+    if(manifest.version<5)manifest=normalizeState(manifest);
     validateState(manifest);
     if(new Set(manifest.images.map(i=>i?.id)).size!==manifest.images.length||files.size!==manifest.images.length+1)fail('Backup has duplicate or unlisted image files.');
     const newImages=[],remap=new Map();
