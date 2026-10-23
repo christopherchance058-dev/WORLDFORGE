@@ -1,8 +1,9 @@
 'use strict';
 const LocalAPI={
  revision:0,
+ worldId:'default',
  async request(url,options={}){
-  let response;try{response=await fetch(url,{...options,headers:{'X-Worldforge':'1',...options.headers}});}catch{throw new Error('Cannot reach the local server. Start it with npm start, then try again.');}
+  let response;try{response=await fetch(url,{...options,headers:{'X-Worldforge':'1','X-Worldforge-World':this.worldId,...options.headers}});}catch{throw new Error('Cannot reach the local server. Start it with npm start, then try again.');}
   let result;try{result=await response.json();}catch{throw new Error('The server returned an incomplete response. Check disk space and the server terminal.');}
   if(!response.ok)throw new Error(result.error||'The local server could not save this change.');return result;
  },

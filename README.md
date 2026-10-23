@@ -7,6 +7,7 @@ No account, subscription, or paid service is needed.
 ## What you can do
 
 - Create, edit, and search your worldbuilding entries.
+- Keep separate worlds and switch between them.
 - Organize entries into your own categories.
 - Connect places, people, factions, and historical events.
 - Upload maps and add pins linked to your entries.
@@ -50,11 +51,13 @@ To stop the app, click the terminal window and press **Ctrl+C**. Wait until it s
 
 Choose **New entry** to begin writing, **Geography** to organize places, or **Maps** to upload your artwork and place pins.
 
-Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
+The large banner shows your current world. Use its **pencil** to change the name and description, or **plus** to create another world. Click the world box in the sidebar to switch worlds. New worlds start empty; your existing work stays in the first world.
+
+Use the **plus beside Categories** to add or edit categories. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 
 ## Back up your world
 
-A backup is a spare copy of your world, including its entries, pictures, maps, and pins.
+A backup is a spare copy of the **world currently selected**, including its entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.
 
 1. Open WORLDFORGE and check that your world is there.
 2. Click the **downward-arrow icon** in the sidebar. Hover over it to see **Export backup**.
@@ -65,7 +68,7 @@ Make a new backup after important writing sessions and before updating the app. 
 
 ## Restore a backup
 
-Restoring brings back the world saved in a backup. **It replaces the world currently open in the app.** Export that world first if you want to keep it.
+Restoring brings back the world saved in a backup. **It replaces the contents of the world currently open in the app.** Other worlds stay untouched, and the open world keeps its current name and description. Switch to the right world—or create an empty one—before importing. Export that world first if you want to keep its contents.
 
 1. Open WORLDFORGE.
 2. Click the **upward-arrow icon** in the sidebar, labelled **Import backup** when hovered.
@@ -77,15 +80,15 @@ Restoring brings back the world saved in a backup. **It replaces the world curre
 
 This is what “migrating your data” means: moving your saved world to a new home.
 
-1. On your old computer, make a backup using **Export backup**.
+1. On your old computer, make a backup using **Export backup**. Repeat for each world you want to move.
 2. Copy the finished backup ZIP to a USB drive or transfer it to the new computer.
 3. Set up WORLDFORGE on the new computer using the first-time instructions above.
-4. Open the app there and use **Import backup** to select your ZIP.
+4. Open the app there and use **Import backup** to select your ZIP. For more worlds, create an empty world with the name and description you want, then import its matching ZIP.
 5. Check that your entries, pictures, and maps are present. Keep the old copy and backup until you are sure everything is there.
 
 ## Update the app without losing your world
 
-Your world is stored in the **`data` folder** inside your WORLDFORGE folder. Keep it when updating.
+All your worlds are stored in the **`data` folder** inside your WORLDFORGE folder. Keep it when updating.
 
 1. Export a backup, then stop the app with **Ctrl+C** in its terminal.
 2. Download and extract the new version into a separate folder.

@@ -59,3 +59,16 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 @media(max-width:760px){.topbar-tools{gap:6px}.topbar .theme-control{font-size:0}.topbar .theme-control select{font-size:10px;max-width:70px}.topbar-tools .private{display:none}.sidebar-bottom{display:flex;gap:4px}.sidebar-bottom>#export,.sidebar-bottom>#import{margin:0}.location-group-fields{padding:12px}.location-entry-editor .form-row{gap:10px}.geography-detail .dialog-actions{justify-content:space-between}.geography-detail .dialog-actions button{padding:10px 12px}.location-facts{grid-template-columns:100px minmax(0,1fr);gap:8px 10px;padding:12px}.location-breadcrumbs{margin-top:0}.geography-intro{padding:30px 0}.geography-intro h2{font-size:26px}.geography-detail .lore-link{font-size:11px}}
 .detail-heading-tools{display:flex;gap:6px}.geography-detail>.dialog-heading{align-items:center}.location-links-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.location-links-grid:empty{display:none}.location-links-grid>.location-detail-group{min-width:0}.location-links-grid .lore-link{margin-right:4px}
 @media(max-width:600px){.location-links-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* World identity and category tools stay close to the content they control. */
+.world-switch{width:100%;background:transparent;color:var(--ink);text-align:left;margin:24px 0 18px;min-width:0}
+.world-switch>span:last-child{min-width:0}.world-switch strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.category-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;padding:0 4px;flex-shrink:0}
+.category-heading .nav-label{margin:0 6px}.category-heading .square-button{width:30px;height:30px;font-size:20px}
+.banner{height:auto;min-height:206px}.banner>div:first-child{position:relative;z-index:1;min-width:0;max-width:80%}
+.banner h2{overflow-wrap:anywhere}.banner #world-banner-description{white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto;margin-bottom:14px}
+.world-banner-actions{display:flex;gap:7px}.world-banner-actions .square-button{background:var(--bg);color:var(--ink)}
+.world-list{display:grid;gap:8px;max-height:220px;overflow:auto;margin:0 0 22px}.world-choice{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--border);border-radius:7px;padding:12px;background:var(--bg);color:var(--ink)}
+.world-choice span{overflow-wrap:anywhere;min-width:0}.world-choice.selected{border-color:var(--green);box-shadow:inset 3px 0 var(--green)}.world-choice .symbol{flex-shrink:0;width:22px;height:22px}
+@media(max-width:760px){.sidebar .category-heading .nav-label{display:block}.category-heading{margin-top:12px;margin-bottom:0}.category-heading .square-button{width:28px;height:28px}.sidebar .world-switch{display:flex;margin:12px 0 0;padding:8px 10px}.world-switch .world-icon{font-size:17px}.sidebar nav{margin-top:4px}.banner>div:first-child{max-width:100%}.banner-art{pointer-events:none}.world-dialog{padding:20px}}
+@media(min-width:761px){.sidebar .world-switch{display:flex;flex-shrink:0}}

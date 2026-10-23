@@ -4,9 +4,9 @@
 <body>
 <aside class="sidebar">
   <a class="brand" href="./"><span class="brand-symbol">✧</span><span>WORLDFORGE<small>A home for imagined worlds</small></span></a>
-  <div class="world"><span class="world-icon">◈</span><div>Your world<small>Personal encyclopedia</small></div></div>
-  <p class="nav-label">EXPLORE YOUR WORLD</p>
-  <nav aria-label="Categories" id="navigation"></nav><button class="utility manage-categories" id="manage-categories" aria-label="Manage categories">＋ <span>Manage categories</span></button>
+  <button class="world world-switch" id="switch-world" title="Switch or add world" aria-label="Switch or add world"><span class="world-icon">◈</span><span><strong id="sidebar-world-name">Your world</strong><small>Switch world ⌄</small></span></button>
+  <div class="category-heading"><p class="nav-label">CATEGORIES</p><button class="square-button" id="manage-categories" title="Manage categories" aria-label="Manage categories">＋</button></div>
+  <nav aria-label="Categories" id="navigation"></nav>
   <div class="sidebar-bottom"><p class="nav-label">YOUR LIBRARY</p><button id="export" aria-label="Export backup" class="utility">↑ <span>Export backup</span></button><button id="import" aria-label="Import backup" class="utility">↓ <span>Import backup</span></button><input type="file" id="backup-file" accept="application/json,application/zip,.json,.zip" hidden><div class="local-note"><span class="status-dot"></span> Saved on this computer<small>Export a backup to keep your world safe.</small></div></div>
 </aside>
 <main>
@@ -14,7 +14,7 @@
   <header class="topbar"><span>WORKSPACE <span class="slash">/</span> <span id="workspace-section">Encyclopedia</span></span><div class="topbar-tools"><span class="private">◉ &nbsp; Private & local</span><div id="appearance-setting"></div></div></header>
   <section class="content" id="encyclopedia">
     <div class="heading-row"><div><p class="eyebrow">A WORLD WAITING TO BE WRITTEN</p><h1 id="page-title">Your encyclopedia</h1><p class="subtitle" id="subtitle">Every person, place, and possibility. All connected by you.</p></div><button class="primary" id="new-entry">＋ New entry</button></div>
-    <div class="banner"><div><span class="eyebrow">THE NEXT CHAPTER STARTS HERE</span><h2>Small details. Endless worlds.</h2><p>Give your ideas a place to grow.<br>Build the stories only you can tell.</p></div><div class="banner-art" aria-hidden="true"><div class="orbit one"></div><div class="orbit two"></div><span>✧</span><div class="mountain back"></div><div class="mountain front"></div></div></div>
+    <div class="banner"><div><span class="eyebrow">YOUR WORLD</span><h2 id="world-banner-title">Your world</h2><p id="world-banner-description">A home for your stories.</p><div class="world-banner-actions"><button id="edit-world" class="square-button" title="Edit world details" aria-label="Edit world details"></button><button id="banner-switch-world" class="square-button" title="Switch world" aria-label="Switch world"></button><button id="add-world" class="square-button" title="Add world" aria-label="Add world"></button></div></div><div class="banner-art" aria-hidden="true"><div class="orbit one"></div><div class="orbit two"></div><span>✧</span><div class="mountain back"></div><div class="mountain front"></div></div></div>
     <div class="stats" id="stats"></div>
     <div class="library-tools"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search titles, stories, or tags…" aria-label="Search entries"><kbd>/</kbd></label><label class="sort-label">Sort by <select id="sort" aria-label="Sort by"><option value="updated">Recently updated</option><option value="title">Title A–Z</option><option value="year">Timeline year</option></select></label></div>
     <div class="section-title"><h2 id="list-title">All entries</h2><span id="result-count"></span></div>

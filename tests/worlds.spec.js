@@ -1,0 +1,41 @@
+const {test,expect,manifest}=require('./fixtures');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const sharp=require('sharp');
+const {Store}=require('../storage');
+const {Worlds}=require('../worlds');
+const headers={'X-Worldforge':'1'};
+async function createWorld(page,title){await page.getByRole('button',{name:'Add world',exact:true}).click();await page.getByLabel('World name',{exact:true}).fill(title);await page.getByLabel('World description').fill('A city and its surrounding sea.');await page.getByRole('button',{name:'Create world',exact:true}).click();await expect(page.locator('#world-banner-title')).toHaveText(title);}
+async function createEntry(page,title){await page.getByRole('button',{name:'New entry'}).click();await page.getByLabel('Title',{exact:true}).fill(title);await page.getByLabel('Description',{exact:true}).fill('A story belonging to this world.');await page.getByRole('button',{name:'Save entry',exact:true}).click();await expect(page.getByRole('button',{name:`Open ${title}`,exact:true})).toBeVisible();}
+async function openWorld(page,title){await page.getByRole('button',{name:'Switch or add world',exact:true}).click();await page.getByRole('button',{name:`Open world ${title}`,exact:true}).click();await expect(page.locator('#world-banner-title')).toHaveText(title);}
+test('world banner editing, separate entries/categories, switching, tabs and restart',async({page,library})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.locator('.card')).toHaveCount(8);
+ await page.getByRole('button',{name:'Edit world details'}).click();await page.getByLabel('World name',{exact:true}).fill('First realm');await page.getByLabel('World description').fill('An ocean realm.');await page.getByRole('button',{name:'Save world details'}).click();await expect(page.locator('#world-banner-description')).toHaveText('An ocean realm.');
+ const firstTab=await page.context().newPage();await firstTab.goto('/');await expect(firstTab.locator('.card')).toHaveCount(8);
+ await createWorld(page,'Second realm');await expect(page.locator('.card')).toHaveCount(0);await createEntry(page,'Second-world character');
+ await page.getByRole('button',{name:'Manage categories',exact:true}).click();await page.getByLabel('Category name').fill('Sea spirits');await page.getByRole('button',{name:'Add category',exact:true}).click();await expect(page.getByRole('button',{name:'Edit category Sea spirits'})).toBeVisible();await page.getByRole('button',{name:'Close categories'}).click();
+ await createEntry(firstTab,'First-world character');await expect(firstTab.locator('#world-banner-title')).toHaveText('First realm');
+ await library.restart();await page.reload();await expect(page.locator('#world-banner-title')).toHaveText('Second realm');await expect(page.locator('.card')).toHaveCount(1);await expect(page.locator('#navigation')).toContainText('Sea spirits');
+ await openWorld(page,'First realm');await expect(page.locator('.card')).toHaveCount(9);await expect(page.locator('#navigation')).not.toContainText('Sea spirits');await expect(page.getByRole('button',{name:'Open Second-world character',exact:true})).toHaveCount(0);
+ await openWorld(page,'Second realm');await expect(page.locator('.card')).toHaveCount(1);expect(errors).toEqual([]);
+});
+test('scoped image/map backups restore only into the selected world and reject unknown worlds',async({page,request,library})=>{
+ await page.goto('/');await expect(page.locator('.card')).toHaveCount(8);await createWorld(page,'Atlas world');const worlds=await (await request.get('/api/worlds')).json(),world=worlds.find(w=>w.title==='Atlas world'),scope={...headers,'X-Worldforge-World':world.id};
+ const bytes=await sharp({create:{width:32,height:24,channels:3,background:'#abcdef'}}).png().toBuffer();const upload=await request.post('/api/images',{headers:{...scope,'Content-Type':'image/png','X-Filename':'sea.png'},data:bytes});expect(upload.status()).toBe(201);const {image}=await upload.json();const state=await (await request.get('/api/state',{headers:scope})).json();const maps=[{id:'sea-map',title:'Sea chart',description:'',updatedAt:new Date().toISOString(),canvases:[{id:'sea-canvas',name:'The sea',filename:'sea.png',image,pins:[{id:'port',title:'Port',description:'Home',color:'gold',icon:'house',x:.23,y:.71}]}]}];expect((await request.put('/api/state',{headers:scope,data:{...state,maps}})).status()).toBe(200);
+ await page.reload();await expect(page.locator('#world-banner-title')).toHaveText('Atlas world');const download=page.waitForEvent('download');await page.getByRole('button',{name:'Export backup',exact:true}).click();const file=path.join(library.root,'atlas-backup.zip');await (await download).saveAs(file);const backup=await manifest(file);expect(backup.world.title).toBe('Atlas world');expect(backup.maps).toEqual(maps);expect(backup.images).toHaveLength(1);
+ const fresh=await (await request.get('/api/state',{headers:scope})).json();expect((await request.put('/api/state',{headers:scope,data:{...fresh,maps:[]}})).status()).toBe(200);
+ const current=await (await request.get('/api/state',{headers:scope})).json();const restored=await request.post('/api/restore',{headers:{...scope,'Content-Type':'application/zip','X-Revision':String(current.revision)},data:await fs.readFile(file)});expect(restored.status()).toBe(200);const restoredState=await restored.json();expect(restoredState.maps[0].canvases[0].pins[0]).toMatchObject({x:.23,y:.71});expect((await request.get(restoredState.maps[0].canvases[0].image)).status()).toBe(200);
+ await library.restart();expect((await request.get(restoredState.maps[0].canvases[0].image)).status()).toBe(200);const original=await (await request.get('/api/state')).json();expect(original.entries).toHaveLength(8);expect(original.maps).toEqual([]);
+ expect((await request.get('/api/state',{headers:{'X-Worldforge-World':'../../outside'}})).status()).toBe(404);
+ expect((await request.post('/api/worlds',{headers,data:{title:'',description:''}})).status()).toBe(400);
+ const bad=await request.post('/api/restore',{headers:{...scope,'Content-Type':'application/zip','X-Revision':String(restoredState.revision)},data:Buffer.from('invalid')});expect(bad.status()).toBe(400);expect((await (await request.get('/api/state',{headers:scope})).json()).maps).toEqual(restoredState.maps);
+});
+test('existing library gets a verified pre-world snapshot without changing its records',async({library})=>{
+ await library.restart(async()=>{
+ const store=new Store(library.root);store.db.exec('DROP TABLE world_catalog');const before=store.state();store.replace({...before,entries:[{id:'old',title:'Existing lore',description:'Keep me',category:'Characters',tags:[],year:'',image:'',updatedAt:new Date().toISOString()}]},before.revision);const expected=store.state();
+ const worlds=new Worlds(store);expect(store.state()).toEqual(expected);const files=await fs.readdir(store.backups);const snapshot=files.find(f=>f.startsWith('before-worlds-'));expect(snapshot).toBeTruthy();const {DatabaseSync}=require('node:sqlite'),db=new DatabaseSync(path.join(store.backups,snapshot),{readOnly:true});expect(db.prepare('PRAGMA integrity_check').get().integrity_check).toBe('ok');expect(JSON.parse(db.prepare('SELECT payload FROM entries').get().payload).title).toBe('Existing lore');db.close();const recovered=path.join(library.root,'snapshot-recovery');await fs.mkdir(recovered);await fs.copyFile(path.join(store.backups,snapshot),path.join(recovered,'worldforge.sqlite'));const restored=new Store(recovered);expect(restored.state()).toEqual(expected);restored.close();worlds.close();
+ });
+});
+test('world and category controls remain usable on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');await expect(page.locator('.card')).toHaveCount(8);await expect(page.locator('.category-heading')).toBeVisible();await expect(page.getByRole('button',{name:'Manage categories',exact:true})).toBeVisible();await createWorld(page,'A long world name for a small screen');await expect(page.locator('#switch-world')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await openWorld(page,'Your world');await expect(page.locator('.card')).toHaveCount(8);
+});

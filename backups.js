@@ -10,8 +10,8 @@ const {normalizeState,imageRecords,fail,receive,validateState,IMAGE_ID,IMAGE_URL
 const backupGB=Number(process.env.WORLDFORGE_BACKUP_LIMIT_GB||1024);
 if(!Number.isFinite(backupGB)||backupGB<=0||backupGB>100000)throw new Error('WORLDFORGE_BACKUP_LIMIT_GB must be between 0 and 100000.');
 const ARCHIVE_LIMIT=backupGB*1024*1024*1024;
-async function exportZip(store,destination){
-  const manifest={format:'worldforge',version:6,exportedAt:new Date().toISOString(),...store.state(),images:store.imageList(),migrations:store.db.prepare('SELECT hash FROM migrations').all().map(r=>r.hash)};
+async function exportZip(store,destination,world){
+  const manifest={...(world?{world}:{}),format:'worldforge',version:6,exportedAt:new Date().toISOString(),...store.state(),images:store.imageList(),migrations:store.db.prepare('SELECT hash FROM migrations').all().map(r=>r.hash)};
   // Immutable image files allow a consistent records snapshot without copying blobs into RAM.
   for(const image of manifest.images)await fsp.access(path.join(store.images,image.filename));
   const zip=new ZipArchive({zlib:{level:0},forceZip64:true});

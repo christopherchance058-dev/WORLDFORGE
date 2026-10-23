@@ -21,7 +21,7 @@ const sample = [
 let entries=[],filter='All',editingId=null,draftImage='',toastTimer,storageBlocked=false,imageLoading=false;
 function validEntry(e){return e && typeof e.id==='string' && e.id.length>0 && categories.includes(e.category) && typeof e.title==='string' && e.title.trim().length>0 && e.title.length<=120 && (e.summary===undefined||typeof e.summary==='string'&&e.summary.length<=500) && typeof e.description==='string' && e.description.trim().length>0 && e.description.length<=30000 && Array.isArray(e.tags) && e.tags.length<=30 && e.tags.every(t=>typeof t==='string' && t.length<=100) && (e.year==='' || (Number.isInteger(e.year)&&Math.abs(e.year)<=999999)) && typeof e.image==='string' && (!e.image || /^\/api\/images\/[a-f0-9-]{36}$/.test(e.image)) && typeof e.updatedAt==='string' && Number.isFinite(Date.parse(e.updatedAt));}
 function notify(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),6500);}
-let saving=false;
+let saving=false,restoring=false;
 async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions){
  if(storageBlocked){notify('Storage is not ready. Resolve the message above or reload before saving.');return false;}
  if(saving){notify('A save is already in progress. Please wait.');return false;}
@@ -37,7 +37,11 @@ async function initialize(){
   const raw=localStorage.getItem(storageKey);
   if(raw!==null){notice.textContent='Checking legacy browser data. Originals and rollback backups will be preserved.';state=await LocalAPI.migrate(raw);}
   if(!state.initialized)state=await LocalAPI.save(sample,[],state.categories);
-  entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;notice.hidden=true;
+  applyWorldState(state);
+  await refreshWorlds();
+  let preferred;try{preferred=localStorage.getItem('worldforge.active-world');}catch{}
+  if(preferred&&preferred!=='default'&&worldList.some(w=>w.id===preferred)){try{await switchWorld(preferred);}catch(e){notify('Could not open the selected world. Your original world is open. '+e.message);}}
+  storageBlocked=false;notice.hidden=true;
  }catch(error){notice.textContent='Could not open or migrate your library: '+error.message+' Existing browser data has not been deleted. Export legacy browser data below for recovery.';const download=node('button','secondary','Export legacy browser data');download.onclick=()=>{try{const raw=localStorage.getItem(storageKey);if(raw===null)return notify('No legacy browser data found.');downloadText(raw,'worldforge-legacy-original.json');}catch{notify('Browser storage cannot be read.');}};notice.append(download);}
  render();$('new-entry').disabled=storageBlocked;
 }
@@ -80,14 +84,14 @@ $('remove-image').onclick=()=>{draftImage='';$('entry-image').value='';imagePrev
 $('entry-image').onchange=async()=>{const file=$('entry-image').files[0];if(!file)return;$('form-error').textContent='';if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>50*1024*1024){$('form-error').textContent='Please choose a JPG, PNG, WebP, or GIF image no larger than 50 MB.';$('entry-image').value='';return;}imageLoading=true;$('save-entry').disabled=true;try{draftImage=await LocalAPI.upload(file);imagePreview();}catch(error){$('form-error').textContent=error.message;}finally{imageLoading=false;$('save-entry').disabled=false;}};
 $('entry-form').onsubmit=async event=>{event.preventDefault();if(imageLoading)return;const tags=[...new Set($('entry-tags').value.split(',').map(x=>x.trim()).filter(Boolean))];const e={...entries.find(e=>e.id===editingId),id:editingId||crypto.randomUUID(),category:$('entry-category').value,title:$('entry-title').value.trim(),summary:$('entry-summary').value.trim(),description:$('entry-description').value.trim(),tags,year:$('entry-category').value==='History'&&$('entry-year').value!==''?Number($('entry-year').value):'',image:draftImage,updatedAt:new Date().toISOString()};const location=Geography.collect();if(location)e.location=location;
  if(!validEntry(e)){$('form-error').textContent='Please enter a title and description, use at most 30 tags (100 characters each), and a valid whole-number year.';return;}const next=editingId?entries.map(x=>x.id===editingId?e:x):[e,...entries];try{GeographyModel.validate(next);}catch(error){$('form-error').textContent=error.message;return;}if(await persist(next)){$('editor').close();filter=e.category;$('search').value='';render();if(Geography.visible){if(GeographyModel.isLocation(e))Geography.show(e.id);else Geography.refresh();}notify(editingId?'Changes saved.':'Entry created.');}else{$('form-error').textContent=$('toast').textContent;}};
-$('export').onclick=()=>{const a=node('a');a.href='/api/backup';a.download='worldforge-backup.zip';a.click();notify('Backup download started. Keep the ZIP file somewhere safe and verify the download completes.');};
+$('export').onclick=()=>{const a=node('a');a.href='/api/backup?world='+encodeURIComponent(LocalAPI.worldId);a.download=activeWorld().title.replace(/[^a-zA-Z0-9_-]+/g,'-')+'-backup.zip';a.click();notify('Backup of the selected world started. Keep the ZIP file somewhere safe and verify the download completes.');};
 $('import').onclick=()=>$('backup-file').click();
 $('backup-file').onchange=async()=>{
  const file=$('backup-file').files[0];$('backup-file').value='';if(!file)return;
- if(!(await confirmAction('Restore this backup?','ZIP backups replace entries and maps. Legacy JSON version 1 preserves existing maps. The server will validate the backup and create a rollback ZIP before changing records.','Import backup')))return;
- const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
+ if(!(await confirmAction('Restore this backup?',`This replaces entries and maps in “${activeWorld().title}” only. Other worlds are untouched. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
+ restoring=true;const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
  try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;Geography.hide();Maps.hide();filter='All';$('search').value='';render();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
- catch(error){notice.textContent='Restore failed: '+error.message;notify(error.message);}
+ catch(error){notice.textContent='Restore failed: '+error.message;notify(error.message);}finally{restoring=false;}
 };
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!Maps.visible&&!Geography.visible&&!document.querySelector('dialog[open]')&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('search').focus();}});
 function manageCategories(){
@@ -99,4 +103,32 @@ function manageCategories(){
 }
 $('manage-categories').onclick=manageCategories;
 for(const [id,icon,label] of [['export','download','Export backup'],['import','upload','Import backup']]){const b=$(id);b.className='square-button';b.title=label;b.replaceChildren(glyph(icon));}
+let worldList=[];
+function activeWorld(){return worldList.find(w=>w.id===LocalAPI.worldId)||{id:'default',title:'Your world',description:'A home for your stories.'};}
+function renderWorld(){const world=activeWorld();$('sidebar-world-name').textContent=world.title;$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';}
+async function refreshWorlds(){worldList=await LocalAPI.request('/api/worlds');renderWorld();}
+function applyWorldState(state){entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
+async function switchWorld(id){
+ if(saving||imageLoading||restoring)throw new Error('Please wait for the current save or upload to finish.');
+ const state=await LocalAPI.request('/api/state',{headers:{'X-Worldforge-World':id}});
+ LocalAPI.worldId=id;LocalAPI.accept(state);applyWorldState(state);renderWorld();render();
+ try{localStorage.setItem('worldforge.active-world',id);}catch{/* A blocked browser preference does not affect saved world data. */}
+}
+async function worldDialog(create=false){
+ if(storageBlocked||saving||imageLoading||restoring)return notify('Please wait until your library is ready.');
+ try{await refreshWorlds();}catch(e){notify('Could not open worlds. '+e.message);return;}
+ if(document.querySelector('.world-dialog[open]'))return;
+ const dialog=node('dialog','world-dialog'),form=node('form'),head=node('div','dialog-heading'),close=node('button','icon-button','×');close.type='button';close.title='Close worlds';close.setAttribute('aria-label','Close worlds');close.onclick=()=>dialog.close();head.append(node('h2','','Your worlds'),close);form.append(head,node('p','storage-note','Each world has its own entries, categories, maps, and pictures.'));
+ const list=node('div','world-list');form.append(list);let creating=create;
+ const nameLabel=node('label','','World name'),name=node('input');name.required=true;name.maxLength=120;name.id='world-name';nameLabel.append(name);
+ const descriptionLabel=node('label','','World description'),description=node('textarea');description.maxLength=3000;description.rows=3;description.id='world-description';descriptionLabel.append(description);
+ const error=node('p','form-error');error.setAttribute('role','alert');const actions=node('div','dialog-actions'),add=node('button','square-button'),save=node('button','primary');add.type='button';add.title='Add world';add.setAttribute('aria-label','Add world');add.append(glyph('plus'));save.type='submit';actions.append(add,save);form.append(nameLabel,descriptionLabel,error,actions);dialog.append(form);document.body.append(dialog);dialog.onclose=()=>dialog.remove();
+ function draw(){const current=activeWorld();list.replaceChildren();for(const world of worldList){const b=node('button','world-choice'+(world.id===current.id?' selected':''));b.type='button';b.setAttribute('aria-label',`Open world ${world.title}`);b.setAttribute('aria-pressed',String(world.id===current.id));b.append(glyph('map'),node('span','',world.title));b.onclick=async()=>{setBusy(true);try{await switchWorld(world.id);dialog.close();notify(`Opened ${world.title}.`);}catch(e){error.textContent=e.message;setBusy(false);}};list.append(b);}name.value=creating?'':current.title;description.value=creating?'':current.description;save.textContent=creating?'Create world':'Save world details';}
+ function setBusy(value){dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=value);dialog.oncancel=e=>{if(value)e.preventDefault();};}
+ add.onclick=()=>{creating=true;error.textContent='';draw();name.focus();};
+ form.onsubmit=async event=>{event.preventDefault();const value={title:name.value.trim(),description:description.value.trim(),revision:activeWorld().revision};if(!value.title){error.textContent='Please give your world a name.';return;}setBusy(true);error.textContent='';try{const world=await LocalAPI.request(creating?'/api/worlds':'/api/world',{method:creating?'POST':'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});await refreshWorlds();if(creating)await switchWorld(world.id);dialog.close();notify(creating?'New world created. Start with your first entry.':'World details saved.');}catch(e){error.textContent=e.message;setBusy(false);}};
+ draw();dialog.showModal();name.focus();
+}
+for(const [id,icon,handler] of [['edit-world','edit',()=>worldDialog()],['banner-switch-world','map',()=>worldDialog()],['add-world','plus',()=>worldDialog(true)]]){$(id).append(glyph(icon));$(id).onclick=handler;}
+$('switch-world').onclick=()=>worldDialog();
 initialize();
