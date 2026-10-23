@@ -49,9 +49,11 @@ To stop the app, click the terminal window and press **Ctrl+C**. Wait until it s
 
 ## Start building your world
 
+Choose **Characters** to browse your cast or create someone new—even with nothing filled in yet. Add a portrait and expand the optional sections whenever you are ready.
+
 Choose **New entry** to begin writing, **Geography** to organize places, or **Maps** to upload your artwork and place pins.
 
-The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **1920 × 480 pixels** works well; keep important details near the centre because the edges may be cropped. Click the world box in the sidebar to switch worlds, or use the **plus** there to create another world. New worlds start empty; your existing work stays in the first world.
+The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **2400 × 800 pixels** works well; keep important details near the centre because the edges may be cropped. Click the world box in the sidebar to switch worlds, or use the **plus** there to create another world. New worlds start empty; your existing work stays in the first world.
 
 Use the **plus beside Categories** to add or edit categories. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 

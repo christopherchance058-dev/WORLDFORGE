@@ -18,7 +18,7 @@ const Maps=(()=>{
   async function updateCanvas(next){return updateMap({...current(),canvases:current().canvases.map(c=>c.id===next.id?next:c)});}
   function leaveWorkspace(){observer?.disconnect();observer=null;gesture=null;document.body.classList.remove('map-editing');el('maps-section').classList.remove('map-workspace');if(ownsFullscreen&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});ownsFullscreen=false;}
   function renderNav(){const b=button('',show,'maps-nav');b.append(glyph('map','nav-icon'),node('span','','Maps'));b.classList.toggle('active',visible);b.setAttribute('aria-current',visible?'page':'false');el('navigation').append(b);}
-  function show(){Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
+  function show(){Characters.hide();Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
   function hide(){leaveWorkspace();visible=false;currentId=null;canvasId=null;el('workspace-section').textContent='Encyclopedia';el('maps-section').hidden=true;el('encyclopedia').hidden=false;}
   function refresh(){if(visible)collection();}
   function frame(){const root=el('maps-section');root.replaceChildren();return root;}
@@ -27,7 +27,7 @@ const Maps=(()=>{
     leaveWorkspace();currentId=null;canvasId=null;const root=frame(),head=node('div','heading-row'),title=node('div');
     title.append(node('p','eyebrow','CHART YOUR WORLD'),node('h1','','Your maps'),node('p','subtitle','Worlds, cities and rooms. One atlas, many perspectives.'));
     head.append(title,button('New map',()=>editMap(),'primary'));root.append(head);message(root);
-    root.append(node('p','storage-note','Original images and their pins save on this computer. Export ZIP backups regularly.'));
+    root.append(node('p','storage-note','Original images and their pins save on this computer. Starting image guide: 3000 × 2000 px (3:2); keep the map’s natural aspect ratio. Export ZIP backups regularly.'));
     const grid=node('div','map-collection');root.append(grid);
     if(!data.length)grid.append(node('p','empty','Create a map and upload one or more images to begin.'));
     data.forEach(m=>{const card=button('',()=>openMap(m.id),'map-card'),img=node('img');if(m.canvases.length){img.src=m.canvases[0].image;img.loading='lazy';img.alt='';card.append(img);}else{const placeholder=node('div','map-card-placeholder');placeholder.append(glyph('map'),node('span','','Your next horizon'));card.append(placeholder);}card.append(node('h2','',m.title),node('p','',m.description||'An uncharted story'),node('small','',`${m.canvases.length} images · ${m.canvases.reduce((n,c)=>n+c.pins.length,0)} pins`));grid.append(card);});
@@ -48,7 +48,7 @@ const Maps=(()=>{
   function editMap(map=null){
     const {dialog,form,message}=makeDialog(map?'Edit map':'Create map');const title=field(form,'Map title',map?.title||'');title.required=true;
     const description=field(form,'Map description (optional)',map?.description||'','textarea',30000);let canvases=map?.canvases||[],loading=false;
-    if(!map){const label=node('label','','Map images'),file=node('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';file.multiple=true;label.append(file);form.append(label,node('p','storage-note','Images are optional. Start with a title and add your artwork whenever you are ready. PNG, JPEG or WebP; up to 50 MB each.'));
+    if(!map){const label=node('label','','Map images'),file=node('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';file.multiple=true;label.append(file);form.append(label,node('p','storage-note','Images are optional. Start with a title and add your artwork whenever you are ready. Starting guide: 3000 × 2000 px (3:2), while keeping your map’s natural aspect ratio. PNG, JPEG or WebP; up to 50 MB each.'));
       file.onchange=async()=>{loading=true;submit.disabled=true;const result=await uploadFiles(file.files,t=>message.textContent=t);canvases=result.canvases;message.textContent=`${canvases.length} image${canvases.length===1?'':'s'} ready. ${result.failures.join(' ')}`;loading=false;submit.disabled=false;};}
     const submit=actions(form,dialog,message,'Save map');
     form.onsubmit=async e=>{e.preventDefault();if(loading)return;if(!title.value.trim()){message.textContent='Enter a map title.';return;}submit.disabled=true;

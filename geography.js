@@ -9,7 +9,7 @@ const Geography=(()=>{
  function hide(){visible=false;$('geography-section').hidden=true;}
  function nav(){const b=node('button',visible?'active':'');b.setAttribute('aria-label','Geography & Locations');b.title='Geography & Locations';b.setAttribute('aria-current',visible?'page':'false');b.append(glyph('map','nav-icon'),node('span','','Geography'),node('span','count',locations().length));b.onclick=()=>show();return b;}
  function show(id=null){
-  Maps.hide();visible=true;$('encyclopedia').hidden=true;$('geography-section').hidden=false;$('workspace-section').textContent='Geography & Locations';
+  Characters.hide();Maps.hide();visible=true;$('encyclopedia').hidden=true;$('geography-section').hidden=false;$('workspace-section').textContent='Geography & Locations';
   if(id)selectedId=id;if(!locations().some(e=>e.id===selectedId))selectedId=null;render();renderNavigation();
  }
  function renderNavigation(){document.querySelectorAll('#navigation button').forEach(b=>{const active=b.getAttribute('aria-label')==='Geography & Locations';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});}
