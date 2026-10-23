@@ -27,12 +27,13 @@ function normalizeState(state){
     return {...rest,canvases:[{id:'base',name:'Original image',filename:'',image,pins}]};
   })};
 }
-function imageRecords(state){return [...state.entries,...state.maps.flatMap(m=>m.canvases.flatMap(c=>[c,...c.pins.filter(p=>p.image)]))];}
+function imageRecords(state){return [...(state.appearance?[state.appearance]:[]),...state.entries,...state.maps.flatMap(m=>m.canvases.flatMap(c=>[c,...c.pins.filter(p=>p.image)]))];}
 function validateState(state, legacy=false) {
   const {entries,maps,categories}=state||{};
   if(!Array.isArray(categories)||categories.length>100||!categories.length||new Set(categories.map(c=>typeof c?.name==='string'?c.name.toLowerCase():null)).size!==categories.length||!categories.every(c=>c&&text(c.name,60,true)&&c.name===c.name.trim()&&c.name.toLowerCase()!=='all'&&markers.includes(c.icon)))fail('Invalid categories. Use unique names and supported icons.');
   const names=categories.map(c=>c.name);
   const image=(value,required=false)=>typeof value==='string'&&(!value&&!required || IMAGE_URL.test(value) || legacy&&value.length<=IMAGE_LIMIT*1.4&&/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(value));
+  if(state.appearance!==undefined&&(!state.appearance||typeof state.appearance!=='object'||Array.isArray(state.appearance)||!image(state.appearance.image)))fail('Invalid world banner image.');
   const ids=items=>new Set(items.map(x=>x?.id)).size===items.length;
   const common=x=>x&&text(x.id,120,true)&&text(x.title,120,true)&&text(x.description,30000)&&typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt));
   const pin=p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,30000)&&(p.image===undefined||image(p.image))&&(p.summary===undefined||text(p.summary,500))&&(p.entryId===undefined||p.entryId===null||text(p.entryId,120,true))&&(p.icon===undefined||markers.includes(p.icon))&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1;
@@ -99,6 +100,7 @@ class Store {
         defaults.forEach((c,i)=>insert.run(c.name,c.icon,i));
         if(schemaVersion===4)this.db.exec('UPDATE settings SET revision=revision+1 WHERE id=1');
       }
+      this.db.exec(`CREATE TABLE IF NOT EXISTS world_appearance (id INTEGER PRIMARY KEY CHECK(id=1), image_id TEXT REFERENCES images(id)); INSERT OR IGNORE INTO world_appearance VALUES(1,NULL);`);
       this.db.exec('PRAGMA user_version=5; COMMIT; PRAGMA foreign_keys=ON');
     }catch(e){this.db.exec('ROLLBACK');throw e;}
   }
@@ -110,7 +112,8 @@ class Store {
     const canvases=this.db.prepare('SELECT * FROM map_canvases ORDER BY position').all();
     const byMap=new Map();for(const c of canvases){if(!byMap.has(c.map_id))byMap.set(c.map_id,[]);byMap.get(c.map_id).push({id:c.id,name:c.name,filename:c.filename,image:`/api/images/${c.image_id}`,pins:grouped.get(JSON.stringify([c.map_id,c.id]))||[]});}
     const maps=this.db.prepare('SELECT * FROM maps ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),canvases:byMap.get(r.id)||[]}));
-    return {version:6,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT name,icon FROM library_categories ORDER BY position').all()};
+    const banner=this.db.prepare('SELECT image_id FROM world_appearance WHERE id=1').get().image_id;
+    return {appearance:{image:banner?`/api/images/${banner}`:''},version:6,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT name,icon FROM library_categories ORDER BY position').all()};
   }
   imageList(){return this.db.prepare('SELECT * FROM images ORDER BY id').all();}
   image(id){return this.db.prepare('SELECT * FROM images WHERE id=?').get(id);}
@@ -133,6 +136,7 @@ class Store {
           for(const p of c.pins){const {x,y,...rest}=p;this.db.prepare('INSERT INTO canvas_pins VALUES(?,?,?,?,?,?)').run(m.id,c.id,p.id,x,y,JSON.stringify(rest));}
         }
       }
+      if(state.appearance!==undefined)this.db.prepare('UPDATE world_appearance SET image_id=? WHERE id=1').run(state.appearance.image?state.appearance.image.match(IMAGE_URL)[1]:null);
       this.db.prepare('UPDATE settings SET revision=revision+1, initialized=1 WHERE id=1').run();
       for(const hash of [...migrationHashes,...(migrationHash?[migrationHash]:[])])this.db.prepare('INSERT OR IGNORE INTO migrations VALUES(?)').run(hash);
       this.db.exec('COMMIT');return this.state();

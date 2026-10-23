@@ -22,11 +22,11 @@ let entries=[],filter='All',editingId=null,draftImage='',toastTimer,storageBlock
 function validEntry(e){return e && typeof e.id==='string' && e.id.length>0 && categories.includes(e.category) && typeof e.title==='string' && e.title.trim().length>0 && e.title.length<=120 && (e.summary===undefined||typeof e.summary==='string'&&e.summary.length<=500) && typeof e.description==='string' && e.description.trim().length>0 && e.description.length<=30000 && Array.isArray(e.tags) && e.tags.length<=30 && e.tags.every(t=>typeof t==='string' && t.length<=100) && (e.year==='' || (Number.isInteger(e.year)&&Math.abs(e.year)<=999999)) && typeof e.image==='string' && (!e.image || /^\/api\/images\/[a-f0-9-]{36}$/.test(e.image)) && typeof e.updatedAt==='string' && Number.isFinite(Date.parse(e.updatedAt));}
 function notify(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),6500);}
 let saving=false,restoring=false;
-async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions){
+async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions,nextAppearance=LocalAPI.appearance){
  if(storageBlocked){notify('Storage is not ready. Resolve the message above or reload before saving.');return false;}
  if(saving){notify('A save is already in progress. Please wait.');return false;}
  saving=true;
- try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return source?{...p,title:source.title,description:source.description,summary:source.summary||'',image:source.image}:p;})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();return true;}
+ try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return source?{...p,title:source.title,description:source.description,summary:source.summary||'',image:source.image}:p;})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories,nextAppearance);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();renderWorld();return true;}
  catch(error){notify('Unable to save. '+error.message);return false;}finally{saving=false;}
 }
 async function initialize(){
@@ -52,7 +52,6 @@ function render(){
  $('navigation').replaceChildren();['All',...categories].forEach(c=>{if(c==='Locations'){$('navigation').append(Geography.nav());return;}const b=node('button',filter===c&&!Maps.visible&&!Geography.visible?'active':'');b.setAttribute('aria-current',filter===c&&!Maps.visible&&!Geography.visible?'page':'false');b.append(glyph(c==='All'?'grid':categoryIcon(c),'nav-icon'),node('span','',c==='All'?'All entries':c),node('span','count',c==='All'?entries.length:entries.filter(e=>e.category===c).length));b.onclick=()=>setFilter(c);$('navigation').append(b);});
  if(!categories.includes('Locations'))$('navigation').append(Geography.nav());
  Maps.renderNav();
- $('stats').replaceChildren();categories.forEach(c=>{const b=node('button',`stat ${categoryClass(c)}`);b.setAttribute('aria-label',`Show ${c}`);b.append(glyph(categoryIcon(c),'stat-icon'));const d=node('div');d.append(node('strong','',entries.filter(e=>e.category===c).length),node('small','',c));b.append(d);b.onclick=()=>setFilter(c);$('stats').append(b);});
  $('page-title').textContent=filter==='All'?'Your encyclopedia':filter==='History'?'Your historical timeline':filter;
  $('subtitle').textContent=filter==='All'?'Every person, place, and possibility. All connected by you.':({Characters:'The people who give your world a heartbeat.',Locations:'Every place has a story. Give yours a home.',History:'The moments that shaped your world, through the ages.',Factions:'Shared beliefs. Divided loyalties. Stories in the making.'})[filter]||'Discover the stories and knowledge of your world.';
  const query=$('search').value.trim().toLowerCase();const list=entries.filter(e=>(filter==='All'||e.category===filter)&&[e.title,e.summary||'',e.description,...e.tags,String(e.year)].join(' ').toLowerCase().includes(query));
@@ -90,7 +89,7 @@ $('backup-file').onchange=async()=>{
  const file=$('backup-file').files[0];$('backup-file').value='';if(!file)return;
  if(!(await confirmAction('Restore this backup?',`This replaces entries and maps in “${activeWorld().title}” only. Other worlds are untouched. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
  restoring=true;const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
- try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;Geography.hide();Maps.hide();filter='All';$('search').value='';render();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
+ try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;Geography.hide();Maps.hide();filter='All';$('search').value='';renderWorld();render();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
  catch(error){notice.textContent='Restore failed: '+error.message;notify(error.message);}finally{restoring=false;}
 };
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!Maps.visible&&!Geography.visible&&!document.querySelector('dialog[open]')&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('search').focus();}});
@@ -105,7 +104,7 @@ $('manage-categories').onclick=manageCategories;
 for(const [id,icon,label] of [['export','download','Export backup'],['import','upload','Import backup']]){const b=$(id);b.className='square-button';b.title=label;b.replaceChildren(glyph(icon));}
 let worldList=[];
 function activeWorld(){return worldList.find(w=>w.id===LocalAPI.worldId)||{id:'default',title:'Your world',description:'A home for your stories.'};}
-function renderWorld(){const world=activeWorld();$('sidebar-world-name').textContent=world.title;$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';}
+function renderWorld(){const world=activeWorld();$('sidebar-world-name').textContent=world.title;$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';const image=$('world-banner-image'),src=LocalAPI.appearance.image;image.hidden=!src;if(src)image.src=src;else image.removeAttribute('src');image.closest('.banner').classList.toggle('has-world-image',!!src);}
 async function refreshWorlds(){worldList=await LocalAPI.request('/api/worlds');renderWorld();}
 function applyWorldState(state){entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
 async function switchWorld(id){
@@ -114,21 +113,35 @@ async function switchWorld(id){
  LocalAPI.worldId=id;LocalAPI.accept(state);applyWorldState(state);renderWorld();render();
  try{localStorage.setItem('worldforge.active-world',id);}catch{/* A blocked browser preference does not affect saved world data. */}
 }
-async function worldDialog(create=false){
+async function worldDialog(mode='switch'){
  if(storageBlocked||saving||imageLoading||restoring)return notify('Please wait until your library is ready.');
  try{await refreshWorlds();}catch(e){notify('Could not open worlds. '+e.message);return;}
  if(document.querySelector('.world-dialog[open]'))return;
- const dialog=node('dialog','world-dialog'),form=node('form'),head=node('div','dialog-heading'),close=node('button','icon-button','×');close.type='button';close.title='Close worlds';close.setAttribute('aria-label','Close worlds');close.onclick=()=>dialog.close();head.append(node('h2','','Your worlds'),close);form.append(head,node('p','storage-note','Each world has its own entries, categories, maps, and pictures.'));
- const list=node('div','world-list');form.append(list);let creating=create;
- const nameLabel=node('label','','World name'),name=node('input');name.required=true;name.maxLength=120;name.id='world-name';nameLabel.append(name);
- const descriptionLabel=node('label','','World description'),description=node('textarea');description.maxLength=3000;description.rows=3;description.id='world-description';descriptionLabel.append(description);
- const error=node('p','form-error');error.setAttribute('role','alert');const actions=node('div','dialog-actions'),add=node('button','square-button'),save=node('button','primary');add.type='button';add.title='Add world';add.setAttribute('aria-label','Add world');add.append(glyph('plus'));save.type='submit';actions.append(add,save);form.append(nameLabel,descriptionLabel,error,actions);dialog.append(form);document.body.append(dialog);dialog.onclose=()=>dialog.remove();
- function draw(){const current=activeWorld();list.replaceChildren();for(const world of worldList){const b=node('button','world-choice'+(world.id===current.id?' selected':''));b.type='button';b.setAttribute('aria-label',`Open world ${world.title}`);b.setAttribute('aria-pressed',String(world.id===current.id));b.append(glyph('map'),node('span','',world.title));b.onclick=async()=>{setBusy(true);try{await switchWorld(world.id);dialog.close();notify(`Opened ${world.title}.`);}catch(e){error.textContent=e.message;setBusy(false);}};list.append(b);}name.value=creating?'':current.title;description.value=creating?'':current.description;save.textContent=creating?'Create world':'Save world details';}
- function setBusy(value){dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=value);dialog.oncancel=e=>{if(value)e.preventDefault();};}
- add.onclick=()=>{creating=true;error.textContent='';draw();name.focus();};
- form.onsubmit=async event=>{event.preventDefault();const value={title:name.value.trim(),description:description.value.trim(),revision:activeWorld().revision};if(!value.title){error.textContent='Please give your world a name.';return;}setBusy(true);error.textContent='';try{const world=await LocalAPI.request(creating?'/api/worlds':'/api/world',{method:creating?'POST':'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});await refreshWorlds();if(creating)await switchWorld(world.id);dialog.close();notify(creating?'New world created. Start with your first entry.':'World details saved.');}catch(e){error.textContent=e.message;setBusy(false);}};
- draw();dialog.showModal();name.focus();
+ const dialog=node('dialog','world-dialog'),content=node('div');dialog.append(content);document.body.append(dialog);dialog.onclose=()=>dialog.remove();
+ let busy=false;
+ dialog.oncancel=e=>{if(busy)e.preventDefault();};
+ function setBusy(value){busy=value;dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=value);}
+ function heading(title,addWorld=false){const head=node('div','dialog-heading'),tools=node('div','world-dialog-tools');head.append(node('h2','',title));if(addWorld){const add=node('button','square-button');add.type='button';add.title='Add world';add.setAttribute('aria-label','Add world');add.append(glyph('plus'));add.onclick=()=>edit(true);tools.append(add);}const close=node('button','icon-button','×');close.type='button';close.title='Close worlds';close.setAttribute('aria-label','Close worlds');close.onclick=()=>dialog.close();tools.append(close);head.append(tools);return head;}
+ function select(){content.replaceChildren(heading('Your worlds',true),node('p','storage-note','Choose a world to open, or use + to create another. Each world keeps its own stories.'));const list=node('div','world-list'),error=node('p','form-error');error.setAttribute('role','alert');for(const world of worldList){const b=node('button','world-choice'+(world.id===LocalAPI.worldId?' selected':''));b.type='button';b.setAttribute('aria-label',`Open world ${world.title}`);b.setAttribute('aria-pressed',String(world.id===LocalAPI.worldId));b.append(glyph('map'),node('span','',world.title));b.onclick=async()=>{setBusy(true);try{await switchWorld(world.id);dialog.close();notify(`Opened ${world.title}.`);}catch(e){error.textContent=e.message;setBusy(false);}};list.append(b);}content.append(list,error);}
+ function edit(creating=false){
+  let profile=activeWorld(),draftBanner=LocalAPI.appearance.image;
+  const form=node('form');form.append(heading(creating?'Create world':'Edit world'));
+  const nameLabel=node('label','','World name'),name=node('input');name.required=true;name.maxLength=120;name.value=creating?'':profile.title;nameLabel.append(name);
+  const descriptionLabel=node('label','','World description'),description=node('textarea');description.maxLength=3000;description.rows=3;description.value=creating?'':profile.description;descriptionLabel.append(description);
+  form.append(nameLabel,descriptionLabel);const error=node('p','form-error');error.setAttribute('role','alert');
+  if(!creating){
+   const label=node('label','','Banner image'),file=node('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';file.id='world-banner-file';file.setAttribute('aria-label','Banner image');const help=node('small','','Recommended: 1920 × 480 pixels (4:1). PNG, JPEG or WebP, up to 50 MB. Edges may be cropped; keep important details near the centre.');help.id='world-banner-help';file.setAttribute('aria-describedby',help.id);label.append(file,help);
+   const preview=node('div','world-banner-preview'),image=node('img'),remove=node('button','square-button');image.alt='Banner preview';remove.type='button';remove.title='Remove banner image';remove.setAttribute('aria-label','Remove banner image');remove.append(glyph('trash'));preview.append(image,remove);
+   const draw=()=>{preview.hidden=!draftBanner;if(draftBanner)image.src=draftBanner;else image.removeAttribute('src');};draw();remove.onclick=()=>{draftBanner='';file.value='';draw();};
+   file.onchange=async()=>{const selected=file.files[0];if(!selected)return;error.textContent='';if(!['image/png','image/jpeg','image/webp'].includes(selected.type)||selected.size>50*1024*1024){error.textContent='Choose a PNG, JPEG or WebP image up to 50 MB.';file.value='';return;}setBusy(true);try{draftBanner=await LocalAPI.upload(selected);draw();}catch(e){error.textContent=e.message;}finally{setBusy(false);file.value='';}};
+   form.append(label,preview);
+  }
+  const actions=node('div','dialog-actions'),cancel=node('button','secondary','Cancel'),save=node('button','primary',creating?'Create world':'Save world details');cancel.type='button';cancel.onclick=()=>dialog.close();save.type='submit';actions.append(cancel,save);form.append(error,actions);
+  form.onsubmit=async event=>{event.preventDefault();if(busy)return;const value={title:name.value.trim(),description:description.value.trim(),revision:profile.revision};if(!value.title){error.textContent='Please give your world a name.';return;}setBusy(true);error.textContent='';try{const world=await LocalAPI.request(creating?'/api/worlds':'/api/world',{method:creating?'POST':'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});profile=world;await refreshWorlds();if(creating)await switchWorld(world.id);else if(draftBanner!==LocalAPI.appearance.image&&!(await persist(entries,Maps.data,categoryDefinitions,{image:draftBanner})))throw new Error('Name and description saved, but the banner could not be saved. '+$('toast').textContent);dialog.close();notify(creating?'New world created. Start with your first entry.':'World details saved.');}catch(e){error.textContent=e.message;}finally{setBusy(false);}};
+  content.replaceChildren(form);name.focus();
+ }
+ if(mode==='edit')edit();else select();dialog.showModal();
 }
-for(const [id,icon,handler] of [['edit-world','edit',()=>worldDialog()],['banner-switch-world','map',()=>worldDialog()],['add-world','plus',()=>worldDialog(true)]]){$(id).append(glyph(icon));$(id).onclick=handler;}
+$('edit-world').append(glyph('edit'));$('edit-world').onclick=()=>worldDialog('edit');
 $('switch-world').onclick=()=>worldDialog();
 initialize();

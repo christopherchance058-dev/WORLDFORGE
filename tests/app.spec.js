@@ -5,7 +5,7 @@ test('sample entries, search, categories and timeline',async({page})=>{
  await expect(page.locator('.card')).toHaveCount(8);
  await page.getByRole('searchbox').fill('cartographer');await expect(page.locator('.card')).toHaveCount(1);await expect(page.locator('.card')).toContainText('Elara');
  await page.getByRole('searchbox').fill('impossibleword');await expect(page.getByText('No entries found')).toBeVisible();
- await page.getByRole('searchbox').fill('');await page.getByRole('button',{name:'Show History',exact:true}).click();
+ await page.getByRole('searchbox').fill('');await page.locator('#navigation').getByRole('button',{name:/History/}).click();
  await expect(page.locator('.card')).toHaveCount(2);await expect(page.locator('.card').first()).toContainText('Year 412');await expect(page.locator('.card').last()).toContainText('Year 438');
 });
 test('create with image, persist, edit category and delete with cancellation',async({page})=>{

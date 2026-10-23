@@ -51,13 +51,13 @@ To stop the app, click the terminal window and press **Ctrl+C**. Wait until it s
 
 Choose **New entry** to begin writing, **Geography** to organize places, or **Maps** to upload your artwork and place pins.
 
-The large banner shows your current world. Use its **pencil** to change the name and description, or **plus** to create another world. Click the world box in the sidebar to switch worlds. New worlds start empty; your existing work stays in the first world.
+The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **1920 × 480 pixels** works well; keep important details near the centre because the edges may be cropped. Click the world box in the sidebar to switch worlds, or use the **plus** there to create another world. New worlds start empty; your existing work stays in the first world.
 
 Use the **plus beside Categories** to add or edit categories. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 
 ## Back up your world
 
-A backup is a spare copy of the **world currently selected**, including its entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.
+A backup is a spare copy of the **world currently selected**, including its banner image, entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.
 
 1. Open WORLDFORGE and check that your world is there.
 2. Click the **downward-arrow icon** in the sidebar. Hover over it to see **Export backup**.
