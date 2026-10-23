@@ -1,6 +1,21 @@
 {
-  "name": "worldforge", "version": "1.0.0", "private": true,
+  "name": "worldforge",
+  "version": "1.0.0",
+  "private": true,
   "description": "A private, local worldbuilding encyclopedia",
-  "scripts": {"start": "node server.js", "test": "playwright test"},
-  "devDependencies": {"@playwright/test": "1.61.1"}
+  "scripts": {
+    "start": "node server.js",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
+  },
+  "dependencies": {
+    "archiver": "^8.0.0",
+    "sharp": "^0.35.5",
+    "yauzl": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
 }

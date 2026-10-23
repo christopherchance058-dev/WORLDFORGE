@@ -1,47 +1,121 @@
 # WORLDFORGE
 
-Your personal worldbuilding encyclopedia. No accounts, paid services, or API keys.
+A free worldbuilding encyclopedia and interactive atlas, stored on your own computer. No accounts, external APIs, or paid services.
 
-## Open the app on your computer
+## Start the updated app
 
-1. Download this project folder to your computer and unzip it if needed.
-2. Install the free LTS version of Node.js from nodejs.org.
-3. Open a terminal in the WORLDFORGE folder (on Windows, open the folder, type `cmd` in the File Explorer address bar, and press Enter).
-4. Type `npm start` and press Enter.
-5. Type `http://localhost:3000` into your browser's address bar.
+1. **Before upgrading**, use **Export backup** in your old app and keep that file.
+2. Install **Node.js 24 LTS or newer** from nodejs.org. SQLite is included with Node; you do not install a separate database service.
+3. Download/unzip the project. Open a terminal in the WORLDFORGE folder. On Windows, open the folder in File Explorer, type `cmd` in the address bar, and press Enter.
+4. Run these commands, one at a time:
 
-Eight sample entries appear automatically. Leave the terminal open while using the app. Use the same browser and address each time so your saved world is available.
+   ```sh
+   npm ci
+   npm start
+   ```
 
-You can also try double-clicking `index.html`, but browser support for saving directly opened files varies. The cloud browser blocks file URLs, so that opening method could not be validated here. The local-server method above was tested.
+5. Open `http://localhost:3000` in your browser. Leave the terminal open. Press Ctrl+C to stop the server; run `npm start` to start it again.
 
-## Use WORLDFORGE
+The first command installs dependencies once and needs Internet access. Normal use runs locally and works offline. Opening `index.html` directly is no longer supported. The server listens only on this computer (127.0.0.1); this is not a public website. If you run it in a cloud workspace, files live on that workspace's machine—download and run it on your computer for local ownership.
 
-- Click **New entry**. Enter a title, category, description, and optional tags and image. Click **Save entry**.
-- Click any entry card to read it. Use **Edit entry** to make changes, or **Delete entry** to remove it after confirmation.
-- Use the left sidebar to browse Characters, Locations, History, and Factions.
-- Search finds titles, descriptions, tags, and years. Clear the search to see everything again.
-- History entries can have a year, including negative years. History opens sorted from earliest to latest, with undated entries last.
-- Images are saved with your entries. Use images under 2 MB; small images leave more space for stories.
-- Click **Export backup** to download a JSON file containing all entries and images. Keep copies outside your browser, especially before clearing browser data.
-- **Import backup** restores an exported JSON file. It replaces the current encyclopedia after confirmation; export the current one first if you want to keep both.
+Use the same browser and exact address as your old version for automatic migration. `localhost` and `127.0.0.1` have separate old browser storage. Once migrated, all browsers using this server share the SQLite library.
 
-Your data stays in this browser on this device. It does not automatically sync to other browsers or devices. Private/incognito windows can erase data when closed. Clearing browser data removes your encyclopedia. Export/import lets you move it to another computer. Browser storage is limited; a failed save displays an error and keeps the editor open.
+## Where your world lives
 
-## Run with a stable local address (recommended for regular use)
+By default, the server creates a **data** folder beside `server.js`:
 
-Install the free LTS version of Node.js from nodejs.org. Open a terminal in the project folder and enter:
+```text
+data/
+  worldforge.sqlite       Entries, maps, pins, image metadata, migration history
+  worldforge.sqlite-wal   SQLite working files (may exist while running)
+  worldforge.sqlite-shm
+  images/                 Original image files with generated names
+  backups/                Original migration JSON and automatic rollback ZIPs
+  staging/                Temporary uploads and restore files
+```
 
-```sh
+**Keep this folder when updating the app.** Do not replace it with an empty folder from a new download. If you unzip a new project folder, stop the server and copy your entire old `data` folder into the new project before starting it.
+
+For a permanent location outside the application folder, set `WORLDFORGE_DATA_DIR` before starting. This variable names the root of the whole library, not an individual database file:
+
+Windows Command Prompt:
+
+```bat
+set "WORLDFORGE_DATA_DIR=C:\Users\YourName\Documents\WorldforgeData"
 npm start
 ```
 
-Then type `http://localhost:3000` in your browser's address bar. Leave the terminal open while using the app. To stop it, press Ctrl+C. Run the same command whenever you want to reopen the app. No dependency installation is needed to run it.
+macOS/Linux:
 
-The server started in the cloud workspace is on that machine, not on your personal computer. To use it locally, download the project and follow the steps above. This first version is not a public website.
+```sh
+WORLDFORGE_DATA_DIR="$HOME/Documents/WorldforgeData" npm start
+```
 
-## Development and tests
+Use that same location each time. The terminal prints the active data folder at startup. Move/copy the **whole folder while the server is stopped**, or use a portable backup. Do not copy just the SQLite file while the server is running; recent transactions may be in its WAL file. Store the database on a local writable disk rather than a network share or live cloud-sync folder.
 
-Plain HTML, CSS, and JavaScript; a tiny Node.js static server. There is no database or build step. Playwright is used only for automated testing.
+## Entries and maps
+
+Click **New entry** to create a character, location, historical event, or faction. Entries support descriptions, tags, and an optional image. Click a card to edit or delete it. Search finds titles, descriptions, tags and years. History can be sorted chronologically. A new empty library receives eight sample entries.
+
+Click **Maps → New map**, add a title, optional description, and a PNG, JPEG, or WebP background:
+
+- **Add pin**: click the image, enter a title/description and choose a color, then save.
+- Click a pin to read, edit, reposition or delete it. **Reposition pin** lets you click its new location. **Cancel tool** keeps its original location.
+- Use the mouse wheel or zoom buttons to zoom; drag to pan in browsing mode. **Reset view** restores the starting view. Arrow keys pan a focused canvas; Escape exits a placement tool.
+- **Edit map** changes its title/description. Deleting a map or pin requires confirmation.
+- Return to the encyclopedia with the category buttons. Saved entries and maps survive browser and server restarts.
+
+Pin positions remain normalized fractions between 0 and 1 in SQLite, so they stay attached while resizing and zooming. Zoom/pan are temporary view settings.
+
+## Images and capacity
+
+Uploaded image bytes are stored as ordinary files, **not base64 in browser storage or database blobs**. SQLite stores a stable image ID, a managed relative filename, MIME type, size, SHA-256 checksum, dimensions, and original filename. The interface uses `/api/images/<id>` URLs, so moving the complete data folder does not break paths.
+
+- PNG, JPEG, WebP and GIF are accepted for entries; map uploads offer PNG, JPEG and WebP.
+- Maximum file size: **50 MB per image**, maximum **80 million total pixels** (including animation frames).
+- Contents are decoded and validated on the server; filename extensions and browser MIME declarations alone are not trusted. Original bytes are retained. Identical existing image files are reused.
+- Capacity depends on available disk space, not the browser's usual 5 MB localStorage quota. Thumbnails/cards load lazily. Large images can still consume significant browser memory when opened.
+- Images from cancelled uploads or deleted records are deliberately retained and included in backups. This avoids accidental data loss; an unused-image cleanup/gallery tool is a future improvement. Do not manually rename or edit managed image files.
+- Save errors report disk space, permission, offline-server, or conflicting-edit problems. A stale tab cannot overwrite a newer revision. Copy unsaved text and reload when a conflict is reported.
+
+## Portable backups and restore
+
+**Export backup** downloads a ZIP containing `manifest.json` (all database records, migration history and image metadata) and `images/` (all registered image files). It is a complete portable library; it does not require the original computer's paths or a raw SQLite database copy. Image bytes stream from disk, so the browser does not need to assemble the entire library in memory. Verify your browser reports that the download completed, then keep copies on another drive.
+
+To restore on this or a different computer:
+
+1. Start the updated app with `npm start`.
+2. Click **Import backup** and select the ZIP.
+3. Confirm replacement. Leave the window open until success appears.
+
+The server stages the upload, rejects unsafe paths, duplicates, missing files, bad checksums, invalid records/pin positions, unsupported versions and unreadable images. It creates a **before-restore ZIP** in `data/backups/`, installs image files under managed names, then replaces entries/maps in a SQLite transaction. A failed validation or save leaves previous records intact. Extra files from an interrupted operation can remain, but are not substituted for your records.
+
+Restores require free disk space for the uploaded ZIP, extracted images, newly installed files, and a rollback backup. ZIP backups use stored image bytes rather than trying to recompress already-compressed images. Backup operations serialize with writes to keep snapshots consistent; a large backup can delay saves.
+
+The default import limit is **1 TB** compressed and expanded, 100,000 image files, and a 64 MB manifest. Set `WORLDFORGE_BACKUP_LIMIT_GB` to adjust the archive size ceiling. Individual image limits still apply. Upload requests allow up to 30 minutes. These are safeguards, not a claim that terabyte libraries have been benchmarked.
+
+Legacy version-1 and version-2 JSON backups are still accepted (up to 64 MB): embedded image data is validated and converted to files. Version-1 imports replace entries and preserve current maps; version-2 imports replace entries and maps. Always export the current world before importing.
+
+## Automatic migration and rollback
+
+On opening the app, it checks the old `worldforge.entries.v1` localStorage key in that browser. This includes the original array format and the later `{version:2, entries, maps}` format.
+
+Before changing records the server:
+
+1. Saves an exact copy as `data/backups/legacy-original-<checksum>.json`.
+2. Creates a ZIP snapshot of the current server library.
+3. Validates and converts embedded images into managed files.
+4. Merges old entries/maps into SQLite. Conflicting IDs receive new IDs rather than overwriting existing records. Identical records are skipped. A checksum makes repeated migration of the same browser data idempotent.
+
+**The original localStorage value is never deleted or rewritten by the new app.** It remains a fallback. A successful empty migration stays empty; it does not introduce sample entries. Migration failure is shown at the top of the app, with a button to download the original browser data. Correct the file/permission problem and reload, or import a known-good backup. Other browser profiles must be opened individually at their original address or exported/imported separately; the server cannot discover their private localStorage automatically.
+
+To undo a restore, import its `before-restore` ZIP. To undo a migration, import its `before-migration` ZIP. Migration history is retained so the old browser data is not automatically reintroduced after rollback. Original JSON can still be imported deliberately.
+
+To return to the old localStorage-based application, stop this server, preserve the complete data folder and a new ZIP backup, and run the old code (Git commit `0f57701`) at the same browser address/port. It can read the untouched old browser data. **New changes made in the SQLite version do not automatically appear in the old app**, and the old app cannot import version-3 ZIPs. Keep the new data folder for returning to the current version.
+
+## Development and testing
+
+Plain HTML/CSS/JavaScript frontend; Node.js HTTP server with built-in SQLite. No application framework or external database service. The existing UI and pin-coordinate model remain in place.
 
 ```sh
 npm ci
@@ -49,38 +123,14 @@ npx playwright install chromium
 npm test
 ```
 
-On the prepared cloud environment, tests use the existing `/usr/bin/chromium`, so no browser download is needed. The tests cover sample content, search, category filters, timeline order, create/edit/delete, image uploads, reload persistence, backup round trips, invalid imports, safe text rendering, storage errors, and desktop/mobile layout.
+The prepared cloud environment uses its installed `/usr/bin/chromium` and does not need a browser download. Tests start isolated servers with temporary data folders; they never reset the working library. `npm test` covers encyclopedia CRUD, image uploads, map/pin interactions, backup compatibility, migration, restart/fresh-browser persistence, archive validation, real filesystem permission errors, stale writes, cross-site write rejection, and a 1,000-small-image library. A disk-full UI response is simulated; the tests do not fill the host drive.
 
-Files: `index.html` (page), `styles.css` (appearance), `app.js` (entries and storage), `server.js` (local server), and `tests/app.spec.js` (browser tests).
+New runtime dependencies:
 
-The optional direct-file test is disabled by default because the managed cloud browser blocks file URLs. On an unrestricted personal browser installation, set `WORLDFORGE_TEST_FILE=1` to run it. All normal application tests use the local server.
+- `sharp`: inspect and decode image contents safely and enforce pixel limits.
+- `archiver`: stream portable ZIP backups from disk, including ZIP64 support.
+- `yauzl`: inspect and extract ZIPs entry-by-entry into a controlled staging directory.
 
-## Interactive Maps
+Modules: `storage.js` owns SQLite and managed image files; `backups.js` owns migration/archive validation and rollback; `server.js` exposes the local API; `api-client.js` connects the existing `app.js` and `maps.js` editors to it.
 
-Click **Maps** in the sidebar, then **New map**. Enter a title, optional description, and choose a PNG, JPEG, or WebP image from your computer. Click **Save map**. Map images must be at most 2 MB and 40 million pixels. No image is sent to a server.
-
-- **Add pin** activates placement mode. Click a location on the image, enter a title, optional description, and color, then **Save pin**.
-- Click a pin to read it in the side panel. **Edit pin** changes its details. **Reposition pin** lets you click a new location. **Cancel tool** leaves its original location intact. Clicking an existing pin always opens it, even while placing pins.
-- Use the wheel or **Zoom in / Zoom out** to zoom. Drag the map to pan in normal browsing mode. **Reset view** restores the initial view. Focus the canvas and use arrow keys to pan or Escape to leave a placement tool.
-- **Edit map** renames the map or updates its description. **Delete map** removes it and all its pins after confirmation.
-- **All maps** returns to your collection. The encyclopedia categories in the sidebar return to your entries. Saving a map or pin is immediate when its Save button succeeds.
-
-Maps, images, and pins survive refreshing or restarting the local server. Use the same browser profile and server address/port each time. **Export backup** now includes every map image and pin along with all encyclopedia entries.
-
-### Storage and compatibility
-
-This version keeps localStorage and its existing key, `worldforge.entries.v1`. Old array-only entry data is read without alteration. The next successful save writes `{version: 2, entries, maps}` to that same key in a single atomic operation. If the browser rejects the save, the previous stored document remains intact, and the editor reports the failure. No separate migration or deletion is required.
-
-Backups exported by this version use `format: "worldforge", version: 2` with `entries` and `maps`. Version-1 backups remain supported: importing one replaces entries after confirmation and **preserves existing maps**. Version-2 imports replace both entries and maps after confirmation. Invalid maps, duplicate IDs, non-finite/out-of-range coordinates, unsupported versions, and unreadable map images are rejected before changing storage. Keep your pre-upgrade backups; older app versions cannot read the new storage document or version-2 backups. Avoid running old and new app versions against the same browser storage.
-
-localStorage typically permits around 5 MB per site. Base64-encoded images take more space than their source files, and entries share the same quota. The 2 MB upload limit does not guarantee space for every image. Use smaller images, export backups, and delete unwanted content if storage fills. Private browsing or clearing browser data may erase everything. Images are not automatically compressed. Backups are limited to 15 MB on import. View zoom and pan reset when a map opens; pin positions persist as normalized x/y fractions from 0 to 1 and remain attached through zoom and resizing.
-
-For larger atlases, the next step is IndexedDB for image blobs. A future migration should copy and validate existing localStorage data in a transaction, keep the original until verification succeeds, and continue accepting version-1/version-2 backups. This release does not change storage engines.
-
-### Maps implementation and validation
-
-`maps.js` provides the collection, editors, pin rendering, normalized-coordinate placement, image validation, and zoom/pan. `app.js` owns shared persistence and backup compatibility. `index.html` loads the module and supplies the map section; `server.js` serves it; `styles.css` adds the map layout and shared dark palette. No dependencies were added.
-
-`npm test` runs the existing encyclopedia tests and map tests in `tests/maps.spec.js`. The latter cover map/pin creation, edits, deletion confirmation, image upload, coordinate alignment after resize/zoom/pan, placement while zoomed, reload and server-restart persistence, map backup round trips, legacy entry migration, legacy backup preservation, invalid image/coordinate rejection, and quota failure. The optional direct-file test remains skipped in the managed cloud browser.
-
-Current limits: one background per map (image replacement is not yet offered), simple colored pins, no layers or links to encyclopedia entries, and no multi-user editing. Use toolbar zoom on touch screens; pinch-to-zoom is not implemented.
+Known limits: testing was on Linux/Chromium, not Windows/macOS or all browsers; 1,000 tiny files and an image over 5 MB were exercised, not thousands of 50 MB maps or power-loss recovery. The UI loads all record metadata and saves a full metadata revision, which is reasonable for a personal library but will benefit from pagination and per-record APIs at much larger scales. No batch-upload gallery, unused-file cleanup, map layers, background replacement, or pinch-to-zoom yet. The local server has no accounts and should not be exposed to a network.

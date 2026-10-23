@@ -1,14 +1,62 @@
-const http = require('node:http');
-const fs = require('node:fs');
-const path = require('node:path');
-const files = {'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js'};
-const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
-const port = Number(process.env.PORT || 3000);
-http.createServer((req,res) => {
-  const file = files[new URL(req.url, 'http://localhost').pathname];
-  if (!file) { res.writeHead(404); res.end('Not found'); return; }
-  fs.readFile(path.join(__dirname,file),(err,data)=>{
-    if(err){res.writeHead(500);res.end('Unable to read app file');return;}
-    res.writeHead(200,{'Content-Type':types[path.extname(file)],'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});res.end(data);
-  });
-}).listen(port,'0.0.0.0',()=>console.log(`WORLDFORGE is running at http://localhost:${port}`));
+'use strict';
+const http=require('node:http');
+const fs=require('node:fs');
+const fsp=fs.promises;
+const path=require('node:path');
+const {randomUUID}=require('node:crypto');
+const {pipeline}=require('node:stream/promises');
+const {Store,fail,friendly,receive,IMAGE_ID,IMAGE_LIMIT,JSON_LIMIT,formats}=require('./storage');
+const {exportZip,restoreZip,legacyImport,ARCHIVE_LIMIT}=require('./backups');
+const files={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js','/api-client.js':'api-client.js'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
+const port=Number(process.env.PORT||3000);
+let store;
+try{store=new Store(process.env.WORLDFORGE_DATA_DIR||path.join(__dirname,'data'));}catch(e){console.error(`WORLDFORGE could not open its data folder: ${friendly(e)}`);process.exit(1);}
+let queue=Promise.resolve();
+function exclusive(fn){const result=queue.then(fn);queue=result.catch(()=>{});return result;}
+function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
+async function body(req,limit=JSON_LIMIT){let size=0;const chunks=[];for await(const c of req){size+=c.length;if(size>limit)fail('Request is too large.',413);chunks.push(c);}try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{fail('Request is not valid JSON.');}}
+const server=http.createServer(async(req,res)=>{
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
+  try{
+    const host=req.headers.host;
+    if(!host||!/^((localhost|127\.0\.0\.1)(:\d+)?|\[::1\](:\d+)?)$/.test(host))fail('Only local computer access is supported.',403);
+    if(req.headers.origin&&req.headers.origin!==`http://${host}`)fail('Cross-site requests are not allowed.',403);
+    const url=new URL(req.url,`http://${host}`),route=url.pathname;
+    if(!['GET','HEAD'].includes(req.method)&&req.headers['x-worldforge']!=='1')fail('Use the WORLDFORGE app to change local data.',403);
+    if(req.method==='GET'&&route==='/api/state')return json(res,200,store.state());
+    if(req.method==='PUT'&&route==='/api/state'){const value=await body(req);return json(res,200,await exclusive(()=>store.replace(value,value.revision)));}
+    if(req.method==='POST'&&route==='/api/migrate'){const value=await body(req);if(typeof value.raw!=='string')fail('Missing legacy browser data.');return json(res,200,await exclusive(()=>legacyImport(store,value.raw,value.revision,true)));}
+    if(req.method==='POST'&&route==='/api/images'){
+      if(!Object.values(formats).includes(req.headers['content-type']))fail('Upload PNG, JPEG, WebP or GIF images.');
+      if(Number(req.headers['content-length'])>IMAGE_LIMIT)fail('Images may be at most 50 MB.',413);
+      const temp=path.join(store.staging,randomUUID());
+      try{await receive(req,temp,IMAGE_LIMIT);let name='';try{name=decodeURIComponent(req.headers['x-filename']||'');}catch{fail('Invalid filename metadata.');}const result=await exclusive(()=>store.upload(temp,name,req.headers['content-type']));return json(res,201,result);}finally{await fsp.rm(temp,{force:true});}
+    }
+    if(req.method==='GET'&&route.startsWith('/api/images/')){
+      const id=route.slice('/api/images/'.length);if(!IMAGE_ID.test(id))fail('Image not found.',404);const image=store.image(id);if(!image)fail('Image not found.',404);
+      const target=path.join(store.images,image.filename);await fsp.access(target);
+      res.writeHead(200,{'Content-Type':image.mime,'Content-Length':image.bytes,'Cache-Control':'private, max-age=31536000, immutable'});await pipeline(fs.createReadStream(target),res);return;
+    }
+    if(req.method==='GET'&&route==='/api/backup'){
+      // Serialize snapshot creation against edits/imports, with image bytes streamed to the browser.
+      await exclusive(async()=>{res.setHeader('Content-Type','application/zip');res.setHeader('Content-Disposition',`attachment; filename="worldforge-${new Date().toISOString().slice(0,10)}.zip"`);await exportZip(store,res);});return;
+    }
+    if(req.method==='POST'&&route==='/api/restore'){
+      const revision=Number(req.headers['x-revision']);
+      if(req.headers['content-type']==='application/json'){
+        const value=await body(req);return json(res,200,await exclusive(()=>legacyImport(store,JSON.stringify(value),revision)));
+      }
+      if(req.headers['content-type']!=='application/zip')fail('Choose a WORLDFORGE ZIP or legacy JSON backup.');
+      if(Number(req.headers['content-length'])>ARCHIVE_LIMIT)fail('Backup exceeds the configured import size limit.',413);
+      const temp=path.join(store.staging,randomUUID());
+      try{await receive(req,temp,ARCHIVE_LIMIT);return json(res,200,await exclusive(()=>restoreZip(store,temp,revision)));}finally{await fsp.rm(temp,{force:true});}
+    }
+    const file=files[route];if(req.method!=='GET'||!file)fail('Not found.',404);
+    const data=await fsp.readFile(path.join(__dirname,file));res.writeHead(200,{'Content-Type':types[path.extname(file)],'Cache-Control':'no-cache'});res.end(data);
+  }catch(e){if(!e.status)console.error(e.code||e.name,e.message);if(!res.headersSent&&!res.destroyed)json(res,e.status||(['ENOSPC','SQLITE_FULL'].includes(e.code)?507:500),{error:friendly(e)});else if(!res.destroyed)res.destroy();}
+});
+server.requestTimeout=30*60*1000;
+server.listen(port,'127.0.0.1',()=>console.log(`WORLDFORGE is running at http://localhost:${server.address().port}\nData folder: ${store.root}`));
+server.on('error',e=>{console.error(e.code==='EADDRINUSE'?'That port is already in use. Stop the previous server or choose another PORT.':friendly(e));process.exitCode=1;store.close();});
+for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.close(()=>{store.close();process.exit(0);}));
