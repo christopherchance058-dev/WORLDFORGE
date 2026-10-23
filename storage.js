@@ -17,12 +17,23 @@ function friendly(error) {
   return error.status ? error.message : 'The local server could not complete this operation. Check its terminal and data-drive permissions.';
 }
 function text(v,max,required=false){return typeof v==='string'&&v.length<=max&&(!required||v.trim().length>0);}
+function normalizeState(state){
+  if(!state||!Array.isArray(state.maps))return state;
+  return {...state,maps:state.maps.map(m=>{
+    if(!m||m.canvases!==undefined)return m;
+    const {image,pins,...rest}=m;
+    return {...rest,canvases:[{id:'base',name:'Original image',filename:'',image,pins}]};
+  })};
+}
+function imageRecords(state){return [...state.entries,...state.maps.flatMap(m=>m.canvases)];}
 function validateState(state, legacy=false) {
   const {entries,maps}=state||{};
   const image=(value,required=false)=>typeof value==='string'&&(!value&&!required || IMAGE_URL.test(value) || legacy&&value.length<=IMAGE_LIMIT*1.4&&/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(value));
   const ids=items=>new Set(items.map(x=>x?.id)).size===items.length;
   const common=x=>x&&text(x.id,120,true)&&text(x.title,120,true)&&text(x.description,30000)&&typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt));
-  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&e.description.trim()&&['Characters','Locations','History','Factions'].includes(e.category)&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&image(m.image,true)&&Array.isArray(m.pins)&&ids(m.pins)&&m.pins.every(p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,10000)&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1))) fail('This is not a valid WORLDFORGE document. Check entries, maps, images and pin coordinates.');
+  const pin=p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,10000)&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1;
+  const canvas=c=>c&&text(c.id,120,true)&&text(c.name,120,true)&&text(c.filename,255)&&image(c.image,true)&&Array.isArray(c.pins)&&ids(c.pins)&&c.pins.every(pin);
+  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&e.description.trim()&&['Characters','Locations','History','Factions'].includes(e.category)&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&m.canvases.length>0&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
 }
 async function receive(stream,destination,limit) {
   let bytes=0,handle;const hash=createHash('sha256');
@@ -51,7 +62,12 @@ class Store {
     this.root=path.resolve(root);this.images=path.join(this.root,'images');this.staging=path.join(this.root,'staging');this.backups=path.join(this.root,'backups');
     for(const dir of [this.root,this.images,this.staging,this.backups])fs.mkdirSync(dir,{recursive:true,mode:0o700});
     this.db=new DatabaseSync(path.join(this.root,'worldforge.sqlite'));
-    if(![0,3].includes(this.db.prepare('PRAGMA user_version').get().user_version))fail('This database requires a different WORLDFORGE version. No migration was attempted.');
+    const schemaVersion=this.db.prepare('PRAGMA user_version').get().user_version;
+    if(![0,3,4].includes(schemaVersion))fail('This database requires a different WORLDFORGE version. No migration was attempted.');
+    if(schemaVersion===3){
+      const snapshot=path.join(this.backups,`before-canvases-${randomUUID()}.sqlite`);
+      this.db.prepare('VACUUM INTO ?').run(snapshot);
+    }
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL, initialized INTEGER NOT NULL);
       INSERT OR IGNORE INTO settings VALUES(1,0,0);
@@ -60,15 +76,28 @@ class Store {
       CREATE TABLE IF NOT EXISTS maps (id TEXT PRIMARY KEY, image_id TEXT NOT NULL REFERENCES images(id), payload TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS pins (map_id TEXT REFERENCES maps(id) ON DELETE CASCADE, id TEXT, x REAL NOT NULL CHECK(x>=0 AND x<=1), y REAL NOT NULL CHECK(y>=0 AND y<=1), payload TEXT NOT NULL, PRIMARY KEY(map_id,id));
       CREATE TABLE IF NOT EXISTS migrations (hash TEXT PRIMARY KEY);
-      PRAGMA user_version=3;`);
+      `);
+    this.db.exec('BEGIN IMMEDIATE');
+    try{
+      this.db.exec(`CREATE TABLE IF NOT EXISTS map_canvases (map_id TEXT REFERENCES maps(id) ON DELETE CASCADE, id TEXT, image_id TEXT NOT NULL REFERENCES images(id), name TEXT NOT NULL, filename TEXT NOT NULL, position INTEGER NOT NULL, PRIMARY KEY(map_id,id));
+        CREATE TABLE IF NOT EXISTS canvas_pins (map_id TEXT, canvas_id TEXT, id TEXT, x REAL NOT NULL CHECK(x>=0 AND x<=1), y REAL NOT NULL CHECK(y>=0 AND y<=1), payload TEXT NOT NULL, PRIMARY KEY(map_id,canvas_id,id), FOREIGN KEY(map_id,canvas_id) REFERENCES map_canvases(map_id,id) ON DELETE CASCADE);`);
+      if(schemaVersion===3){
+        this.db.exec(`INSERT INTO map_canvases SELECT m.id, 'base', m.image_id, 'Original image', i.originalName, 0 FROM maps m JOIN images i ON i.id=m.image_id;
+          INSERT INTO canvas_pins SELECT map_id, 'base', id, x, y, payload FROM pins;
+          UPDATE settings SET revision=revision+1 WHERE id=1;`);
+      }
+      this.db.exec('PRAGMA user_version=4; COMMIT');
+    }catch(e){this.db.exec('ROLLBACK');throw e;}
   }
   state(){
     const meta=this.db.prepare('SELECT * FROM settings').get();
     const entries=this.db.prepare('SELECT * FROM entries ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),image:r.image_id?`/api/images/${r.image_id}`:''}));
-    const pins=this.db.prepare('SELECT * FROM pins ORDER BY rowid').all();
-    const grouped=new Map();for(const p of pins){if(!grouped.has(p.map_id))grouped.set(p.map_id,[]);grouped.get(p.map_id).push({...JSON.parse(p.payload),x:p.x,y:p.y});}
-    const maps=this.db.prepare('SELECT * FROM maps ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),image:`/api/images/${r.image_id}`,pins:grouped.get(r.id)||[]}));
-    return {version:3,revision:meta.revision,initialized:!!meta.initialized,entries,maps};
+    const pins=this.db.prepare('SELECT * FROM canvas_pins ORDER BY rowid').all();
+    const grouped=new Map();for(const p of pins){const key=JSON.stringify([p.map_id,p.canvas_id]);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push({...JSON.parse(p.payload),x:p.x,y:p.y});}
+    const canvases=this.db.prepare('SELECT * FROM map_canvases ORDER BY position').all();
+    const byMap=new Map();for(const c of canvases){if(!byMap.has(c.map_id))byMap.set(c.map_id,[]);byMap.get(c.map_id).push({id:c.id,name:c.name,filename:c.filename,image:`/api/images/${c.image_id}`,pins:grouped.get(JSON.stringify([c.map_id,c.id]))||[]});}
+    const maps=this.db.prepare('SELECT * FROM maps ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),canvases:byMap.get(r.id)||[]}));
+    return {version:4,revision:meta.revision,initialized:!!meta.initialized,entries,maps};
   }
   imageList(){return this.db.prepare('SELECT * FROM images ORDER BY id').all();}
   image(id){return this.db.prepare('SELECT * FROM images WHERE id=?').get(id);}
@@ -79,10 +108,17 @@ class Store {
     try {
       const insert=this.db.prepare('INSERT OR IGNORE INTO images VALUES(?,?,?,?,?,?,?,?)');
       for(const i of newImages)insert.run(i.id,i.filename,i.mime,i.bytes,i.sha256,i.width,i.height,i.originalName);
-      for(const r of [...state.entries,...state.maps])if(r.image&&!this.image(r.image.match(IMAGE_URL)[1]))fail('An image is missing. Upload it again or restore a complete backup.');
-      this.db.exec('DELETE FROM pins; DELETE FROM maps; DELETE FROM entries;');
+      for(const r of imageRecords(state))if(r.image&&!this.image(r.image.match(IMAGE_URL)[1]))fail('An image is missing. Upload it again or restore a complete backup.');
+      this.db.exec('DELETE FROM canvas_pins; DELETE FROM map_canvases; DELETE FROM pins; DELETE FROM maps; DELETE FROM entries;');
       for(const e of state.entries){const {image,...payload}=e;this.db.prepare('INSERT INTO entries VALUES(?,?,?)').run(e.id,image?image.match(IMAGE_URL)[1]:null,JSON.stringify(payload));}
-      for(const m of state.maps){const {image,pins,...payload}=m;this.db.prepare('INSERT INTO maps VALUES(?,?,?)').run(m.id,image.match(IMAGE_URL)[1],JSON.stringify(payload));for(const p of pins){const {x,y,...rest}=p;this.db.prepare('INSERT INTO pins VALUES(?,?,?,?,?)').run(m.id,p.id,x,y,JSON.stringify(rest));}}
+      for(const m of state.maps){
+        const {canvases,...payload}=m;
+        this.db.prepare('INSERT INTO maps VALUES(?,?,?)').run(m.id,canvases[0].image.match(IMAGE_URL)[1],JSON.stringify(payload));
+        for(const [position,c] of canvases.entries()){
+          this.db.prepare('INSERT INTO map_canvases VALUES(?,?,?,?,?,?)').run(m.id,c.id,c.image.match(IMAGE_URL)[1],c.name,c.filename,position);
+          for(const p of c.pins){const {x,y,...rest}=p;this.db.prepare('INSERT INTO canvas_pins VALUES(?,?,?,?,?,?)').run(m.id,c.id,p.id,x,y,JSON.stringify(rest));}
+        }
+      }
       this.db.prepare('UPDATE settings SET revision=revision+1, initialized=1 WHERE id=1').run();
       for(const hash of [...migrationHashes,...(migrationHash?[migrationHash]:[])])this.db.prepare('INSERT OR IGNORE INTO migrations VALUES(?)').run(hash);
       this.db.exec('COMMIT');return this.state();
@@ -104,9 +140,9 @@ class Store {
     if(Array.isArray(input))state={entries:input,maps:this.state().maps};
     else if(input&&[1,2].includes(input.version))state={entries:input.entries,maps:input.version===1?this.state().maps:input.maps};
     else fail('Unsupported legacy backup version.');
-    state=structuredClone(state);validateState(state,true);
+    state=normalizeState(structuredClone(state));validateState(state,true);
     const newImages=[];const cache=new Map();
-    for(const record of [...state.entries,...state.maps]){
+    for(const record of imageRecords(state)){
       if(!record.image.startsWith('data:'))continue;
       const encoded=record.image;if(cache.has(encoded)){record.image=cache.get(encoded);continue;}
       const match=encoded.match(/^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/);
@@ -118,4 +154,4 @@ class Store {
   }
   close(){this.db.close();}
 }
-module.exports={Store,fail,friendly,receive,inspectImage,validateState,IMAGE_ID,IMAGE_URL,IMAGE_LIMIT,JSON_LIMIT,formats};
+module.exports={normalizeState,imageRecords,Store,fail,friendly,receive,inspectImage,validateState,IMAGE_ID,IMAGE_URL,IMAGE_LIMIT,JSON_LIMIT,formats};

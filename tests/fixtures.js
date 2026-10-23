@@ -10,7 +10,7 @@ async function start(root,port=0){
  return {child,url,stop:()=>new Promise(resolve=>{if(child.exitCode!==null||child.signalCode!==null)return resolve();child.once('exit',resolve);child.kill();})};
 }
 const test=base.test.extend({
- library:async({},use)=>{const root=await fs.mkdtemp(path.join(os.tmpdir(),'worldforge-test-'));let server=await start(root);try{await use({root,url:server.url,restart:async()=>{const port=new URL(server.url).port;await server.stop();server=await start(root,port);}});}finally{await server.stop();await fs.rm(root,{recursive:true,force:true});}},
+ library:async({},use)=>{const root=await fs.mkdtemp(path.join(os.tmpdir(),'worldforge-test-'));let server=await start(root);try{await use({root,url:server.url,restart:async(whileStopped=async()=>{})=>{const port=new URL(server.url).port;await server.stop();try{await whileStopped();}finally{server=await start(root,port);}}});}finally{await server.stop();await fs.rm(root,{recursive:true,force:true});}},
  baseURL:async({library},use)=>use(library.url),
 });
 async function manifest(file){const yauzl=require('yauzl');return new Promise((resolve,reject)=>yauzl.open(file,{lazyEntries:true},(e,zip)=>{if(e)return reject(e);zip.on('error',reject);zip.on('entry',entry=>{if(entry.fileName!=='manifest.json')return zip.readEntry();zip.openReadStream(entry,(e,s)=>{if(e)return reject(e);let data='';s.on('data',c=>data+=c);s.on('error',reject);s.on('end',()=>{zip.close();try{resolve(JSON.parse(data));}catch(e){reject(e);}});});});zip.readEntry();}));}

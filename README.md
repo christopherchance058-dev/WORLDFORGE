@@ -30,7 +30,7 @@ data/
   worldforge.sqlite-wal   SQLite working files (may exist while running)
   worldforge.sqlite-shm
   images/                 Original image files with generated names
-  backups/                Original migration JSON and automatic rollback ZIPs
+  backups/                Migration JSON, database snapshots and rollback ZIPs
   staging/                Temporary uploads and restore files
 ```
 
@@ -57,15 +57,21 @@ Use that same location each time. The terminal prints the active data folder at 
 
 Click **New entry** to create a character, location, historical event, or faction. Entries support descriptions, tags, and an optional image. Click a card to edit or delete it. Search finds titles, descriptions, tags and years. History can be sorted chronologically. A new empty library receives eight sample entries.
 
-Click **Maps → New map**, add a title, optional description, and a PNG, JPEG, or WebP background:
+Click **Maps → New map**, add a title and optional description, and select one or several PNG, JPEG, or WebP files. The editor fills the browser viewport automatically.
 
-- **Add pin**: click the image, enter a title/description and choose a color, then save.
-- Click a pin to read, edit, reposition or delete it. **Reposition pin** lets you click its new location. **Cancel tool** keeps its original location.
-- Use the mouse wheel or zoom buttons to zoom; drag to pan in browsing mode. **Reset view** restores the starting view. Arrow keys pan a focused canvas; Escape exits a placement tool.
-- **Edit map** changes its title/description. Deleting a map or pin requires confirmation.
-- Return to the encyclopedia with the category buttons. Saved entries and maps survive browser and server restarts.
+- **Images** opens/collapses the thumbnail panel. Select a thumbnail to switch canvases. Each image has its own pins.
+- **Add images** accepts several files at once. Rename images, move them up/down in the list, or replace their artwork using the image panel. Replacement preserves normalized pin positions; different artwork may need manual repositioning.
+- **Remove image** asks for confirmation and removes that canvas and its pins. The last image cannot be removed; delete the map instead. Original files remain in the image library and backups.
+- **Add pin**: click the image, enter a title/description and choose a color, then save. Click a pin to read, edit or delete it. Drag pins to move them, or choose **Reposition pin** and click a new location.
+- Use the mouse wheel or zoom buttons to zoom; drag the background to pan. **Reset view** fits the image. Arrow keys pan a focused canvas; Escape exits a placement tool.
+- **Images** and **Pin details** collapse the side panels to maximize space. **Browser fullscreen**, where supported, also hides browser controls.
+- Changes save automatically; **Save** explicitly saves the map again. **Edit map** changes its title/description. **Exit editor** returns to the map collection, where the encyclopedia category buttons are available again.
 
-Pin positions remain normalized fractions between 0 and 1 in SQLite, so they stay attached while resizing and zooming. Zoom/pan are temporary view settings.
+Pin positions remain normalized fractions between 0 and 1 relative to their own image, so they stay attached while resizing and zooming. Zoom/pan are temporary view settings. Independent canvases are supported; transparent image overlays/layers are not included yet.
+
+## Appearance
+
+The default is **Light**, even when your operating system uses dark mode. Choose **Light**, **Dark**, or **System** in the sidebar or editor toolbar. Your browser remembers this preference across restarts; System follows operating-system changes. The setting applies throughout the app and never filters or darkens image artwork. Theme preferences are per-browser settings, not part of world backups. The previous forced dark appearance came from unconditional CSS overrides; these now apply only when Dark is selected.
 
 ## Images and capacity
 
@@ -80,7 +86,7 @@ Uploaded image bytes are stored as ordinary files, **not base64 in browser stora
 
 ## Portable backups and restore
 
-**Export backup** downloads a ZIP containing `manifest.json` (all database records, migration history and image metadata) and `images/` (all registered image files). It is a complete portable library; it does not require the original computer's paths or a raw SQLite database copy. Image bytes stream from disk, so the browser does not need to assemble the entire library in memory. Verify your browser reports that the download completed, then keep copies on another drive.
+**Export backup** downloads a version-4 ZIP containing `manifest.json` (all database records, migration history and image metadata) and `images/` (all registered image files). It is a complete portable library; it does not require the original computer's paths or a raw SQLite database copy. Image bytes stream from disk, so the browser does not need to assemble the entire library in memory. Verify your browser reports that the download completed, then keep copies on another drive.
 
 To restore on this or a different computer:
 
@@ -94,9 +100,19 @@ Restores require free disk space for the uploaded ZIP, extracted images, newly i
 
 The default import limit is **1 TB** compressed and expanded, 100,000 image files, and a 64 MB manifest. Set `WORLDFORGE_BACKUP_LIMIT_GB` to adjust the archive size ceiling. Individual image limits still apply. Upload requests allow up to 30 minutes. These are safeguards, not a claim that terabyte libraries have been benchmarked.
 
+Previous version-3 ZIP backups are accepted and their maps become single-image canvases. Older app versions cannot import version-4 backups.
+
 Legacy version-1 and version-2 JSON backups are still accepted (up to 64 MB): embedded image data is validated and converted to files. Version-1 imports replace entries and preserve current maps; version-2 imports replace entries and maps. Always export the current world before importing.
 
 ## Automatic migration and rollback
+
+### Upgrading existing SQLite maps
+
+Before starting this update, export a portable backup and stop the old server. Keep your existing `data` folder. On first startup, schema version 3 is copied to `data/backups/before-canvases-<id>.sqlite` using SQLite's consistent snapshot operation **before** any schema changes. If that backup fails, startup stops. A transaction then upgrades to schema version 4: every existing map becomes a container with one “Original image” canvas, preserving image IDs, pins, normalized coordinates and entries. Image files are unchanged. Reload any older browser tabs; their saves are rejected to prevent overwriting the new format.
+
+To roll back this schema upgrade, stop the server and preserve the entire current data folder separately. Make another copy for recovery; in that recovery copy only, replace `worldforge.sqlite` with the `before-canvases` snapshot and remove any copied `worldforge.sqlite-wal` and `worldforge.sqlite-shm` files. Keep its `images` folder. Run the previous SQLite app (commit `ab26471`) with `WORLDFORGE_DATA_DIR` pointing to this recovery copy. The snapshot restores the state from before upgrading; newer edits remain in your preserved current folder. Starting the new app on the recovery copy would upgrade it again. A portable ZIP is the preferred way to restore into the current app.
+
+### Migrating older browser-only data
 
 On opening the app, it checks the old `worldforge.entries.v1` localStorage key in that browser. This includes the original array format and the later `{version:2, entries, maps}` format.
 
@@ -123,9 +139,9 @@ npx playwright install chromium
 npm test
 ```
 
-The prepared cloud environment uses its installed `/usr/bin/chromium` and does not need a browser download. Tests start isolated servers with temporary data folders; they never reset the working library. `npm test` covers encyclopedia CRUD, image uploads, map/pin interactions, backup compatibility, migration, restart/fresh-browser persistence, archive validation, real filesystem permission errors, stale writes, cross-site write rejection, and a 1,000-small-image library. A disk-full UI response is simulated; the tests do not fill the host drive.
+The prepared cloud environment uses its installed `/usr/bin/chromium` and does not need a browser download. Tests start isolated servers with temporary data folders; they never reset the working library. `npm test` covers encyclopedia CRUD, image uploads, map/pin interactions, backup compatibility, migration, restart/fresh-browser persistence, fullscreen entry/exit, batch uploads, separate canvas pins, image rename/reorder/replace/remove, themes, schema-3 snapshots and upgrades, archive validation, real filesystem permission errors, stale writes, cross-site write rejection, and a 1,000-small-image library. A disk-full UI response is simulated; the tests do not fill the host drive.
 
-New runtime dependencies:
+Existing runtime dependencies (none added for the fullscreen/multi-image update):
 
 - `sharp`: inspect and decode image contents safely and enforce pixel limits.
 - `archiver`: stream portable ZIP backups from disk, including ZIP64 support.
@@ -133,4 +149,4 @@ New runtime dependencies:
 
 Modules: `storage.js` owns SQLite and managed image files; `backups.js` owns migration/archive validation and rollback; `server.js` exposes the local API; `api-client.js` connects the existing `app.js` and `maps.js` editors to it.
 
-Known limits: testing was on Linux/Chromium, not Windows/macOS or all browsers; 1,000 tiny files and an image over 5 MB were exercised, not thousands of 50 MB maps or power-loss recovery. The UI loads all record metadata and saves a full metadata revision, which is reasonable for a personal library but will benefit from pagination and per-record APIs at much larger scales. No batch-upload gallery, unused-file cleanup, map layers, background replacement, or pinch-to-zoom yet. The local server has no accounts and should not be exposed to a network.
+Known limits: testing was on Linux/Chromium, not Windows/macOS or all browsers; 1,000 tiny files and an image over 5 MB were exercised, not thousands of 50 MB maps or power-loss recovery. The UI loads all record metadata and saves a full metadata revision, which is reasonable for a personal library but will benefit from pagination and per-record APIs at much larger scales. No standalone image-library gallery, unused-file cleanup, image overlays/layers, or pinch-to-zoom yet. The local server has no accounts and should not be exposed to a network.

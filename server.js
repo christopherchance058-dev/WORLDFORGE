@@ -7,7 +7,7 @@ const {randomUUID}=require('node:crypto');
 const {pipeline}=require('node:stream/promises');
 const {Store,fail,friendly,receive,IMAGE_ID,IMAGE_LIMIT,JSON_LIMIT,formats}=require('./storage');
 const {exportZip,restoreZip,legacyImport,ARCHIVE_LIMIT}=require('./backups');
-const files={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js','/api-client.js':'api-client.js'};
+const files={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js','/api-client.js':'api-client.js','/theme.js':'theme.js'};
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
 const port=Number(process.env.PORT||3000);
 let store;
@@ -25,7 +25,7 @@ const server=http.createServer(async(req,res)=>{
     const url=new URL(req.url,`http://${host}`),route=url.pathname;
     if(!['GET','HEAD'].includes(req.method)&&req.headers['x-worldforge']!=='1')fail('Use the WORLDFORGE app to change local data.',403);
     if(req.method==='GET'&&route==='/api/state')return json(res,200,store.state());
-    if(req.method==='PUT'&&route==='/api/state'){const value=await body(req);return json(res,200,await exclusive(()=>store.replace(value,value.revision)));}
+    if(req.method==='PUT'&&route==='/api/state'){const value=await body(req);if(value.version!==4)fail('Please reload WORLDFORGE before saving. This server uses the multi-image map format.',409);return json(res,200,await exclusive(()=>store.replace(value,value.revision)));}
     if(req.method==='POST'&&route==='/api/migrate'){const value=await body(req);if(typeof value.raw!=='string')fail('Missing legacy browser data.');return json(res,200,await exclusive(()=>legacyImport(store,value.raw,value.revision,true)));}
     if(req.method==='POST'&&route==='/api/images'){
       if(!Object.values(formats).includes(req.headers['content-type']))fail('Upload PNG, JPEG, WebP or GIF images.');
