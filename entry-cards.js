@@ -11,8 +11,8 @@ const EntryCards=(()=>{
   if(e.image){const image=node('img');image.src=e.image;image.alt='';image.loading='lazy';thumbnail.append(image);}else{thumbnail.classList.add('entry-card-placeholder');thumbnail.append(glyph(icon||categoryIcon(e.category)));}media.append(thumbnail);
   const copy=node('div','entry-card-copy'),title=node(heading,'entry-card-title',e.title);copy.append(title);
   const facts=metadata===undefined?[e.category,e.category==='History'&&e.year!==''?`Year ${e.year}`:''].filter(Boolean).join(' · '):metadata;
-  if(facts)copy.append(node('p','entry-card-facts',facts));
-  if(e.summary||e.description)copy.append(node('p','entry-card-summary',e.summary||e.description));
+  if(typeof facts==='string'&&facts.trim())copy.append(node('p','entry-card-facts',facts.trim()));
+  const summary=(e.summary||'').trim()||(e.description||'').trim();if(summary)copy.append(node('p','entry-card-summary',summary));
   button.append(media,copy);return button;
  }
  function fullImage(image,title){const link=node('a','full-image-link','View full image ↗');link.href=image;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label',`View full image of ${title}`);return link;}
