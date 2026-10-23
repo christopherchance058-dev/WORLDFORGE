@@ -54,3 +54,33 @@ On the prepared cloud environment, tests use the existing `/usr/bin/chromium`, s
 Files: `index.html` (page), `styles.css` (appearance), `app.js` (entries and storage), `server.js` (local server), and `tests/app.spec.js` (browser tests).
 
 The optional direct-file test is disabled by default because the managed cloud browser blocks file URLs. On an unrestricted personal browser installation, set `WORLDFORGE_TEST_FILE=1` to run it. All normal application tests use the local server.
+
+## Interactive Maps
+
+Click **Maps** in the sidebar, then **New map**. Enter a title, optional description, and choose a PNG, JPEG, or WebP image from your computer. Click **Save map**. Map images must be at most 2 MB and 40 million pixels. No image is sent to a server.
+
+- **Add pin** activates placement mode. Click a location on the image, enter a title, optional description, and color, then **Save pin**.
+- Click a pin to read it in the side panel. **Edit pin** changes its details. **Reposition pin** lets you click a new location. **Cancel tool** leaves its original location intact. Clicking an existing pin always opens it, even while placing pins.
+- Use the wheel or **Zoom in / Zoom out** to zoom. Drag the map to pan in normal browsing mode. **Reset view** restores the initial view. Focus the canvas and use arrow keys to pan or Escape to leave a placement tool.
+- **Edit map** renames the map or updates its description. **Delete map** removes it and all its pins after confirmation.
+- **All maps** returns to your collection. The encyclopedia categories in the sidebar return to your entries. Saving a map or pin is immediate when its Save button succeeds.
+
+Maps, images, and pins survive refreshing or restarting the local server. Use the same browser profile and server address/port each time. **Export backup** now includes every map image and pin along with all encyclopedia entries.
+
+### Storage and compatibility
+
+This version keeps localStorage and its existing key, `worldforge.entries.v1`. Old array-only entry data is read without alteration. The next successful save writes `{version: 2, entries, maps}` to that same key in a single atomic operation. If the browser rejects the save, the previous stored document remains intact, and the editor reports the failure. No separate migration or deletion is required.
+
+Backups exported by this version use `format: "worldforge", version: 2` with `entries` and `maps`. Version-1 backups remain supported: importing one replaces entries after confirmation and **preserves existing maps**. Version-2 imports replace both entries and maps after confirmation. Invalid maps, duplicate IDs, non-finite/out-of-range coordinates, unsupported versions, and unreadable map images are rejected before changing storage. Keep your pre-upgrade backups; older app versions cannot read the new storage document or version-2 backups. Avoid running old and new app versions against the same browser storage.
+
+localStorage typically permits around 5 MB per site. Base64-encoded images take more space than their source files, and entries share the same quota. The 2 MB upload limit does not guarantee space for every image. Use smaller images, export backups, and delete unwanted content if storage fills. Private browsing or clearing browser data may erase everything. Images are not automatically compressed. Backups are limited to 15 MB on import. View zoom and pan reset when a map opens; pin positions persist as normalized x/y fractions from 0 to 1 and remain attached through zoom and resizing.
+
+For larger atlases, the next step is IndexedDB for image blobs. A future migration should copy and validate existing localStorage data in a transaction, keep the original until verification succeeds, and continue accepting version-1/version-2 backups. This release does not change storage engines.
+
+### Maps implementation and validation
+
+`maps.js` provides the collection, editors, pin rendering, normalized-coordinate placement, image validation, and zoom/pan. `app.js` owns shared persistence and backup compatibility. `index.html` loads the module and supplies the map section; `server.js` serves it; `styles.css` adds the map layout and shared dark palette. No dependencies were added.
+
+`npm test` runs the existing encyclopedia tests and map tests in `tests/maps.spec.js`. The latter cover map/pin creation, edits, deletion confirmation, image upload, coordinate alignment after resize/zoom/pan, placement while zoomed, reload and server-restart persistence, map backup round trips, legacy entry migration, legacy backup preservation, invalid image/coordinate rejection, and quota failure. The optional direct-file test remains skipped in the managed cloud browser.
+
+Current limits: one background per map (image replacement is not yet offered), simple colored pins, no layers or links to encyclopedia entries, and no multi-user editing. Use toolbar zoom on touch screens; pinch-to-zoom is not implemented.
