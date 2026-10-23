@@ -33,14 +33,15 @@ async function initialize(){
  storageBlocked=true;$('new-entry').disabled=true;
  const notice=$('storage-notice');notice.hidden=false;notice.textContent='Opening your local library…';
  try{
+  worldList=await LocalAPI.request('/api/worlds');LocalAPI.worldId=worldList.some(w=>w.id==='default')?'default':worldList[0].id;
   let state=await LocalAPI.state();
   const raw=localStorage.getItem(storageKey);
-  if(raw!==null){notice.textContent='Checking legacy browser data. Originals and rollback backups will be preserved.';state=await LocalAPI.migrate(raw);}
-  if(!state.initialized)state=await LocalAPI.save(sample,[],state.categories);
+  if(raw!==null&&LocalAPI.worldId==='default'){notice.textContent='Checking legacy browser data. Originals and rollback backups will be preserved.';state=await LocalAPI.migrate(raw);}
+  if(!state.initialized)state=await LocalAPI.save(LocalAPI.worldId==='default'?sample:[],[],state.categories);
   applyWorldState(state);
   await refreshWorlds();
   let preferred;try{preferred=localStorage.getItem('worldforge.active-world');}catch{}
-  if(preferred&&preferred!=='default'&&worldList.some(w=>w.id===preferred)){try{await switchWorld(preferred);}catch(e){notify('Could not open the selected world. Your original world is open. '+e.message);}}
+  if(preferred&&preferred!==LocalAPI.worldId&&worldList.some(w=>w.id===preferred)){try{await switchWorld(preferred);}catch(e){notify('Could not open the selected world. Your original world is open. '+e.message);}}
   storageBlocked=false;notice.hidden=true;
  }catch(error){notice.textContent='Could not open or migrate your library: '+error.message+' Existing browser data has not been deleted. Export legacy browser data below for recovery.';const download=node('button','secondary','Export legacy browser data');download.onclick=()=>{try{const raw=localStorage.getItem(storageKey);if(raw===null)return notify('No legacy browser data found.');downloadText(raw,'worldforge-legacy-original.json');}catch{notify('Browser storage cannot be read.');}};notice.append(download);}
  render();$('new-entry').disabled=storageBlocked;
@@ -108,7 +109,7 @@ $('manage-categories').onclick=manageCategories;
 for(const [id,icon,label] of [['export','download','Export backup'],['import','upload','Import backup']]){const b=$(id);b.className='square-button';b.title=label;b.replaceChildren(glyph(icon));}
 let worldList=[];
 function activeWorld(){return worldList.find(w=>w.id===LocalAPI.worldId)||{id:'default',title:'Your world',description:'A home for your stories.'};}
-function renderWorld(){const world=activeWorld();$('sidebar-world-name').textContent=world.title;$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';const image=$('world-banner-image'),src=LocalAPI.appearance.image;image.hidden=!src;if(src)image.src=src;else image.removeAttribute('src');image.closest('.banner').classList.toggle('has-world-image',!!src);}
+function renderWorld(){const world=activeWorld();$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';const image=$('world-banner-image'),src=LocalAPI.appearance.image;image.hidden=!src;if(src)image.src=src;else image.removeAttribute('src');image.closest('.banner').classList.toggle('has-world-image',!!src);}
 async function refreshWorlds(){worldList=await LocalAPI.request('/api/worlds');renderWorld();}
 function applyWorldState(state){entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
 async function switchWorld(id){
@@ -126,7 +127,8 @@ async function worldDialog(mode='switch'){
  dialog.oncancel=e=>{if(busy)e.preventDefault();};
  function setBusy(value){busy=value;dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=value);}
  function heading(title,addWorld=false){const head=node('div','dialog-heading'),tools=node('div','world-dialog-tools');head.append(node('h2','',title));if(addWorld){const add=node('button','square-button');add.type='button';add.title='Add world';add.setAttribute('aria-label','Add world');add.append(glyph('plus'));add.onclick=()=>edit(true);tools.append(add);}const close=node('button','icon-button','×');close.type='button';close.title='Close worlds';close.setAttribute('aria-label','Close worlds');close.onclick=()=>dialog.close();tools.append(close);head.append(tools);return head;}
- function select(){content.replaceChildren(heading('Your worlds',true),node('p','storage-note','Choose a world to open, or use + to create another. Each world keeps its own stories.'));const list=node('div','world-list'),error=node('p','form-error');error.setAttribute('role','alert');for(const world of worldList){const b=node('button','world-choice'+(world.id===LocalAPI.worldId?' selected':''));b.type='button';b.setAttribute('aria-label',`Open world ${world.title}`);b.setAttribute('aria-pressed',String(world.id===LocalAPI.worldId));b.append(glyph('map'),node('span','',world.title));b.onclick=async()=>{setBusy(true);try{await switchWorld(world.id);dialog.close();notify(`Opened ${world.title}.`);}catch(e){error.textContent=e.message;setBusy(false);}};list.append(b);}content.append(list,error);}
+ function select(){content.replaceChildren(heading('Your worlds',true),node('p','storage-note','Choose a world to open, or use + to create another. Each world keeps its own stories.'));const list=node('div','world-list'),error=node('p','form-error');error.setAttribute('role','alert');for(const world of worldList){const b=node('button','world-choice'+(world.id===LocalAPI.worldId?' selected':''));b.type='button';b.setAttribute('aria-label',`Open world ${world.title}`);b.setAttribute('aria-pressed',String(world.id===LocalAPI.worldId));b.append(glyph('map'),node('span','',world.title));b.onclick=async()=>{setBusy(true);try{await switchWorld(world.id);dialog.close();notify(`Opened ${world.title}.`);}catch(e){error.textContent=e.message;setBusy(false);}};list.append(b);}content.append(list,error);
+  LocalAPI.request('/api/worlds/trash').then(trashed=>{if(!list.isConnected||!trashed.length)return;const trash=node('details','world-trash-section');trash.append(node('summary','',`Deleted worlds (${trashed.length})`));for(const world of trashed){const row=node('div','world-trash-row'),tools=node('div','world-trash-tools'),restore=node('button','secondary','Restore');restore.type='button';restore.setAttribute('aria-label',`Restore world ${world.title}`);restore.onclick=async()=>{setBusy(true);try{const restored=await LocalAPI.request(`/api/worlds/${world.id}/restore`,{method:'POST'});await refreshWorlds();await switchWorld(restored.id);dialog.close();notify('World restored.');}catch(e){error.textContent=e.message;setBusy(false);}};const download=node('a','square-button');download.href=`/api/worlds/${world.id}/deletion-backup`;download.download='worldforge-deleted-world-backup.zip';download.title=`Download backup of ${world.title}`;download.setAttribute('aria-label',download.title);download.append(glyph('download'));tools.append(download,restore);row.append(node('span','',world.title),tools);trash.append(row);}content.append(trash);}).catch(e=>{if(list.isConnected)error.textContent='Could not load deleted worlds. '+e.message;});}
  function edit(creating=false){
   let profile=activeWorld(),draftBanner=LocalAPI.appearance.image;
   const form=node('form');form.append(heading(creating?'Create world':'Edit world'));
@@ -147,5 +149,14 @@ async function worldDialog(mode='switch'){
  if(mode==='edit')edit();else select();dialog.showModal();
 }
 $('edit-world').append(glyph('edit'));$('edit-world').onclick=()=>worldDialog('edit');
-$('switch-world').onclick=()=>worldDialog();
+$('switch-world').append(glyph('switchworld'));$('switch-world').onclick=()=>worldDialog();
+$('delete-world').append(glyph('trash'));$('delete-world').onclick=async()=>{
+ if(storageBlocked||saving||imageLoading||restoring)return notify('Please wait until your library is ready.');
+ const profile=activeWorld(),revision=LocalAPI.revision;
+ if(!await confirmAction('Move this world to Trash?',`“${profile.title}” will be removed from your active worlds. A verified ZIP backup will be saved first. Its files will be kept, and you can restore it under Deleted worlds in the world switcher. Other worlds will not change.`,'Move to Trash'))return;
+ const progress=node('dialog','world-dialog');progress.append(node('h2','','Protecting your world'),node('p','','Creating and checking a complete backup before moving the world to Trash. Please keep this window open.'));progress.oncancel=e=>e.preventDefault();document.body.append(progress);progress.showModal();let moved=false;
+ try{const result=await LocalAPI.request('/api/world',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision,profileRevision:profile.revision})});moved=true;await refreshWorlds();await switchWorld(result.nextWorldId);notify('World moved to Trash. A verified backup was saved; use the world switcher to restore it.');}
+ catch(e){if(moved){storageBlocked=true;$('new-entry').disabled=true;$('storage-notice').hidden=false;$('storage-notice').textContent='Your world is safely in Trash, but the next world could not open. Reload WORLDFORGE to continue. '+e.message;}notify(e.message);}
+ finally{progress.close();progress.remove();}
+};
 initialize();

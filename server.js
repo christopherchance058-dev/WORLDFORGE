@@ -29,8 +29,13 @@ const server=http.createServer(async(req,res)=>{
     if(!['GET','HEAD'].includes(req.method)&&req.headers['x-worldforge']!=='1')fail('Use the WORLDFORGE app to change local data.',403);
     if(req.method==='GET'&&route==='/api/worlds')return json(res,200,worlds.list());
     if(req.method==='POST'&&route==='/api/worlds'){const value=await body(req);return json(res,201,await exclusive(()=>worlds.create(value)));}
+    if(req.method==='GET'&&route==='/api/worlds/trash')return json(res,200,worlds.trash());
+    const trashRoute=route.match(/^\/api\/worlds\/(default|[a-f0-9-]{36})\/(restore|deletion-backup)$/);
+    if(trashRoute&&req.method==='POST'&&trashRoute[2]==='restore')return json(res,200,await exclusive(()=>worlds.restore(trashRoute[1])));
+    if(trashRoute&&req.method==='GET'&&trashRoute[2]==='deletion-backup'){const file=worlds.deletionBackup(trashRoute[1]);await fsp.access(file);res.writeHead(200,{'Content-Type':'application/zip','Content-Disposition':'attachment; filename="worldforge-deleted-world-backup.zip"','Cache-Control':'no-store'});await pipeline(fs.createReadStream(file),res);return;}
     const worldId=req.headers['x-worldforge-world']||url.searchParams.get('world')||'default';
-    const store=worlds.store(worldId);
+    const store=route.startsWith('/api/')&&!route.startsWith('/api/images/')?worlds.store(worldId):worlds.root;
+    if(req.method==='DELETE'&&route==='/api/world'){const value=await body(req);return json(res,200,await exclusive(()=>worlds.remove(worldId,value)));}
     if(req.method==='PUT'&&route==='/api/world'){const value=await body(req);return json(res,200,await exclusive(()=>worlds.update(worldId,value)));}
     if(req.method==='GET'&&route==='/api/state')return json(res,200,store.state());
     if(req.method==='PUT'&&route==='/api/state'){const value=await body(req);if(value.version!==6)fail('Please reload WORLDFORGE before saving. This server supports geography and location relationships.',409);return json(res,200,await exclusive(()=>store.replace(value,value.revision)));}

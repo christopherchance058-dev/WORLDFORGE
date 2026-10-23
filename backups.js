@@ -22,11 +22,30 @@ async function exportZip(store,destination,world){
   zip.finalize().catch(e=>zip.destroy(e));
   await completion;
 }
-async function checkpoint(store,reason){
+async function checkpoint(store,reason,world){
   const filename=`${new Date().toISOString().replaceAll(':','-')}-${reason}-${randomUUID()}.zip`;
   const target=path.join(store.backups,filename), temp=target+'.partial';
-  try{await exportZip(store,fs.createWriteStream(temp,{flags:'wx',mode:0o600}));await fsp.rename(temp,target);return filename;}
+  try{await exportZip(store,fs.createWriteStream(temp,{flags:'wx',mode:0o600}),world);await fsp.rename(temp,target);return filename;}
   catch(e){await fsp.rm(temp,{force:true});throw e;}
+}
+// Verify our completed checkpoint without copying image files or loading them into RAM.
+async function verifyCheckpoint(store,filename,world){
+  const expected=store.state(),images=store.imageList(),byPath=new Map(images.map(i=>[`images/${i.filename}`,i]));
+  const zip=await new Promise((resolve,reject)=>yauzl.open(path.join(store.backups,filename),{lazyEntries:true},(e,z)=>e?reject(e):resolve(z)));
+  return new Promise((resolve,reject)=>{
+    const seen=new Set();let stopped=false,manifestSeen=false;
+    const stop=e=>{if(stopped)return;stopped=true;zip.close();reject(e);};zip.on('error',stop);
+    zip.on('end',()=>{if(stopped)return;if(!manifestSeen||seen.size!==images.length+1)return stop(Object.assign(new Error('The deletion backup is incomplete. Your world was not moved to Trash.'),{status:400}));resolve(true);});
+    zip.on('entry',entry=>{(async()=>{
+      const name=entry.fileName;if(seen.has(name)||(name!=='manifest.json'&&!byPath.has(name)))fail('The deletion backup contains unexpected files. Your world was not moved to Trash.');seen.add(name);
+      const limit=name==='manifest.json'?JSON_LIMIT:IMAGE_LIMIT;if(entry.uncompressedSize>limit)fail('The deletion backup exceeds the supported size.');
+      const stream=await new Promise((resolve,reject)=>zip.openReadStream(entry,(e,s)=>e?reject(e):resolve(s)));let bytes=0;const hash=createHash('sha256'),chunks=[];
+      for await(const chunk of stream){bytes+=chunk.length;if(bytes>limit)fail('The deletion backup exceeds the supported size.');if(name==='manifest.json')chunks.push(chunk);else hash.update(chunk);}
+      if(name==='manifest.json'){const manifest=JSON.parse(Buffer.concat(chunks).toString('utf8'));validateState(manifest);if(manifest.format!=='worldforge'||Object.entries(expected).some(([key,value])=>JSON.stringify(manifest[key])!==JSON.stringify(value))||JSON.stringify(manifest.images)!==JSON.stringify(images)||(world&&JSON.stringify(manifest.world)!==JSON.stringify(world)))fail('The deletion backup did not match your world. Nothing was deleted.');manifestSeen=true;}
+      else{const image=byPath.get(name);if(bytes!==image.bytes||hash.digest('hex')!==image.sha256)fail('An image failed the deletion backup check. Your world was not moved to Trash.');}
+      zip.readEntry();
+    })().catch(stop);});zip.readEntry();
+  });
 }
 async function unpack(file,directory){
   const zip=await new Promise((resolve,reject)=>yauzl.open(file,{lazyEntries:true,autoClose:true},(e,z)=>e?reject(Object.assign(e,{status:400})):resolve(z)));
@@ -94,4 +113,4 @@ async function legacyImport(store,raw,revision,migrate=false){
   }
   return {...store.replace(state,revision,{newImages,migrationHash:migrate?hash:null}),rollback};
 }
-module.exports={exportZip,checkpoint,restoreZip,legacyImport,ARCHIVE_LIMIT};
+module.exports={exportZip,checkpoint,verifyCheckpoint,restoreZip,legacyImport,ARCHIVE_LIMIT};

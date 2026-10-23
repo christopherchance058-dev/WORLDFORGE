@@ -49,11 +49,13 @@ To stop the app, click the terminal window and press **Ctrl+C**. Wait until it s
 
 ## Start building your world
 
-Choose **Characters** to browse your cast or create someone new—even with nothing filled in yet. Add a portrait and expand the optional sections whenever you are ready.
+Choose **Characters** to browse your cast or create someone new—even with nothing filled in yet. Add a portrait and expand the optional sections whenever you are ready. Character type and life status accept your own words; saved character details are offered as suggestions while typing. Use the **Card size** slider to fit more characters on screen.
 
 Choose **New entry** to begin writing, **Geography** to organize places, or **Maps** to upload your artwork and place pins.
 
-The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **2400 × 800 pixels** works well; keep important details near the centre because the edges may be cropped. Click the world box in the sidebar to switch worlds, or use the **plus** there to create another world. New worlds start empty; your existing work stays in the first world.
+The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **2400 × 800 pixels** works well; keep important details near the centre because the edges may be cropped. Use the **two-arrow button beside the pencil** to switch worlds, or use the **plus** in that window to create another world. New worlds start empty; your existing work stays in the first world.
+
+To remove a world, click the **trash can at the banner’s top right** and confirm. The app checks a complete backup first and keeps the original files. To undo, open the world switcher, expand **Deleted worlds**, and choose **Restore**. Moving a world to Trash does not free disk space.
 
 Use the **plus beside Categories** to add or edit categories. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 

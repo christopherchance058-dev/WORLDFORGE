@@ -1,6 +1,7 @@
 /* Shared, fixed SVG vocabulary. No remote fonts or icon service required. */
 (function(root){
  const paths={
+  switchworld:'<path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/>',
   pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
   person:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3M9 15l3 4 3-4"/>',
   house:'<path d="m3 10 9-8 9 8M5 9v12h14V9M10 21v-7h4v7"/>',
