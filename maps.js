@@ -18,7 +18,7 @@ const Maps=(()=>{
   async function updateCanvas(next){return updateMap({...current(),canvases:current().canvases.map(c=>c.id===next.id?next:c)});}
   function leaveWorkspace(){observer?.disconnect();observer=null;gesture=null;document.body.classList.remove('map-editing');el('maps-section').classList.remove('map-workspace');if(ownsFullscreen&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});ownsFullscreen=false;}
   function renderNav(){const b=button('',show,'maps-nav');b.append(glyph('map','nav-icon'),node('span','','Maps'));b.classList.toggle('active',visible);b.setAttribute('aria-current',visible?'page':'false');el('navigation').append(b);}
-  function show(){visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
+  function show(){Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
   function hide(){leaveWorkspace();visible=false;currentId=null;canvasId=null;el('workspace-section').textContent='Encyclopedia';el('maps-section').hidden=true;el('encyclopedia').hidden=false;}
   function refresh(){if(visible)collection();}
   function frame(){const root=el('maps-section');root.replaceChildren();return root;}

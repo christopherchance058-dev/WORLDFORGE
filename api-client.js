@@ -8,7 +8,7 @@ const LocalAPI={
  },
  accept(state){this.revision=state.revision;return state;},
  async state(){return this.accept(await this.request('/api/state'));},
- async save(entries,maps,categories){return this.accept(await this.request('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:5,revision:this.revision,entries,maps,categories})}));},
+ async save(entries,maps,categories){return this.accept(await this.request('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:6,revision:this.revision,entries,maps,categories})}));},
  async upload(file){if(file.size>50*1024*1024)throw new Error('Images may be at most 50 MB.');return (await this.request('/api/images',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':encodeURIComponent(file.name)},body:file})).image;},
  async migrate(raw){return this.accept(await this.request('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision:this.revision,raw})}));},
  async restore(file){return this.accept(await this.request('/api/restore',{method:'POST',headers:{'Content-Type':file.name.toLowerCase().endsWith('.json')?'application/json':'application/zip','X-Revision':String(this.revision)},body:file}));}

@@ -38,7 +38,7 @@ test('large image upload exceeds old quota, validates format and stores a safe r
 });
 
 test('portable backup restores into an empty folder and produces a working rollback',async({request,library})=>{
- const bytes=await png();const uploaded=await (await upload(request,bytes)).json();let current=await state(request);let response=await request.put('/api/state',{headers,data:{version:5,categories:require('../symbols').defaults,revision:current.revision,entries:[entry(uploaded.image)],maps:[newMap(uploaded.image)]}});expect(response.status()).toBe(200);current=await response.json();
+ const bytes=await png();const uploaded=await (await upload(request,bytes)).json();let current=await state(request);let response=await request.put('/api/state',{headers,data:{version:6,categories:require('../symbols').defaults,revision:current.revision,entries:[entry(uploaded.image)],maps:[newMap(uploaded.image)]}});expect(response.status()).toBe(200);current=await response.json();
  const zip=await (await request.get('/api/backup')).body();const backupFile=path.join(library.root,'portable.zip');await fs.writeFile(backupFile,zip);const exported=await manifest(backupFile);expect(exported.images).toHaveLength(1);
  const target=new Store(path.join(library.root,'other-computer'));try{
   const restored=await restoreZip(target,backupFile,0);expect(restored.entries[0].title).toBe('Old portrait');expect(restored.maps[0].canvases[0].pins).toEqual(current.maps[0].canvases[0].pins);const i=target.image(restored.maps[0].canvases[0].image.split('/').pop());expect(await fs.readFile(path.join(target.images,i.filename))).toEqual(bytes);
@@ -48,7 +48,7 @@ test('portable backup restores into an empty folder and produces a working rollb
 });
 
 test('malformed archives, missing images and invalid coordinates cannot replace a library',async({request,library})=>{
- const image=(await (await upload(request,await png())).json()).image;const initial=await state(request);await request.put('/api/state',{headers,data:{version:5,categories:require('../symbols').defaults,revision:initial.revision,entries:[entry(image)],maps:[newMap(image)]}});const before=await state(request);
+ const image=(await (await upload(request,await png())).json()).image;const initial=await state(request);await request.put('/api/state',{headers,data:{version:6,categories:require('../symbols').defaults,revision:initial.revision,entries:[entry(image)],maps:[newMap(image)]}});const before=await state(request);
  const zip=await (await request.get('/api/backup')).body();const backupFile=path.join(library.root,'good.zip');await fs.writeFile(backupFile,zip);const metadata=await manifest(backupFile);const source=await fs.readFile(path.join(library.root,'images',metadata.images[0].filename));
  const cases=[
   [['manifest.json',JSON.stringify(metadata)]],
@@ -58,11 +58,11 @@ test('malformed archives, missing images and invalid coordinates cannot replace 
   [['manifest.json',JSON.stringify({...metadata,version:99})],[`images/${metadata.images[0].filename}`,source]],
  ];
  for(let n=0;n<cases.length;n++){const bad=path.join(library.root,`bad-${n}.zip`);await zipFile(bad,cases[n]);const res=await request.post('/api/restore',{headers:{...headers,'Content-Type':'application/zip','X-Revision':String(before.revision)},data:await fs.readFile(bad)});expect(res.status()).toBe(400);expect(await state(request)).toEqual(before);}
- const badMigration=await request.post('/api/migrate',{headers,data:{version:5,categories:require('../symbols').defaults,revision:before.revision,raw:JSON.stringify({version:2,entries:[entry('data:image/png;base64,YmFk')],maps:[]})}});expect(badMigration.status()).toBe(400);expect(await state(request)).toEqual(before);
+ const badMigration=await request.post('/api/migrate',{headers,data:{version:6,categories:require('../symbols').defaults,revision:before.revision,raw:JSON.stringify({version:2,entries:[entry('data:image/png;base64,YmFk')],maps:[]})}});expect(badMigration.status()).toBe(400);expect(await state(request)).toEqual(before);
 });
 
 test('stale writes and cross-site requests rejected; real permission errors preserve records',async({request,library})=>{
- const old=await state(request);const next={version:5,categories:require('../symbols').defaults,entries:[entry()],maps:[],revision:old.revision};expect((await request.put('/api/state',{headers,data:next})).status()).toBe(200);const before=await state(request);
+ const old=await state(request);const next={version:6,categories:require('../symbols').defaults,entries:[entry()],maps:[],revision:old.revision};expect((await request.put('/api/state',{headers,data:next})).status()).toBe(200);const before=await state(request);
  expect((await request.put('/api/state',{headers,data:next})).status()).toBe(409);expect((await request.put('/api/state',{data:{...next,revision:before.revision}})).status()).toBe(403);expect((await request.post('/api/images',{headers:{...headers,Origin:'https://untrusted.example','Content-Type':'image/png'},data:await png()})).status()).toBe(403);
  await fs.chmod(path.join(library.root,'images'),0o500);try{const failed=await upload(request,await png());expect(failed.status()).toBe(500);expect((await failed.json()).error).toContain('permissions');expect(await state(request)).toEqual(before);}finally{await fs.chmod(path.join(library.root,'images'),0o700);}
  expect(friendly({code:'ENOSPC',message:'disk full'})).toContain('Disk is full');

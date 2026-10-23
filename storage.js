@@ -6,6 +6,7 @@ const { randomUUID, createHash } = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 const sharp = require('sharp');
 const {defaults,markers}=require('./symbols');
+const GeographyModel=require('./geography-model');
 const IMAGE_LIMIT = 50 * 1024 * 1024;
 const JSON_LIMIT = 64 * 1024 * 1024;
 const IMAGE_ID = /^[a-f0-9-]{36}$/;
@@ -37,6 +38,7 @@ function validateState(state, legacy=false) {
   const pin=p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,30000)&&(p.image===undefined||image(p.image))&&(p.summary===undefined||text(p.summary,500))&&(p.entryId===undefined||p.entryId===null||text(p.entryId,120,true))&&(p.icon===undefined||markers.includes(p.icon))&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1;
   const canvas=c=>c&&text(c.id,120,true)&&text(c.name,120,true)&&text(c.filename,255)&&image(c.image,true)&&Array.isArray(c.pins)&&ids(c.pins)&&c.pins.every(pin);
   if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&e.description.trim()&&names.includes(e.category)&&(e.summary===undefined||text(e.summary,500))&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
+  try{GeographyModel.validate(entries);}catch(error){fail(error.message);}
 }
 async function receive(stream,destination,limit) {
   let bytes=0,handle;const hash=createHash('sha256');
@@ -108,7 +110,7 @@ class Store {
     const canvases=this.db.prepare('SELECT * FROM map_canvases ORDER BY position').all();
     const byMap=new Map();for(const c of canvases){if(!byMap.has(c.map_id))byMap.set(c.map_id,[]);byMap.get(c.map_id).push({id:c.id,name:c.name,filename:c.filename,image:`/api/images/${c.image_id}`,pins:grouped.get(JSON.stringify([c.map_id,c.id]))||[]});}
     const maps=this.db.prepare('SELECT * FROM maps ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),canvases:byMap.get(r.id)||[]}));
-    return {version:5,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT name,icon FROM library_categories ORDER BY position').all()};
+    return {version:6,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT name,icon FROM library_categories ORDER BY position').all()};
   }
   imageList(){return this.db.prepare('SELECT * FROM images ORDER BY id').all();}
   image(id){return this.db.prepare('SELECT * FROM images WHERE id=?').get(id);}
