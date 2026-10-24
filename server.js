@@ -8,7 +8,7 @@ const {pipeline}=require('node:stream/promises');
 const {Store,fail,friendly,receive,IMAGE_ID,IMAGE_LIMIT,JSON_LIMIT,formats}=require('./storage');
 const {Worlds}=require('./worlds');
 const {exportZip,restoreZip,legacyImport,ARCHIVE_LIMIT}=require('./backups');
-const files={'/entry-cards.js':'entry-cards.js','/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js','/api-client.js':'api-client.js','/theme.js':'theme.js','/symbols.js':'symbols.js','/geography-model.js':'geography-model.js','/geography.js':'geography.js','/character-model.js':'character-model.js','/characters.js':'characters.js'};
+const files={'/description-links.js':'description-links.js','/entry-cards.js':'entry-cards.js','/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/maps.js':'maps.js','/api-client.js':'api-client.js','/theme.js':'theme.js','/symbols.js':'symbols.js','/geography-model.js':'geography-model.js','/geography.js':'geography.js','/character-model.js':'character-model.js','/characters.js':'characters.js'};
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
 const port=Number(process.env.PORT||3000);
 let store;
