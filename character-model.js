@@ -18,6 +18,7 @@
   ['Work, abilities & standing',[
    ['occupation','Occupations & professions',500],['rank','Ranks & positions',500],['reputation','Reputation & social standing',3000,true],['skills','Skills, talents & specialized knowledge',4000,true],['powers','Magical abilities & supernatural powers',4000,true],['languages','Languages',1000],['possessions','Possessions & equipment notes',4000,true]]]
  ];
+ const linkFields=groups.flatMap(([,fields])=>fields).filter(([key,,,multi])=>multi||['aliases','titles','species','ancestry','occupation','rank','languages'].includes(key)).map(([key])=>key);
  const fields=groups.flatMap(([,fields])=>fields);
  const singles={birthplaceId:'Birthplace',homeId:'Home',currentLocationId:'Current location'};
  const lists={factionIds:'Factions & institutions',eventIds:'Important events',itemIds:'Possessions & equipment',magicIds:'Magic & powers',relatedIds:'Other linked lore'};
@@ -37,5 +38,5 @@
    if(c.gallery!==undefined){if(!Array.isArray(c.gallery)||c.gallery.length>50||new Set(c.gallery.map(g=>g?.id)).size!==c.gallery.length)fail('Use up to 50 additional character images with unique IDs.');for(const g of c.gallery)if(!object(g)||!text(g.id,120)||!g.id||!g.image||!imageValid(g.image)||(g.caption!==undefined&&!text(g.caption,500)))fail('Invalid additional character image or caption.');}
   }
  }
- const api={types,statuses,groups,fields,singles,lists,isCharacter,read,references,deletion,validate};if(typeof module!=='undefined')module.exports=api;else root.CharacterModel=api;
+ const api={linkFields,types,statuses,groups,fields,singles,lists,isCharacter,read,references,deletion,validate};if(typeof module!=='undefined')module.exports=api;else root.CharacterModel=api;
 })(globalThis);
