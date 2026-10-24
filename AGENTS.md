@@ -18,6 +18,14 @@ These are the default instructions for future coding tasks in this repository. U
 - The user has no programming knowledge: edit/run/verify the project yourself when the environment supports it; do not hand back coding or terminal work that you can perform. Do not invent lore or completed features.
 - Keep user-generated content safely rendered. Preserve normalized map coordinates, ID-based relationships and existing record fields where relevant; examine necessary integration points, not just the visible widget.
 
+## Universal @ linking
+
+- Internal linking is a core capability. Whenever introducing a category, entry type, or text field, evaluate and integrate the existing shared `@` system into every appropriate narrative or short-text field. Preserve compact editing, validation and field limits; do not force linking into dates, numbers, dropdowns, checkboxes or image uploads.
+- Reuse `description-links.js`: shared autocomplete, stable-ID references, chip editing, safe DOM rendering and existing clickable-entry navigation. Do not create a separate linking implementation unless a technical reason is documented.
+- Document any field that cannot support linking and why. Distinguish required future integration from implemented coverage; claim support only after that field/category is implemented and tested.
+- Add focused tests for new linkable fields/categories: insertion, saving/reopening, readable current names after renaming, missing/deleted targets and preservation of surrounding text. Check affected existing categories when changing shared linking infrastructure, including persistence/backup compatibility where relevant.
+- Prioritize desktop behavior. Do not add mobile-specific implementation, screenshots or keyboard/IME testing unless explicitly requested; existing general regression checks remain subject to risk-based testing below.
+
 ## Protect the actual library
 
 - Never casually delete, replace, reset or overwrite a user's data folder, SQLite database, image files or backups. Git-ignored data is not disposable. Never run destructive experiments/tests against the real library.
