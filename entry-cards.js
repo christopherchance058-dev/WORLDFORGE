@@ -12,7 +12,7 @@ const EntryCards=(()=>{
   const copy=node('div','entry-card-copy'),title=node(heading,'entry-card-title',e.title);copy.append(title);
   const facts=metadata===undefined?[e.category,e.category==='History'&&e.year!==''?`Year ${e.year}`:''].filter(Boolean).join(' · '):metadata;
   if(typeof facts==='string'&&facts.trim())copy.append(node('p','entry-card-facts',facts.trim()));
-  const summary=(e.summary||'').trim()||DescriptionLinks.plain(e,entries).trim();if(summary)copy.append(node('p','entry-card-summary',summary));
+  const summary=DescriptionLinks.plain(e,entries,'summary').trim()||DescriptionLinks.plain(e,entries).trim();if(summary)copy.append(node('p','entry-card-summary',summary));
   button.append(media,copy);return button;
  }
  function fullImage(image,title){const link=node('a','full-image-link','View full image ↗');link.href=image;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label',`View full image of ${title}`);return link;}

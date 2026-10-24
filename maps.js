@@ -10,7 +10,7 @@ const Maps=(()=>{
   const canvas=()=>current()?.canvases.find(c=>c.id===canvasId);
   const button=(label,fn,cls='secondary')=>{const b=node('button',cls,label);b.type='button';b.onclick=e=>{if(!busy)return fn(e);};return b;};
   function iconButton(label,icon,fn,cls=''){const b=button('',fn,`square-button ${cls}`);b.setAttribute('aria-label',label);b.title=label;b.append(glyph(icon));return b;}
-  function pinContent(p){const entry=entries.find(e=>e.id===p.entryId);return {title:entry?.title||p.title,description:entry?.description||p.description,summary:entry?(entry.summary||''):(p.summary||''),image:entry?(entry.image||''):(p.image||''),category:entry?.category||'',linked:!!entry,missing:!!p.entryId&&!entry};}
+  function pinContent(p){const entry=entries.find(e=>e.id===p.entryId);return {title:entry?.title||p.title,description:entry?.description||p.description,summary:entry?DescriptionLinks.plain(entry,entries,'summary'):(p.summary||''),image:entry?(entry.image||''):(p.image||''),category:entry?.category||'',linked:!!entry,missing:!!p.entryId&&!entry};}
   function error(message){if(el('map-message'))el('map-message').textContent=message;}
   function setBusy(value){busy=value;const status=document.querySelector('.autosave-note');if(status)status.textContent=value?'Saving…':saveFailed?'Save failed':'Saved locally';el('maps-section').setAttribute('aria-busy',String(value));el('maps-section').querySelectorAll('button').forEach(b=>b.disabled=value);if(el('map-viewport'))updateControls();}
   async function save(next){const wasBusy=busy;setBusy(true);try{if(!(await persist(entries,next))){saveFailed=true;error(el('toast').textContent);return false;}saveFailed=false;error('');return true;}finally{setBusy(wasBusy);}}
