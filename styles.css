@@ -327,3 +327,8 @@ body:has(#detail[open]){overflow:hidden}
 .entry-grid{--entry-image-size:80px}
 .entry-grid[data-size=small]{--entry-image-size:56px}
 .entry-grid[data-size=large]{--entry-image-size:104px}
+
+/* Native sorting controls and their opened options follow the active theme. */
+.sort-label select{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color-scheme:light}
+[data-theme=dark] .sort-label select{background:var(--surface);color:var(--ink);color-scheme:dark}
+.sort-label select option{background:var(--surface);color:var(--ink)}

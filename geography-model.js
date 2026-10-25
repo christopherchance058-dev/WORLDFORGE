@@ -28,6 +28,7 @@
   });
   return {entries:next,children,referencing,parent:parentEntry};
  }
+ function validateSelectionNotes(notes,keys){if(notes===undefined)return;if(!object(notes)||Object.keys(notes).some(k=>!keys.includes(k)))throw new Error('Invalid selection notes.');for(const values of Object.values(notes))if(!Array.isArray(values)||values.length>500||values.some(n=>typeof n!=='string'||!n.trim()||n.length>120)||new Set(values).size!==values.length)throw new Error('Use up to 500 unique notes of 120 characters per selection.');}
  function validate(entries){
   const byId=new Map(entries.map(e=>[e.id,e]));
   const fail=message=>{throw new Error(message);};
@@ -37,7 +38,7 @@
    if(!object(g))fail('Location details must be an object.');
    if(g.type!==undefined&&!validText(g.type,120))fail('Location type must be text, up to 120 characters.');
    if(g.status!==undefined&&!validText(g.status,120))fail('Location status must be text, up to 120 characters.');
-   if(g.selectionNotes!==undefined){if(!object(g.selectionNotes)||Object.keys(g.selectionNotes).some(k=>!lists.includes(k)))fail('Invalid location selection notes.');for(const notes of Object.values(g.selectionNotes))if(!Array.isArray(notes)||notes.length>500||notes.some(n=>!validText(n,120)||!n.trim())||new Set(notes).size!==notes.length)fail('Use up to 500 unique notes of 120 characters per selection.');}
+   validateSelectionNotes(g.selectionNotes,lists);
    for(const [key,max] of Object.entries(texts))if(g[key]!==undefined&&!validText(g[key],max))fail(`Invalid location field: ${key} (maximum ${max} characters).`);
    const reference=(id,locationsOnly=false)=>{
     if(id===null||id==='')return;
@@ -56,6 +57,6 @@
    for(const id of chain.reverse()){depth++;if(depth>64)fail('Location hierarchies may be up to 64 levels deep.');depths.set(id,depth);}
   }
  }
- const api={types,statuses,texts,lists,singles,isLocation,read,ancestry,descendants,references,deletion,validate};
+ const api={validateSelectionNotes,types,statuses,texts,lists,singles,isLocation,read,ancestry,descendants,references,deletion,validate};
  if(typeof module!=='undefined')module.exports=api;else root.GeographyModel=api;
 })(globalThis);
