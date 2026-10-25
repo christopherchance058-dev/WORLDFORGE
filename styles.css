@@ -317,7 +317,7 @@ body:has(#detail[open]){overflow:hidden}
 .entry-card .entry-card-title{display:block;overflow:visible;-webkit-line-clamp:unset}
 .entry-card-open{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 
-/* One shared card format: square image beside title, metadata and tags; full-width lore below. */
+/* Shared square header and full-width lore; tag placement follows card size. */
 .entry-grid{align-items:start}
 .entry-card,.entry-card.card,.entry-card.character-card{grid-template-columns:var(--entry-image-size) minmax(0,1fr);row-gap:12px;align-self:start}
 .entry-card-content{grid-column:1/-1;min-width:0}
@@ -333,3 +333,9 @@ body:has(#detail[open]){overflow:hidden}
 .sort-label select option{background:var(--surface);color:var(--ink)}
 
 .child-location-dialog form>.secondary{display:inline-flex;align-items:center;gap:6px;margin-bottom:18px}
+
+/* Small cards give tags their own full-width row before the preview. */
+.entry-card-content>.entry-card-tags{margin-top:0}
+.entry-card .entry-card-content>.entry-card-tags+.entry-card-summary{margin-top:10px}
+.child-location-links{display:flex;flex-wrap:wrap;gap:8px}
+.location-detail-group>.add-child{display:flex;width:fit-content;margin-top:16px!important}
