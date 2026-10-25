@@ -408,3 +408,22 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-jump label>span{margin:0}
 .timeline-jump button{margin:0}
 .timeline-axis-label{max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Eras share the ruler and have their own bounded, scrollable label lanes. */
+.era-dialog{width:min(900px,calc(100vw - 48px));max-height:88dvh;padding:26px;overflow:auto}
+.era-dialog .dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.era-dialog .dialog-heading h2{margin:0;font:28px var(--serif)}
+.era-dialog form>button{margin:10px 10px 10px 0}
+.era-manager-row{padding:14px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.era-manager-row small{flex:1 1 200px}.era-open{border:0;background:transparent;color:var(--ink);font:18px var(--serif);text-align:left}
+.timeline-filters .era-toggle{display:flex;align-items:center;gap:8px;min-width:0;max-width:none;padding:10px 0;white-space:nowrap}
+.era-toggle input{width:auto;margin:0;accent-color:var(--green)}
+.timeline-era-strip{position:sticky;top:46px;overflow:auto;z-index:2;background:var(--surface-soft);border-bottom:1px solid var(--border);cursor:auto;scrollbar-gutter:stable}
+.timeline-era-strip:focus-visible{outline:2px solid var(--control-ink);outline-offset:-2px}
+.timeline-era-labels{position:relative;min-width:100%}
+.timeline-era-band{position:absolute;height:25px;min-width:2px;padding:0;border:1px solid var(--era-color);border-radius:3px;background:color-mix(in srgb,var(--era-color) 16%,var(--surface));color:var(--ink);text-align:left}
+.timeline-era-name{position:absolute;top:1px;display:block;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:20px;padding:0 5px;background:var(--surface-soft);border-radius:3px}
+.timeline-era-band:hover .timeline-era-name{outline:1px solid var(--ink)}
+.timeline-era-shade{position:absolute;top:46px;bottom:0;z-index:0;pointer-events:none;background:color-mix(in srgb,var(--era-color) 5%,transparent);border-inline:1px solid color-mix(in srgb,var(--era-color) 40%,transparent)}
+.timeline-era-band[data-certainty=approximate],.timeline-era-shade[data-certainty=approximate]{border-style:dashed}
+.timeline-era-band[data-certainty=disputed],.timeline-era-shade[data-certainty=disputed]{border-style:dotted}
+.timeline-track{z-index:1}

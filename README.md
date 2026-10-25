@@ -77,11 +77,11 @@ Drag blank space or use the earlier/later arrows to move through time. Use **+ /
 
 Click an event title or duration bar to open its existing reading window; use the normal pencil to edit. Save or delete updates the timeline without reloading. **New event** uses the same History editor. Search can find a particular event in a dense history; use Fit to events after searching to see the matching period. Ordinary Back/Forward restores the timeline's view.
 
-Entries without a start year are under **Undated events**, never placed at Year 0. **Other calendars** contains entries with named calendars: no conversion is assumed, so these are kept off the main ruler. Open either section to browse entries, with Show more for longer lists. Fit uses only the compatible dated events. If imported chronology cannot be plotted safely, **Chronology to review** keeps the affected entries accessible. There is one global timeline for each selected world. View settings are temporary; switching worlds or restoring a backup resets them.
+Entries without a start year are under **Undated events**, never placed at Year 0. **Other calendars** contains entries using a different calendar/unit from the selected ruler. Choose their Timeline scale to plot comparable numeric positions; no conversion is assumed. Open either section to browse entries, with Show more for longer lists. Fit uses compatible dated events and shown era boundaries. If imported chronology cannot be plotted safely, **Chronology to review** keeps the affected entries accessible. There is one global timeline for each selected world. View settings are temporary; switching worlds or restoring a backup resets them.
 
 ## Back up your world
 
-A backup is a spare copy of the **world currently selected**, including its banner image, entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.
+A backup is a spare copy of the **world currently selected**, including its banner image, entries, historical eras, chronology settings, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.
 
 1. Open WORLDFORGE and check that your world is there.
 2. Click the **downward-arrow icon** in the sidebar. Hover over it to see **Export backup**.
@@ -136,3 +136,13 @@ History chronology also accepts **Time unit** (e.g. Tide, Cycle or your wording)
 In the visual timeline, choose **Timeline scale** to view a saved calendar/unit pair. Each scale has its own ruler: Tide 3 is never automatically treated as Year 3. Other scales remain accessible in the separate list. Search, filters, Go to position, Fit, reading links and Back/Forward work with the chosen scale. Written dates appear in reading views and event labels; a written date by itself is never guessed onto the ruler. Creative suggestions remain editable; timeline/filter selectors choose existing saved values.
 
 Use this updated app when editing custom chronology: older releases can reject custom certainty wording or mislabel numeric positions as years. Current ZIP backups retain all these optional fields.
+
+### Historical eras
+
+Open **History → Visual timeline → Manage eras**. Choose **New era**, enter a name, and optionally add dates, a description (including @ links), a display color and certainty. Eras are separate from events and can overlap. Select a band label or a manager item to read/edit/delete it. Deleting an era keeps every event; deleting an event keeps every era. Unsaved era edits prompt before closing.
+
+Bands align with the chosen Timeline scale. Their labels have separate scrollable rows when they overlap; event cards remain readable below them. Search and certainty filter eras as well as events; event type applies only to events. **Show era bands** controls their visibility. **Fit to events** fits matching events and shown eras. Missing numeric starts remain in **Unpositioned eras**; a known start without an end is a boundary marker, with no invented duration. Different calendars/units never get converted automatically.
+
+**Manage eras → World chronology** optionally sets a name, calendar and unit for the world's initial scale. Existing worlds default to Year without configuration. This setting changes the initial ruler, not saved dates; Back/Forward retains your chosen scale and view.
+
+To verify the feature, create overlapping periods, pan/zoom, hide/show bands, open an era and a linked entry then navigate Back. Edit/save/reload and export a current ZIP; imports include eras/settings and create a rollback. Old ZIPs/legacy JSON have no eras and restore the default chronology, so keep a current backup before replacing your library. Older application versions cannot manage/export these new records reliably.

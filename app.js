@@ -22,11 +22,11 @@ let entries=[],filter='All',editingId=null,draftImage='',toastTimer,storageBlock
 function validEntry(e){return e && typeof e.id==='string' && e.id.length>0 && categories.includes(e.category) && typeof e.title==='string' && e.title.trim().length>0 && e.title.length<=120 && (e.summary===undefined||typeof e.summary==='string'&&e.summary.length<=500) && typeof e.description==='string' && (e.description.trim().length>0||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e)) && e.description.length<=30000 && Array.isArray(e.tags) && e.tags.length<=30 && e.tags.every(t=>typeof t==='string' && t.length<=100) && (e.year==='' || (Number.isInteger(e.year)&&Math.abs(e.year)<=999999)) && typeof e.image==='string' && (!e.image || /^\/api\/images\/[a-f0-9-]{36}$/.test(e.image)) && typeof e.updatedAt==='string' && Number.isFinite(Date.parse(e.updatedAt));}
 function notify(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),6500);}
 let saving=false,restoring=false;
-async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions,nextAppearance=LocalAPI.appearance){
+async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions,nextAppearance=LocalAPI.appearance,nextHistory={eras:LocalAPI.eras,chronology:LocalAPI.chronology}){
  if(storageBlocked){notify('Storage is not ready. Resolve the message above or reload before saving.');return false;}
  if(saving){notify('A save is already in progress. Please wait.');return false;}
  saving=true;
- try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return source?{...p,title:source.title,description:source.description,summary:source.summary||'',image:source.image}:p;})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories,nextAppearance);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();renderWorld();return true;}
+ try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return source?{...p,title:source.title,description:source.description,summary:source.summary||'',image:source.image}:p;})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories,nextAppearance,nextHistory);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();renderWorld();return true;}
  catch(error){notify('Unable to save. '+error.message);return false;}finally{saving=false;}
 }
 async function initialize(){
@@ -87,7 +87,7 @@ function renderEntryDetail(e,box,options={}){
  if(EntryProfile.hasText(e.description))EntryProfile.section(box,'Overview').append(DescriptionLinks.render(node('p','detail-description location-prose'),e,entries,showDetail));Geography.appendDetails(e,box);Characters.appendBacklinks(e,box);Factions.appendDetails(e,box);HistoryEntries.appendDetails(e,box);
 }
 function showDetail(id){return Navigation.visit(()=>openDetail(id));}
-function openDetail(id){const e=entries.find(e=>e.id===id);if(!e)return;$('detail').dataset.entryId=id;renderEntryDetail(e,$('detail-content'),{close:()=>Navigation.visit(()=>$('detail').close())});$('detail-content').prepend(Navigation.controls());if(!$('detail').open)$('detail').showModal();}
+function openDetail(id){const e=entries.find(e=>e.id===id);if(!e)return;delete $('detail').dataset.eraId;$('detail').dataset.entryId=id;renderEntryDetail(e,$('detail-content'),{close:()=>Navigation.visit(()=>$('detail').close())});$('detail-content').prepend(Navigation.controls());if(!$('detail').open)$('detail').showModal();}
 async function deleteEntry(e){
  const plan=GeographyModel.deletion(entries,e),characterPlan=CharacterModel.deletion(plan.entries,e);plan.entries=characterPlan.entries;const factionPlan=FactionModel.deletion(plan.entries,e);plan.entries=factionPlan.entries;const historyPlan=HistoryModel.deletion(plan.entries,e);plan.entries=historyPlan.entries;let message=`“${e.title}” will be removed. Linked map pins will keep copies of its text and image.`;
  if(plan.children)message+=` Its ${plan.children} direct child location${plan.children===1?'':'s'} will ${plan.parent?`move under “${plan.parent.title}”`:'become top-level locations'}. Their children and stories will be kept.`;
@@ -112,7 +112,7 @@ $('export').onclick=()=>{const a=node('a');a.href='/api/backup?world='+encodeURI
 $('import').onclick=()=>$('backup-file').click();
 $('backup-file').onchange=async()=>{
  const file=$('backup-file').files[0];$('backup-file').value='';if(!file)return;
- if(!(await confirmAction('Restore this backup?',`This replaces entries and maps in “${activeWorld().title}” only. Other worlds are untouched. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
+ if(!(await confirmAction('Restore this backup?',`This replaces entries, maps, historical eras and chronology settings in “${activeWorld().title}” only. Other worlds are untouched. Backups without eras restore an empty era list and default chronology. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
  restoring=true;const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
  try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;HistoryTimeline.reset();Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';renderWorld();render();Navigation.reset();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
  catch(error){notice.textContent='Restore failed: '+error.message;notify(error.message);}finally{restoring=false;}
