@@ -31,6 +31,8 @@ These are the default instructions for future coding tasks in this repository. U
 
 - Show the world banner only on All entries. All existing and future categories allow an initial name and icon at creation; afterward, expose only color editing. Preserve saved names/icons and relationships. Reuse the shared expanded preset palette, custom color picker and default reset, with readable link shades in Light and Dark themes.
 
+- Standard category browsers, including Characters and future categories, reuse the common heading, search/size/create/sort toolbar and section count styling. Keep specialist filters/fields. Use a distinct workspace only when functionality needs it (Location hierarchy, Maps).
+
 ## Shared entry presentation
 
 - Reuse `entry-profile.js` (`EntryProfile.header`, `section`, `facts`, `field`) and shared profile/editor styles for current and future categories. Keep category-specific fields and validation without creating a different header, heading scale, image layout or action pattern for each category. Cards continue to use `EntryCards`: square thumbnail beside title/metadata/tags, full-width preview below, and natural card heights. Reuse this format for all future category cards.

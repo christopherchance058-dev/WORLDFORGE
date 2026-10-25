@@ -59,6 +59,8 @@ To remove a world, click the **trash can at the banner’s top right** and confi
 
 Use the **plus beside Categories** to add categories or change their link colors. Choose a new category’s name and icon when creating it; afterward they are fixed. Choose from 32 preset colors, pick a custom color, or reset to the default. The world banner and world controls appear only on **All entries**. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 
+In a location’s reading window, **Add child location** lets you create a new place or choose an existing location. Choosing an existing place keeps its content and children. If it already belongs to another parent, the app asks you to confirm the move. Locations that would create circular nesting are excluded.
+
 ## Back up your world
 
 A backup is a spare copy of the **world currently selected**, including its banner image, entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.

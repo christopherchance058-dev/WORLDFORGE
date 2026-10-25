@@ -11,7 +11,7 @@ const record=(id,title,character={},extra={})=>({id,title,category:'Characters',
 async function saveState(request,value){const response=await request.put('/api/state',{headers,data:value});expect(response.status(),await response.text()).toBe(200);return response.json();}
 async function start(page){await page.goto('/');await expect(page.locator('.card')).toHaveCount(8);await page.getByRole('button',{name:'Characters',exact:true}).click();await expect(page.locator('#characters-section h1')).toHaveText('Characters');}
 async function closeReading(page){if(await page.locator('#detail').isVisible())await page.getByRole('button',{name:'Close entry',exact:true}).click();}
-async function create(page){await closeReading(page);await page.getByRole('button',{name:'Create character',exact:true}).click();}
+async function create(page){await closeReading(page);await page.getByRole('button',{name:'New entry',exact:true}).click();}
 const save=page=>page.getByRole('button',{name:'Save entry',exact:true}).click();
 const openGroup=(page,name)=>page.locator('#character-editor').getByText(name,{exact:true}).click();
 async function back(page){await page.getByRole('button',{name:'Close entry',exact:true}).click();}
