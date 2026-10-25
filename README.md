@@ -57,7 +57,7 @@ The large banner shows your current world. Use its **pencil** to change the name
 
 To remove a world, click the **trash can at the banner’s top right** and confirm. The app checks a complete backup first and keeps the original files. To undo, open the world switcher, expand **Deleted worlds**, and choose **Restore**. Moving a world to Trash does not free disk space.
 
-Use the **plus beside Categories** to add or edit categories. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
+Use the **plus beside Categories** to add categories or change their link colors. Choose a new category’s name and icon when creating it; afterward they are fixed. Choose from 32 preset colors, pick a custom color, or reset to the default. The world banner and world controls appear only on **All entries**. Hover over an icon to see what it does. Your saved work remains available after closing and reopening the app.
 
 ## Back up your world
 
