@@ -452,3 +452,28 @@ dialog .form-error{scroll-margin-top:16px}
 .era-image-preview.square img{width:150px;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover}
 
 @media(min-width:901px){.timeline-toolbar{gap:10px}.timeline-toolbar .search{flex-basis:200px;min-width:180px}}
+
+/* Compact History timeline controls; disclosures retain occasional actions. */
+.timeline-toolbar .search{flex:1 1 260px}
+.timeline-toolbar>.timeline-actions{margin-left:auto}
+.timeline-disclosure{position:relative;flex:0 0 auto}
+.timeline-disclosure>summary{display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:7px;cursor:pointer;list-style:none;font-size:13px;font-weight:600;background:var(--surface);color:var(--ink)}
+.timeline-disclosure>summary::-webkit-details-marker{display:none}
+.timeline-new>summary{background:var(--green);color:#fff}
+.timeline-new>summary::after{content:'▾'}
+.timeline-disclosure>summary:focus-visible{outline:2px solid var(--control-ink);outline-offset:2px}
+.timeline-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:10;min-width:180px;padding:12px;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px #0003}
+.timeline-new .timeline-popover{left:auto;right:0;display:grid;gap:6px}
+.timeline-new .timeline-popover button{text-align:left;white-space:nowrap}
+.timeline-caption{margin:8px 0 12px;gap:12px}
+.timeline-caption>.timeline-actions{gap:6px}
+.timeline-caption button{height:40px;min-height:40px}
+.timeline-view-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-left:auto}
+.timeline-view-info output{white-space:nowrap}
+.timeline-jump.timeline-popover{display:flex;align-items:end;flex-wrap:nowrap}
+.timeline-jump label{display:grid;gap:6px}
+.timeline-help>summary{width:36px;padding:8px}
+.timeline-help .timeline-popover{left:auto;right:0;width:min(360px,70vw);font-size:13px;line-height:1.6}
+.timeline-help p+p{margin-top:10px}
+.timeline-filters label{flex:1 1 180px;max-width:280px}
+.timeline-filters button[hidden]{display:none}
