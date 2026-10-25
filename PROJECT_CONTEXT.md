@@ -4,7 +4,7 @@ Read with [AGENTS.md](AGENTS.md). This is the compact architecture reference; [R
 
 ## Purpose and workflow
 
-A personal, local-first worldbuilding encyclopedia and interactive atlas. The user's setting centers on **one deeply developed fantasy city and its surrounding fantasy ocean**; neighboring cities and nations are mostly offscreen. Favor connected lore and easy navigation over many empty categories. Do not invent established lore.
+A personal, local-first worldbuilding encyclopedia and interactive atlas. Favor connected lore and easy navigation over many empty categories. Do not invent established lore.
 
 Workflow: write entries and short descriptions, organize categories, nest locations and link their inhabitants/history/factions, then place entry-linked pins on uploaded maps. Multiple independent worlds share one server. The sidebar has no world box. The Location category uses a house icon; Maps sits separately under Atlas, with its map icon. The workspace heading is Locations; internal `Locations` category keys and Geography modules are unchanged. The home banner has pencil (edit), two arrows (switch/create), and a top-right trash can (recoverable world deletion). New entry sits beside search/sorting; category navigation lives only in the sidebar. Added worlds start empty; the original library remains the default world. The browser remembers its last selection; already-open tabs keep their own world. No login, paid service, external API, or cloud storage is required. Cloud-workspace files live on that machine.
 
