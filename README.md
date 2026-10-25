@@ -67,7 +67,17 @@ History entries keep the normal title, short description, description, image, an
 
 Choose **Unknown** certainty to save without dates. The editor disables the year inputs; switching back before saving restores what you typed. Unknown saves no start/end year. Confirmed, Approximate, Disputed, or Not specified can be used with incomplete dates. End year cannot precede Start year. **Historical classification** suggests event types and accepts your own wording. Calendar names are labels; no conversion is performed. Year sorting groups calendar names alphabetically (unnamed first), orders events within each calendar by start year, and places undated events last.
 
-Existing events retain their old year and other content. Editing chronology synchronizes that legacy year with the start year. Use the current app for chronology edits and portable backups; older versions cannot reliably edit the new date details. The visual timeline is reserved for a later phase.
+Existing events retain their old year and other content. Editing chronology synchronizes that legacy year with the start year. Use the current app for chronology edits and portable backups; older versions cannot reliably edit the new date details. Open **Visual timeline** in History to explore these events on a horizontal axis.
+
+## Visual history timeline
+
+In **History**, choose **Visual timeline**. The ruler positions events by numeric start year; a bar appears only when both start and end are recorded. Dashed outlines mean Approximate and dotted outlines mean Disputed; labels also show certainty. Negative years and explicitly entered Year 0 follow the same numeric scale.
+
+Drag blank space or use the earlier/later arrows to move through time. Use **+ / −**, **Fit to events**, or **Go to year** to find a useful period. Ctrl + wheel (Meta + wheel where supported) zooms around the pointer. Shift + wheel pans horizontally. With the timeline background focused, Left/Right pans, +/− zooms, Home fits, and Page Up/Down scrolls through overlapping event rows. Zooming never introduces month/day precision. **Back to History** returns to the normal cards.
+
+Click an event title or duration bar to open its existing reading window; use the normal pencil to edit. Save or delete updates the timeline without reloading. **New event** uses the same History editor. Search can find a particular event in a dense history; use Fit to events after searching to see the matching period. Ordinary Back/Forward restores the timeline's view.
+
+Entries without a start year are under **Undated events**, never placed at Year 0. **Other calendars** contains entries with named calendars: no conversion is assumed, so these are kept off the main ruler. Open either section to browse entries, with Show more for longer lists. Fit uses only the compatible dated events. If imported chronology cannot be plotted safely, **Chronology to review** keeps the affected entries accessible. There is one global timeline for each selected world. View settings are temporary; switching worlds or restoring a backup resets them.
 
 ## Back up your world
 

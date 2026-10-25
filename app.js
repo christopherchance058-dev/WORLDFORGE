@@ -58,13 +58,14 @@ function presentFormError(error){
 new MutationObserver(changes=>{const errors=new Set();for(const change of changes){const target=change.target.nodeType===1?change.target:change.target.parentElement;const error=target?.closest('.form-error');if(error){shownErrors.delete(error);errors.add(error);}for(const node of change.addedNodes||[]){if(node.nodeType!==1)continue;if(node.matches('.form-error'))errors.add(node);node.querySelectorAll('.form-error').forEach(e=>errors.add(e));}}errors.forEach(presentFormError);}).observe(document.body,{subtree:true,childList:true,characterData:true});
 document.addEventListener('invalid',event=>{const input=event.target,dialog=input.closest('dialog');if(!dialog)return;const error=dialog.querySelector('.form-error');if(!error)return;event.preventDefault();const label=input.labels?.[0]?.textContent.trim()||input.getAttribute('aria-label')||'Field';error.textContent=input.id==='entry-title'?'Please enter a name.':label+': '+input.validationMessage;},true);
 function setFilter(category){return Navigation.visit(()=>setFilterView(category));}
-function setFilterView(category){if(category==='Characters'){Characters.show();return;}Characters.hide();if(category==='Locations'){Geography.show();return;}Geography.hide();Maps.hide();filter=category;if(category==='History')$('sort').value='year';render();}
+function setFilterView(category){HistoryTimeline.hide();if(category==='Characters'){Characters.show();return;}Characters.hide();if(category==='Locations'){Geography.show();return;}Geography.hide();Maps.hide();filter=category;if(category==='History')$('sort').value='year';render();}
 function render(){
  document.querySelector('#encyclopedia>.banner').hidden=filter!=='All';
- $('navigation').replaceChildren();['All',...categories].forEach(c=>{if(c==='Characters'){$('navigation').append(Characters.nav());return;}if(c==='Locations'){$('navigation').append(Geography.nav());return;}const b=node('button',filter===c&&!Maps.visible&&!Geography.visible&&!Characters.visible?'active':'');b.setAttribute('aria-current',filter===c&&!Maps.visible&&!Geography.visible&&!Characters.visible?'page':'false');b.append(glyph(c==='All'?'grid':categoryIcon(c),'nav-icon'),node('span','',c==='All'?'All entries':c),node('span','count',c==='All'?entries.length:entries.filter(e=>e.category===c).length));b.onclick=()=>setFilter(c);$('navigation').append(b);});
+ $('navigation').replaceChildren();['All',...categories].forEach(c=>{if(c==='Characters'){$('navigation').append(Characters.nav());return;}if(c==='Locations'){$('navigation').append(Geography.nav());return;}const b=node('button',(HistoryTimeline.visible?c==='History':filter===c&&!Maps.visible&&!Geography.visible&&!Characters.visible)?'active':'');b.setAttribute('aria-current',(HistoryTimeline.visible?c==='History':filter===c&&!Maps.visible&&!Geography.visible&&!Characters.visible)?'page':'false');b.append(glyph(c==='All'?'grid':categoryIcon(c),'nav-icon'),node('span','',c==='All'?'All entries':c),node('span','count',c==='All'?entries.length:entries.filter(e=>e.category===c).length));b.dataset.category=c;b.onclick=()=>setFilter(c);$('navigation').append(b);});
  if(!categories.includes('Locations'))$('navigation').append(Geography.nav());
  if(!categories.includes('Characters')&&entries.some(CharacterModel.isCharacter))$('navigation').append(Characters.nav());
  Maps.renderNav();
+ $('open-history-timeline').hidden=filter!=='History';$('open-history-timeline').disabled=storageBlocked;
  $('history-sort-note').hidden=filter!=='History'||$('sort').value!=='year';
  $('page-title').textContent=filter==='All'?'Your encyclopedia':filter==='History'?'Your historical timeline':filter;
  $('subtitle').textContent=filter==='All'?'Every person, place, and possibility. All connected by you.':({Characters:'The people who give your world a heartbeat.',Locations:'Every place has a story. Give yours a home.',History:'The moments that shaped your world, through the ages.',Factions:'Shared beliefs. Divided loyalties. Stories in the making.'})[filter]||'Discover the stories and knowledge of your world.';
@@ -72,6 +73,7 @@ function render(){
  list.sort((a,b)=>$('sort').value==='title'?a.title.localeCompare(b.title):$('sort').value==='year'?HistoryModel.compare(a,b):b.updatedAt.localeCompare(a.updatedAt));
  $('list-title').textContent=filter==='All'?'All entries':filter==='History'?'Timeline':filter;$('result-count').textContent=`${list.length} ${list.length===1?'entry':'entries'}`;$('entries').className=filter==='History'?'cards timeline':'cards';$('entries').replaceChildren();
  EntryCards.grid($('entries'));list.forEach(e=>$('entries').append(EntryCards.card(e,{className:'card',onOpen:()=>showDetail(e.id)})));
+ if(HistoryTimeline.visible){$('encyclopedia').hidden=true;HistoryTimeline.refresh();}
  $('empty').hidden=list.length>0;$('empty-title').textContent=query?'No entries found':'A new story starts here';$('empty-text').textContent=query?'Try another title, phrase, or tag.':'Create your first entry and bring your world to life.';
 }
 document.querySelector('.library-actions').prepend(EntryCards.control());
@@ -98,6 +100,7 @@ async function deleteEntry(e){
  if(await persist(plan.entries,nextMaps)){if($('detail').open)$('detail').close();Geography.refresh();Characters.refresh();render();Navigation.sync();notify('Entry deleted.');}
 }
 function confirmAction(title,message,action){$('confirm-title').textContent=title;$('confirm-message').textContent=message;$('confirm-action').textContent=action;$('confirm').returnValue='cancel';$('confirm').showModal();return new Promise(resolve=>$('confirm').addEventListener('close',()=>resolve($('confirm').returnValue==='confirm'),{once:true}));}
+$('open-history-timeline').onclick=()=>HistoryTimeline.show();
 $('new-entry').onclick=()=>openEditor();document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.dataset.close==='editor'?Characters.closeEditor():$(b.dataset.close).close());$('search').oninput=render;$('sort').onchange=render;$('entry-category').onchange=updateYear;
 $('remove-image').onclick=()=>{draftImage='';$('entry-image').value='';imagePreview();};
 $('editor').addEventListener('cancel',event=>{event.preventDefault();Characters.closeEditor();});
@@ -110,10 +113,10 @@ $('backup-file').onchange=async()=>{
  const file=$('backup-file').files[0];$('backup-file').value='';if(!file)return;
  if(!(await confirmAction('Restore this backup?',`This replaces entries and maps in “${activeWorld().title}” only. Other worlds are untouched. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
  restoring=true;const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
- try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';renderWorld();render();Navigation.reset();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
+ try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;HistoryTimeline.reset();Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';renderWorld();render();Navigation.reset();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
  catch(error){notice.textContent='Restore failed: '+error.message;notify(error.message);}finally{restoring=false;}
 };
-document.addEventListener('keydown',e=>{if(e.key==='/'&&!Maps.visible&&!Geography.visible&&!Characters.visible&&!document.querySelector('dialog[open]')&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('search').focus();}});
+document.addEventListener('keydown',e=>{if(e.key==='/'&&!HistoryTimeline.visible&&!Maps.visible&&!Geography.visible&&!Characters.visible&&!document.querySelector('dialog[open]')&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('search').focus();}});
 function manageCategories(){
  const dialog=node('dialog','category-dialog'),form=node('form'),head=node('div','dialog-heading'),close=node('button','icon-button','×');close.type='button';close.setAttribute('aria-label','Close categories');close.onclick=()=>dialog.close();head.append(node('h2','','Your categories'),close);form.append(head,node('p','storage-note','Magic and Bestiary are ready to use. Add categories to organize your own world. Names and icons are fixed after creation; link colors can be changed anytime.'));
  const list=node('div','category-manager-list');form.append(list);let editing=null;
@@ -127,7 +130,7 @@ let worldList=[];
 function activeWorld(){return worldList.find(w=>w.id===LocalAPI.worldId)||{id:'default',title:'Your world',description:'A home for your stories.'};}
 function renderWorld(){const world=activeWorld();$('world-banner-title').textContent=world.title;$('world-banner-description').textContent=world.description||'Give your ideas a place to grow.';const image=$('world-banner-image'),src=LocalAPI.appearance.image;image.hidden=!src;if(src)image.src=src;else image.removeAttribute('src');image.closest('.banner').classList.toggle('has-world-image',!!src);}
 async function refreshWorlds(){worldList=await LocalAPI.request('/api/worlds');renderWorld();}
-function applyWorldState(state){entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
+function applyWorldState(state){entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);HistoryTimeline.reset();Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
 async function switchWorld(id){
  if(saving||imageLoading||restoring)throw new Error('Please wait for the current save or upload to finish.');
  const state=await LocalAPI.request('/api/state',{headers:{'X-Worldforge-World':id}});

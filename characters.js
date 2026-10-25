@@ -8,7 +8,7 @@ const Characters=(()=>{
  function reset(){hide();selectedId=null;query='';filters={};sort='updated';}
  function nav(){const b=button('',()=>show(),visible?'active':'');b.setAttribute('aria-label','Characters');b.title='Characters';b.setAttribute('aria-current',visible?'page':'false');b.append(glyph('person','nav-icon'),node('span','','Characters'),node('span','count',people().length));return b;}
  function show(id=null){return Navigation.visit(()=>showView(id));}
- function showView(id=null,open=true){Geography.hide();Maps.hide();visible=true;selectedId=id;$('encyclopedia').hidden=true;$('characters-section').hidden=false;$('workspace-section').textContent='Characters';render();document.querySelectorAll('#navigation button').forEach(b=>{const active=b.getAttribute('aria-label')==='Characters';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});if(id&&open)showDetail(id);}
+ function showView(id=null,open=true){HistoryTimeline.hide();Geography.hide();Maps.hide();visible=true;selectedId=id;$('encyclopedia').hidden=true;$('characters-section').hidden=false;$('workspace-section').textContent='Characters';render();document.querySelectorAll('#navigation button').forEach(b=>{const active=b.getAttribute('aria-label')==='Characters';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});if(id&&open)showDetail(id);}
  function refresh(){if(visible){if(!people().some(e=>e.id===selectedId))selectedId=null;render();}}
  function create(){openEditor(null,{category:categories.includes('Characters')?'Characters':people()[0]?.category||categories[0],character:true});}
 

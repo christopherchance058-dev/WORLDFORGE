@@ -44,6 +44,8 @@ These are the default instructions for future coding tasks in this repository. U
 - Category editors must keep descriptive classifications open to custom text and suggestions. Optional relationships reuse `Geography.flexiblePicker` for multiple stable-ID selections plus explicit, neutral unlinked notes; never auto-create entries or auto-link names. Keep structural category/parent/travel, numeric/date and image safeguards. Document real exceptions, preserve old singular links when extending models, and test notes, backlinks, deletion and backups. Unlinked selection labels are intentionally plain (no @ parsing); narrative fields retain shared @ linking.
 - For shared presentation changes, check populated and sparse Character, Faction and Location views/editors in Light and Dark themes, including linked text and image bounds. Follow the existing risk-based testing and desktop-priority rules.
 
+- History’s visual timeline is a functional exception to ordinary category cards: show numeric chronology/type/certainty in its anchored cards and retain the standard metadata-free format elsewhere. Derive timeline positions from HistoryModel; keep undated and named-calendar entries off the main numeric axis. Timeline views/pan/zoom are not library records; reuse Navigation for entry opening and workspace restoration.
+
 ## Protect the actual library
 
 - Never casually delete, replace, reset or overwrite a user's data folder, SQLite database, image files or backups. Git-ignored data is not disposable. Never run destructive experiments/tests against the real library.

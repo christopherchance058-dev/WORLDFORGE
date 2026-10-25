@@ -1,0 +1,77 @@
+/* One session-only timeline workspace derived from the current world's History entries. */
+const HistoryTimeline=(()=>{
+ const math=TimelineLayout;
+ let visible=false,center=0,scale=10,query='',initialized=false,frame=0,groups=null,filtered=null,viewport,scene,error,range,status,search,zoomIn,zoomOut,drag=null;
+ let observer,sourceEntries=null,pendingScroll=null,pendingGroups=null;
+ const button=(text,action,cls='secondary')=>{const b=node('button',cls,text);b.type='button';b.onclick=action;return b;};
+ const number=value=>(Math.round(value)||0).toLocaleString('en-US');
+ function width(){return Math.max(200,viewport?.clientWidth||800);}
+ function schedule(){if(!visible||frame)return;frame=requestAnimationFrame(()=>{frame=0;if(visible)paint();});}
+ function metrics(){const compact=scale<2||filtered.dated.length>100;return {compact,cardWidth:Math.min(compact?210:270,width()-24),pitch:compact?160:210};}
+ function applyView(next){center=next.center;scale=next.scale;schedule();}
+ function fit(){applyView(math.fit(filtered?.dated||[],width()));}
+ function zoom(factor,x){applyView(math.zoom(center,scale,width(),factor,x));}
+ function pan(direction){applyView(math.view(center+direction*width()*.65/scale,scale,width()));}
+ function open(entry){showDetail(entry.id);}
+ function create(){openEditor(null,{category:categories.includes('History')?'History':entries.find(HistoryModel.isHistory)?.category||categories[0]});}
+ function build(){
+  const root=$('timeline-section');if(root.childNodes.length)return;
+  const heading=node('div','heading-row'),copy=node('div'),actions=node('div','timeline-actions');copy.append(node('p','eyebrow','HISTORY / VISUAL TIMELINE'),node('h1','','World history'),node('p','subtitle','Trace the events that shaped your world.'));
+  actions.append(button('Back to History',()=>setFilter(categories.includes('History')?'History':'All')),button('＋ New event',create,'primary'));heading.append(copy,actions);error=node('p','form-error');error.setAttribute('role','alert');root.append(heading,error);
+  const tools=node('div','timeline-toolbar'),label=node('label','search');search=node('input');search.type='search';search.setAttribute('aria-label','Search timeline events');search.placeholder='Find an event, story, or event type…';label.append(glyph('zoom'),search);search.oninput=()=>{query=search.value;pendingGroups={};refresh();fit();};
+  const controls=node('div','timeline-actions');zoomOut=button('−',()=>zoom(1/1.6),'square-button');zoomOut.setAttribute('aria-label','Zoom out');zoomOut.title='Zoom out';zoomIn=button('+',()=>zoom(1.6),'square-button');zoomIn.setAttribute('aria-label','Zoom in');zoomIn.title='Zoom in';
+  const earlier=button('←',()=>pan(-1),'square-button'),later=button('→',()=>pan(1),'square-button');earlier.setAttribute('aria-label','Pan earlier');later.setAttribute('aria-label','Pan later');earlier.title='Pan earlier';later.title='Pan later';controls.append(earlier,later,zoomOut,zoomIn,button('Fit to events',fit));tools.append(label,controls);
+  const jump=node('form','timeline-jump'),jumpLabel=node('label','','Go to year'),year=node('input');year.type='text';year.inputMode='numeric';year.maxLength=8;year.setAttribute('aria-label','Go to year');year.placeholder='e.g. -200';jumpLabel.append(year);const go=node('button','secondary','Go');go.type='submit';jump.append(jumpLabel,go);jump.onsubmit=event=>{event.preventDefault();try{const value=HistoryModel.parseYear(year.value,'Year');if(value===null)throw new Error('Enter a year to visit.');error.textContent='';applyView(math.view(value,scale,width()));}catch(e){error.textContent=e.message;error.scrollIntoView({block:'nearest'});}};tools.append(jump);root.append(tools);
+  const caption=node('div','timeline-caption');status=node('p');status.setAttribute('role','status');range=node('output');range.setAttribute('aria-label','Visible year range');caption.append(status,range);root.append(caption);
+  const help=node('p','storage-note','Drag the background or use ← / → to pan. Use + / − to zoom, Ctrl + wheel to zoom at the pointer, and Page Up / Page Down to scroll event rows.');help.id='timeline-help';root.append(help);
+  viewport=node('div','timeline-viewport');viewport.id='timeline-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Historical timeline');viewport.setAttribute('aria-describedby',help.id);scene=node('div','timeline-scene');viewport.append(scene);root.append(viewport);
+  const extra=node('div','timeline-unplaced');extra.id='timeline-unplaced';root.append(extra);
+  viewport.onscroll=schedule;
+  viewport.addEventListener('wheel',event=>{if(event.ctrlKey||event.metaKey){event.preventDefault();zoom(event.deltaY<0?1.2:1/1.2,event.clientX-viewport.getBoundingClientRect().left);}else if(event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)){event.preventDefault();applyView(math.view(center+(event.deltaX||event.deltaY)/scale,scale,width()));}},{passive:false});
+  viewport.onkeydown=event=>{if(event.target!==viewport||event.ctrlKey||event.metaKey||event.altKey)return;if(['ArrowLeft','ArrowRight','+','=','-','Home'].includes(event.key)){event.preventDefault();if(event.key==='ArrowLeft')pan(-1);else if(event.key==='ArrowRight')pan(1);else if(event.key==='Home')fit();else zoom(event.key==='-'?1/1.6:1.6);}};
+  viewport.onpointerdown=event=>{if(event.button!==0||event.target.closest('button,a,input,select'))return;viewport.focus({preventScroll:true});drag={x:event.clientX,center};viewport.setPointerCapture(event.pointerId);viewport.classList.add('dragging');event.preventDefault();};
+  viewport.onpointermove=event=>{if(!drag)return;applyView(math.view(drag.center-(event.clientX-drag.x)/scale,scale,width()));};
+  const stop=()=>{drag=null;viewport.classList.remove('dragging');};viewport.onpointerup=stop;viewport.onpointercancel=stop;viewport.onlostpointercapture=stop;
+  observer=new ResizeObserver(()=>{if(visible){const next=math.view(center,scale,width());center=next.center;scale=next.scale;schedule();}});observer.observe(viewport);
+ }
+ function updateGroups(){
+  const extra=$('timeline-unplaced'),previous=pendingGroups||Object.fromEntries([...extra.querySelectorAll('details')].map(d=>[d.dataset.group,{open:d.open,limit:Number(d.dataset.limit)||0}]));pendingGroups=null;extra.replaceChildren();
+  for(const [key,title,explanation] of [['undated','Undated events','These entries have no known start year. They are not placed at Year 0.'],['named','Other calendars','These entries use named calendars. Their years are not placed on this axis because no conversion is defined.'],['invalid','Chronology to review','These entries cannot be plotted safely. Open the entry to review its dates.']]){
+   const records=filtered[key];if(!records.length)continue;const details=node('details','timeline-other');details.dataset.group=key;details.open=previous[key]?.open??!!query;details.append(node('summary','',`${title} (${records.length})`));const body=node('div','timeline-other-body');body.append(node('p','storage-note',explanation));details.append(body);let limit=0;
+   function more(){const next=records.slice(limit,limit+(limit?50:Math.max(50,previous[key]?.limit||50)));body.querySelector('.timeline-more')?.remove();for(const record of next){const row=button('',()=>open(record.entry),'timeline-other-entry'),date=HistoryModel.label(record.entry);row.append(node('strong','',record.entry.title),node('small','',record.reason||[date||'Start year unknown',record.calendar&&!date.includes(record.calendar)?record.calendar:'',HistoryModel.certainties[record.certainty]||''].filter(Boolean).join(' · ')));body.append(row);}limit+=next.length;details.dataset.limit=limit;if(limit<records.length)body.append(button(`Show more (${records.length-limit} remaining)`,more,'secondary timeline-more'));}
+   details.ontoggle=()=>{if(details.open&&!limit)more();};if(details.open)more();extra.append(details);
+  }
+ }
+ function refresh(){
+  if(!visible)return;build();error.textContent='';try{
+   if(!groups||sourceEntries!==entries){groups=math.partition(entries);sourceEntries=entries;}const q=query.trim().toLowerCase();filtered=Object.fromEntries(Object.entries(groups).map(([key,list])=>[key,list.filter(record=>!q||(record.search??=([record.entry.title,...record.entry.tags,DescriptionLinks.plain(record.entry,entries,'summary'),DescriptionLinks.plain(record.entry,entries),HistoryEntries.searchText(record.entry)].join(' ').toLowerCase())).includes(q))]));
+   updateGroups();if(!initialized){initialized=true;const next=math.fit(filtered.dated,width());center=next.center;scale=next.scale;}schedule();
+  }catch(e){error.textContent='Could not display the timeline. '+e.message;scene.replaceChildren();}
+ }
+ function paint(){
+  if(!filtered)return;const w=width(),{compact,cardWidth,pitch}=metrics(),layout=math.layout(filtered.dated,center,scale,w,cardWidth),ticks=math.ticks(center,scale,w),focusId=document.activeElement?.dataset.timelineOpen;
+  const fragment=document.createDocumentFragment(),axis=node('div','timeline-axis');axis.setAttribute('aria-label','Year axis');axis.append(node('span','timeline-axis-label','YEAR'));for(const tick of ticks){const label=node('span','timeline-tick',number(tick.year));label.style.left=tick.x+'px';label.dataset.year=tick.year;axis.append(label);const line=node('span','timeline-gridline');line.style.left=tick.x+'px';line.setAttribute('aria-hidden','true');fragment.append(line);}fragment.append(axis);
+  const height=Math.max(viewport.clientHeight,64+layout.rows*pitch+24);scene.style.height=height+'px';if(pendingScroll!==null){viewport.scrollTop=pendingScroll;pendingScroll=null;}scene.dataset.center=center;scene.dataset.scale=scale;scene.dataset.width=w;scene.dataset.rows=layout.rows;
+  const top=viewport.scrollTop-2*pitch,bottom=viewport.scrollTop+viewport.clientHeight+2*pitch;
+  for(const record of layout.records){const y=64+record.row*pitch;if(y+pitch<top||y>bottom)continue;const track=node('div','timeline-track');track.style.top=y+'px';track.dataset.entryId=record.entry.id;track.dataset.row=record.row;track.dataset.start=record.start;if(record.end!==null)track.dataset.end=record.end;
+   const certainty=HistoryModel.certainties[record.certainty]||'',date=`Year ${record.start}`+(record.end!==null?` – Year ${record.end}`:''),description=[record.entry.title,date,record.type,certainty,record.end===null?'End not recorded':''].filter(Boolean).join(' · ');
+   const marker=node('span','timeline-marker');marker.style.left=record.startX+'px';marker.dataset.year=record.start;marker.setAttribute('aria-hidden','true');track.append(marker);
+   if(record.end!==null){const bar=button('',()=>open(record.entry),'timeline-duration');bar.style.left=Math.max(0,record.startX)+'px';bar.style.width=Math.max(2,Math.min(w,record.endX)-Math.max(0,record.startX))+'px';bar.dataset.certainty=record.certainty;bar.setAttribute('aria-label','Open duration: '+description);bar.title=description;track.append(bar);}
+   const card=node('article','timeline-event-card'+(compact?' compact':''));card.style.left=record.cardX+'px';card.style.width=cardWidth+'px';card.dataset.certainty=record.certainty;card.title=description;const openButton=button(record.entry.title,()=>open(record.entry),'timeline-event-open');openButton.dataset.timelineOpen=record.entry.id;openButton.setAttribute('aria-label','Open event '+record.entry.title);card.append(openButton,node('p','timeline-event-date',date));
+   const facts=node('div','timeline-event-facts');if(record.type)facts.append(node('span','timeline-event-type',record.type));if(certainty)facts.append(node('span','tag',certainty));if(record.startX<0)facts.append(node('span','tag','Starts before view'));card.append(facts);
+   if(!compact){const preview=DescriptionLinks.plain(record.entry,entries,'summary').trim()||DescriptionLinks.plain(record.entry,entries);if(preview){const words=preview.trim().split(/\s+/);card.append(node('p','timeline-preview',words.slice(0,18).join(' ')+(words.length>18?' …':'')));}}
+   card.onclick=event=>{if(!event.target.closest('button,a'))open(record.entry);};track.append(card);fragment.append(track);
+  }
+  if(!layout.records.length){const any=Object.values(groups).some(list=>list.length),message=!any?'No historical events yet. Create an event to begin.':query&&!Object.values(filtered).some(list=>list.length)?'No events match this search. Try a different title or clear the search.':!filtered.dated.length?'No dated events on this axis. Undated events and other calendars are listed below.':'No matching events in this period. Use Fit to events or explore another year.';const empty=node('p','timeline-empty',message);fragment.append(empty);}
+  scene.replaceChildren(fragment);if(focusId)scene.querySelectorAll('[data-timeline-open]').forEach(b=>{if(b.dataset.timelineOpen===focusId)b.focus({preventScroll:true});});
+  status.textContent=`${filtered.dated.length} dated ${filtered.dated.length===1?'event':'events'} · ${layout.records.length} in this period`;
+  range.textContent=`Years ${number(math.yearAtX(0,center,scale,w))} to ${number(math.yearAtX(w,center,scale,w))}`;zoomIn.disabled=scale>=math.MAX_SCALE;zoomOut.disabled=scale<=w/2200000;
+ }
+ function show(){return Navigation.visit(showView);}
+ function showView(){if(storageBlocked){notify('History is not ready. Resolve the library message first.');return;}Characters.hide();Geography.hide();Maps.hide();visible=true;$('encyclopedia').hidden=true;$('timeline-section').hidden=false;$('workspace-section').textContent='History timeline';build();search.value=query;refresh();document.querySelectorAll('#navigation button').forEach(b=>{const active=b.dataset.category==='History';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});}
+ function hide(){visible=false;$('timeline-section').hidden=true;if(frame){cancelAnimationFrame(frame);frame=0;}drag=null;viewport?.classList.remove('dragging');}
+ function reset(){hide();center=0;scale=10;query='';initialized=false;groups=null;filtered=null;sourceEntries=null;pendingScroll=null;pendingGroups=null;if(viewport)viewport.scrollTop=0;if(scene){scene.replaceChildren();scene.style.height='';for(const key of ['center','scale','width','rows'])delete scene.dataset[key];}const jump=$('timeline-section').querySelector('.timeline-jump input');if(jump)jump.value='';$('timeline-unplaced')?.replaceChildren();}
+ function state(){return {center,scale,query,scrollTop:viewport?.scrollTop||0,initialized,groups:Object.fromEntries([...($('timeline-unplaced')?.querySelectorAll('details')||[])].map(d=>[d.dataset.group,{open:d.open,limit:Number(d.dataset.limit)||0}]))};}
+ function restore(s){center=s.center;scale=s.scale;query=s.query;initialized=s.initialized;pendingScroll=s.scrollTop;pendingGroups=s.groups||{};showView();schedule();}
+ return {show,hide,reset,state,restore,refresh,get visible(){return visible;}};
+})();
