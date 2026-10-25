@@ -33,6 +33,8 @@ These are the default instructions for future coding tasks in this repository. U
 
 - Standard category browsers, including Characters and future categories, reuse the common heading, search/size/create/sort toolbar and section count styling. Keep specialist filters/fields. Use a distinct workspace only when functionality needs it (Location hierarchy, Maps).
 
+- All editor errors belong directly beneath the heading and must scroll into view, including validation, field limits, uploads and save failures. Reuse the shared form-error presentation policy; future editor dialogs must expose a `.form-error` summary. Preserve drafts when errors occur. Locations require only a nonblank name; optional supplied values still obey length, relationship, nesting and image validation.
+
 ## Shared entry presentation
 
 - Reuse `entry-profile.js` (`EntryProfile.header`, `section`, `facts`, `field`) and shared profile/editor styles for current and future categories. Keep category-specific fields and validation without creating a different header, heading scale, image layout or action pattern for each category. Cards continue to use `EntryCards`: square thumbnail beside title and tags at every size, with full-width preview below. Cards show no category/year/species/occupation/status/location-type metadata rows; keep those details in saved entries and reading windows. Keep natural card heights. Reuse this format for all future category cards.

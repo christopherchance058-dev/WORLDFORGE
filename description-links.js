@@ -27,7 +27,7 @@
   const model=()=>({description:input.value,descriptionReferences:{version:1,items:refs}});
   function serialize(node=surface){if(node.nodeType===3)return node.data;if(node.nodeType!==1)return '';if(node.dataset.refToken&&refs.some(r=>r.token===node.dataset.refToken))return node.dataset.refToken;if(node.dataset.referencePadding)return '';if(node.tagName==='BR')return '\n';let value='';for(const child of node.childNodes){if(['DIV','P'].includes(child.nodeName)&&value&&!value.endsWith('\n'))value+='\n';value+=serialize(child);}return value;}
   function close(){menu.hidden=true;menu.replaceChildren();surface.setAttribute('aria-expanded','false');surface.removeAttribute('aria-activedescendant');results=[];}
-  function hint(text){feedback.textContent=text;}
+  function hint(text){feedback.textContent=text;if(text&&text!=='Reference inserted.'&&hostDialog.id==='editor'&&typeof setEditorError==='function')setEditorError(label+': '+text);}
   function appendPlain(parent,text){text.split('\n').forEach((line,i)=>{if(i)parent.append(document.createElement('br'));parent.append(document.createTextNode(line));});}
   function pad(){surface.querySelectorAll('[data-reference-padding]').forEach(n=>n.remove());if(serialize().endsWith('\n')){const br=document.createElement('br');br.dataset.referencePadding='true';surface.append(br);}}
   function caretEnd(){const range=document.createRange(),padding=surface.querySelector('[data-reference-padding]');if(padding)range.setStartBefore(padding);else{range.selectNodeContents(surface);range.collapse(false);}range.collapse(true);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);}
