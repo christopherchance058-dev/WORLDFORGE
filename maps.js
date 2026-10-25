@@ -12,18 +12,20 @@ const Maps=(()=>{
   function iconButton(label,icon,fn,cls=''){const b=button('',fn,`square-button ${cls}`);b.setAttribute('aria-label',label);b.title=label;b.append(glyph(icon));return b;}
   function pinContent(p){const entry=entries.find(e=>e.id===p.entryId);return {title:entry?.title||p.title,description:entry?.description||p.description,summary:entry?DescriptionLinks.plain(entry,entries,'summary'):(p.summary||''),image:entry?(entry.image||''):(p.image||''),category:entry?.category||'',linked:!!entry,missing:!!p.entryId&&!entry};}
   function error(message){if(el('map-message'))el('map-message').textContent=message;}
-  function setBusy(value){busy=value;const status=document.querySelector('.autosave-note');if(status)status.textContent=value?'Saving…':saveFailed?'Save failed':'Saved locally';el('maps-section').setAttribute('aria-busy',String(value));el('maps-section').querySelectorAll('button').forEach(b=>b.disabled=value);if(el('map-viewport'))updateControls();}
+  function setBusy(value){busy=value;const status=document.querySelector('.autosave-note');if(status)status.textContent=value?'Saving…':saveFailed?'Save failed':'Saved locally';el('maps-section').setAttribute('aria-busy',String(value));el('maps-section').querySelectorAll('button').forEach(b=>b.disabled=value);if(el('map-viewport'))updateControls();Navigation.refreshControls();}
   async function save(next){const wasBusy=busy;setBusy(true);try{if(!(await persist(entries,next))){saveFailed=true;error(el('toast').textContent);return false;}saveFailed=false;error('');return true;}finally{setBusy(wasBusy);}}
   async function updateMap(map){return save(data.map(m=>m.id===map.id?{...map,updatedAt:new Date().toISOString()}:m));}
   async function updateCanvas(next){return updateMap({...current(),canvases:current().canvases.map(c=>c.id===next.id?next:c)});}
   function leaveWorkspace(){observer?.disconnect();observer=null;gesture=null;document.body.classList.remove('map-editing');el('maps-section').classList.remove('map-workspace');if(ownsFullscreen&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});ownsFullscreen=false;}
   function renderNav(){const b=button('',show,'maps-nav');b.append(glyph('map','nav-icon'),node('span','','Maps'));b.classList.toggle('active',visible);b.setAttribute('aria-current',visible?'page':'false');el('navigation').append(b);}
-  function show(){Characters.hide();Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
+  function show(){return Navigation.visit(showView);}
+  function showView(){Characters.hide();Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
   function hide(){leaveWorkspace();visible=false;currentId=null;canvasId=null;el('workspace-section').textContent='Encyclopedia';el('maps-section').hidden=true;el('encyclopedia').hidden=false;}
   function refresh(){if(visible)collection();}
   function frame(){const root=el('maps-section');root.replaceChildren();return root;}
   function message(root){const msg=node('p','form-error');msg.id='map-message';msg.setAttribute('role','alert');root.append(msg);}
-  function collection(){
+  function collection(){return Navigation.visit(collectionView);}
+  function collectionView(){
     leaveWorkspace();currentId=null;canvasId=null;const root=frame(),head=node('div','heading-row'),title=node('div');
     title.append(node('p','eyebrow','CHART YOUR WORLD'),node('h1','','Your maps'),node('p','subtitle','Worlds, cities and rooms. One atlas, many perspectives.'));
     head.append(title,button('New map',()=>editMap(),'primary'));root.append(head);message(root);
@@ -57,10 +59,11 @@ const Maps=(()=>{
   }
   function setMode(next,id=null){mode=next;movingId=id;el('map-viewport').dataset.mode=mode;el('add-pin').setAttribute('aria-pressed',String(mode==='add'));el('pan-tool').setAttribute('aria-pressed',String(mode==='browse'));el('map-help').textContent=mode==='add'?'Click the image to place a pin. Existing pins open their information.':mode==='move'?'Click the new position. Cancel tool keeps the original position.':'Drag the image to pan, or drag a pin to move it. Changes save automatically.';el('cancel-tool').hidden=mode==='browse';}
   function applyPanels(){const layout=el('map-layout');layout.classList.toggle('images-collapsed',!imagesOpen);layout.classList.toggle('pins-collapsed',!pinsOpen);el('canvas-panel').hidden=!imagesOpen;el('pin-panel').hidden=!pinsOpen;el('toggle-images').setAttribute('aria-expanded',String(imagesOpen));el('toggle-pins').setAttribute('aria-expanded',String(pinsOpen));}
-  function openMap(id,selected=null){
+  function openMap(id,selected=null){return Navigation.visit(()=>openMapView(id,selected));}
+  function openMapView(id,selected=null){
     observer?.disconnect();currentId=id;const m=current();if(!m)return collection();canvasId=m.canvases.some(c=>c.id===selected)?selected:m.canvases[0]?.id||null;
     imagesOpen=false;pinsOpen=false;selectedPin=null;saveFailed=false;const root=frame();root.classList.add('map-workspace');document.body.classList.add('map-editing');
-    const toolbar=node('div','map-toolbar');toolbar.append(iconButton('Exit editor','back',collection));const heading=node('div','workspace-heading');heading.append(node('small','','ATLAS WORKSPACE'),node('h1','workspace-title',m.title));toolbar.append(heading,node('span','autosave-note','Saved locally'));
+    const toolbar=node('div','map-toolbar');toolbar.append(Navigation.controls());toolbar.append(iconButton('Exit editor','back',collection));const heading=node('div','workspace-heading');heading.append(node('small','','ATLAS WORKSPACE'),node('h1','workspace-title',m.title));toolbar.append(heading,node('span','autosave-note','Saved locally'));
     toolbar.append(iconButton('Save','save',async()=>{if(await updateMap(current()))notify('Map saved.');}),iconButton('Edit map','edit',()=>editMap(current())),iconButton('Delete map','trash',async()=>{if(await confirmAction('Delete this map?',`Delete “${current().title}” and all its canvases and pins? Original files remain in the library.`,'Delete map'))if(await save(data.filter(m=>m.id!==currentId)))collection();}));toolbar.append(Theme.control());root.append(toolbar);message(root);
     const layout=node('div','map-layout');layout.id='map-layout';const pinPanel=node('aside');pinPanel.id='pin-panel';pinPanel.setAttribute('aria-label','Pin information');const stage=node('div','map-stage');
     const viewport=node('div');viewport.id='map-viewport';viewport.tabIndex=0;viewport.setAttribute('aria-label','Map canvas. Drag to pan. Use toolbar to add pins and zoom.');
@@ -104,7 +107,7 @@ const Maps=(()=>{
     viewport.onpointerup=async e=>{if(!gesture)return;const g=gesture;gesture=null;if(viewport.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);if(g.moved){ignoreClickUntil=performance.now()+350;if(g.kind==='pin')await movePin(g.id,position(e,true));}else if(g.kind==='pin'){showPin(g.id);ignoreClickUntil=performance.now()+350;}};
     viewport.onpointercancel=()=>{gesture=null;drawPins();};
     viewport.onclick=e=>{if(busy||performance.now()<ignoreClickUntil||e.target.closest('.map-pin')||mode==='browse')return;const p=position(e);if(!p)return;if(mode==='move')movePin(movingId,p);else editPin(null,p);};
-    viewport.onkeydown=e=>{if(e.key==='Escape'){hideHover();setMode('browse');return;}if(e.target!==viewport)return;const moves={ArrowLeft:[30,0],ArrowRight:[-30,0],ArrowUp:[0,30],ArrowDown:[0,-30]};if(moves[e.key]){e.preventDefault();panX+=moves[e.key][0];panY+=moves[e.key][1];transform();}};
+    viewport.onkeydown=e=>{if(e.key==='Escape'){hideHover();setMode('browse');return;}if(e.target!==viewport||e.ctrlKey||e.shiftKey||e.altKey||e.metaKey)return;const moves={ArrowLeft:[30,0],ArrowRight:[-30,0],ArrowUp:[0,30],ArrowDown:[0,-30]};if(moves[e.key]){e.preventDefault();panX+=moves[e.key][0];panY+=moves[e.key][1];transform();}};
   }
   function hideHover(){if(el('map-hover'))el('map-hover').hidden=true;}
   function hoverPin(p,target){if(gesture||busy)return;const info=pinContent(p),box=el('map-hover');box.replaceChildren();if(info.image){const image=node('img');image.src=info.image;image.alt='';box.append(image);}const body=node('div');if(info.category)body.append(node('small','eyebrow',info.category));body.append(node('strong','',info.title),node('p','',info.summary||'Click to read the full story.'));box.append(body);box.hidden=false;const r=target.getBoundingClientRect(),width=Math.min(280,innerWidth-24);box.style.width=`${width}px`;box.style.left=`${Math.max(12,Math.min(innerWidth-width-12,r.right+14))}px`;box.style.top=`${Math.max(12,Math.min(innerHeight-box.offsetHeight-12,r.top-20))}px`;}
@@ -140,5 +143,7 @@ const Maps=(()=>{
     const controls=node('div','canvas-actions');if(canvas())controls.append(iconButton('Rename image','edit',renameImage),iconButton('Move image up','up',()=>reorderImage(-1)),iconButton('Move image down','down',()=>reorderImage(1)));panel.append(controls,iconButton('Upload images','upload',()=>chooseImages()));
   }
 
-  return {get data(){return data;},set data(value){data=value;},get visible(){return visible;},hide,refresh,renderNav,refreshEntries(){if(currentId&&el('map-plane')){drawPins();if(selectedPin)showPin(selectedPin);else pinList();}}};
+  function state(){return {currentId,canvasId,imagesOpen,pinsOpen,selectedPin,zoom,cx:naturalWidth?(viewWidth/2-panX)/scale/naturalWidth:.5,cy:naturalHeight?(viewHeight/2-panY)/scale/naturalHeight:.5};}
+  function restore(s){if(!s.currentId||!data.some(m=>m.id===s.currentId)){show();return;}if(visible&&currentId===s.currentId&&canvasId===s.canvasId)return;if(!visible)show();openMap(s.currentId,s.canvasId);imagesOpen=s.imagesOpen;pinsOpen=s.pinsOpen;applyPanels();const img=el('map-background'),loaded=img.onload;img.onload=()=>{loaded?.();zoom=s.zoom;fit(false);panX=viewWidth/2-s.cx*naturalWidth*scale;panY=viewHeight/2-s.cy*naturalHeight*scale;transform();if(s.selectedPin)showPin(s.selectedPin);};}
+  return {state,restore,get busy(){return busy;},get data(){return data;},set data(value){data=value;},get visible(){return visible;},hide,refresh,renderNav,refreshEntries(){if(currentId&&el('map-plane')){drawPins();if(selectedPin)showPin(selectedPin);else pinList();}}};
 })();

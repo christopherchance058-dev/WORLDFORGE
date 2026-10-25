@@ -17,6 +17,7 @@ These are the default instructions for future coding tasks in this repository. U
 - Prefer the existing stack/dependencies and preserve local-first operation. Add no library, cloud service, external API, database, account requirement or build system unless genuinely needed and the user has authorized the design.
 - The user has no programming knowledge: edit/run/verify the project yourself when the environment supports it; do not hand back coding or terminal work that you can perform. Do not invent lore or completed features.
 - Keep user-generated content safely rendered. Preserve normalized map coordinates, ID-based relationships and existing record fields where relevant; examine necessary integration points, not just the visible widget.
+- Reuse `Navigation.visit` for new entry/workspace opening paths and provide state/restore hooks where appropriate. Keep saves and view refreshes out of navigation history, and reuse the shared editor discard guard before leaving unsaved work.
 
 ## Universal @ linking
 

@@ -170,3 +170,6 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 .description-link-option{display:flex;align-items:center;gap:12px}.reference-suggestion-art{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:0 0 44px;overflow:hidden;border-radius:8px;background:var(--surface-soft);color:var(--control-ink)}.reference-suggestion-art img{width:100%;height:100%;object-fit:cover;object-position:center}.reference-suggestion-copy{min-width:0}.reference-suggestion-art svg{width:23px;height:23px}
 
 .reference-editor.compact{min-height:40px;max-height:110px;padding:7px 12px;line-height:1.65}.reference-editor.compact+.description-link-help{font-size:9px!important;margin:3px 0 0} .character-field .description-reference{font-size:inherit}
+
+/* Shared application history controls, including modal and map contexts. */
+.history-controls{display:inline-flex;gap:4px;flex-shrink:0;align-items:center}.history-controls .square-button{width:32px;height:32px;padding:0;font-size:18px}.history-controls button:disabled{opacity:.35;cursor:default}#detail-content>.history-controls{margin-bottom:12px}#editor .dialog-heading>.history-controls{margin-right:8px}
