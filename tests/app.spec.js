@@ -6,14 +6,14 @@ test('sample entries, search, categories and timeline',async({page})=>{
  await page.getByRole('searchbox').fill('cartographer');await expect(page.locator('.card')).toHaveCount(1);await expect(page.locator('.card')).toContainText('Elara');
  await page.getByRole('searchbox').fill('impossibleword');await expect(page.getByText('No entries found')).toBeVisible();
  await page.getByRole('searchbox').fill('');await page.locator('#navigation').getByRole('button',{name:/History/}).click();
- await expect(page.locator('.card')).toHaveCount(2);await expect(page.locator('.card').first()).toContainText('Year 412');await expect(page.locator('.card').last()).toContainText('Year 438');
+ await expect(page.locator('.card')).toHaveCount(2);await expect(page.locator('.card .entry-card-title')).toHaveText(['The Sundering','The First Lantern']);
 });
 test('create with image, persist, edit category and delete with cancellation',async({page})=>{
  await page.getByRole('button',{name:'New entry'}).click();await page.getByLabel('Title',{exact:true}).fill('Mira of the Moon');await page.getByLabel('Description',{exact:true}).fill('A keeper of lunar maps.');await page.getByLabel(/^Tags/).fill('moon, explorer');
  await page.locator('#entry-image').setInputFiles({name:'moon.png',mimeType:'image/png',buffer:await require('sharp')({create:{width:20,height:20,channels:3,background:'#559977'}}).png().toBuffer()});
  await expect(page.locator('#image-preview')).toBeVisible();await page.getByRole('button',{name:'Save entry'}).click();await page.reload();
  await page.getByRole('button',{name:'Open Mira of the Moon',exact:true}).click();await expect(page.locator('.detail-image')).toBeVisible();await page.getByRole('button',{name:'Edit entry',exact:true}).click();
- await page.getByLabel('Title',{exact:true}).fill('Mira’s Crossing');await page.getByLabel('Category',{exact:true}).selectOption('History');await page.getByRole('spinbutton',{name:'Timeline year (optional)',exact:true}).fill('-12');await page.getByRole('button',{name:'Save entry'}).click();
+ await page.getByLabel('Title',{exact:true}).fill('Mira’s Crossing');await page.getByLabel('Category',{exact:true}).selectOption('History');await page.getByRole('textbox',{name:'Start year',exact:true}).fill('-12');await page.getByRole('button',{name:'Save entry'}).click();
  await page.getByRole('button',{name:'Open Mira’s Crossing',exact:true}).click();await expect(page.locator('#detail')).toContainText('Year -12');await page.getByRole('button',{name:'Delete entry',exact:true}).click();await page.locator('#confirm').getByRole('button',{name:'Cancel'}).click();await expect(page.locator('#detail')).toBeVisible();
  await page.getByRole('button',{name:'Delete entry',exact:true}).click();await page.locator('#confirm').getByRole('button',{name:'Delete entry'}).click();await expect(page.locator('#detail')).not.toBeVisible();await expect(page.getByRole('button',{name:'Open Mira’s Crossing',exact:true})).toHaveCount(0);await page.reload();await expect(page.getByRole('button',{name:'Open Mira’s Crossing',exact:true})).toHaveCount(0);
 });

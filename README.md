@@ -61,6 +61,14 @@ Use the **plus beside Categories** to add categories or change their link colors
 
 In a location’s reading window, **Add child location** lets you create a new place or choose an existing location. Choosing an existing place keeps its content and children. If it already belongs to another parent, the app asks you to confirm the move. Locations that would create circular nesting are excluded.
 
+## Historical events
+
+History entries keep the normal title, short description, description, image, and tags. Open **Chronology** for optional Start year, End year, Year precision, Date certainty, and Calendar or dating system. Use whole fictional years, including negative years. A blank year remains unknown; zero is stored only when you explicitly enter it. Leave End year blank if it is unknown or not recorded—this does not imply the event ended in its start year.
+
+Choose **Unknown** certainty to save without dates. The editor disables the year inputs; switching back before saving restores what you typed. Unknown saves no start/end year. Confirmed, Approximate, Disputed, or Not specified can be used with incomplete dates. End year cannot precede Start year. **Historical classification** suggests event types and accepts your own wording. Calendar names are labels; no conversion is performed. Year sorting groups calendar names alphabetically (unnamed first), orders events within each calendar by start year, and places undated events last.
+
+Existing events retain their old year and other content. Editing chronology synchronizes that legacy year with the start year. Use the current app for chronology edits and portable backups; older versions cannot reliably edit the new date details. The visual timeline is reserved for a later phase.
+
 ## Back up your world
 
 A backup is a spare copy of the **world currently selected**, including its banner image, entries, categories, pictures, maps, and pins. If you have several worlds, export a backup for each one.

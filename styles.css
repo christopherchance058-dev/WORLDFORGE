@@ -216,7 +216,7 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 
 /* The Character form's image sidebar and section rhythm apply to all categories. */
 #editor,#editor.character-entry-editor{width:min(900px,calc(100vw - 28px))}
-#editor #entry-form{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px,26%,220px);grid-template-areas:'head head' 'error error' 'keys keys' 'note note' 'title category' 'location location' 'summary portrait' 'description portrait' 'tags portrait' 'locationExtra locationExtra' 'factionExtra factionExtra' 'characterExtra characterExtra' 'actions actions';column-gap:24px}
+#editor #entry-form{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px,26%,220px);grid-template-areas:'head head' 'error error' 'keys keys' 'note note' 'title category' 'location location' 'summary portrait' 'description portrait' 'tags portrait' 'locationExtra locationExtra' 'factionExtra factionExtra' 'historyExtra historyExtra' 'characterExtra characterExtra' 'actions actions';column-gap:24px}
 #editor .dialog-heading{grid-area:head}#editor #character-editor-note{grid-area:note}#editor #entry-title-field{grid-area:title}#editor #entry-category-fields{grid-area:category;grid-template-columns:minmax(0,1fr)}
 #editor #location-editor{grid-area:location}#editor #entry-summary-field{grid-area:summary}#editor #entry-description-field{grid-area:description}#editor #entry-tags-field{grid-area:tags}#editor #image-controls{grid-area:portrait}
 #editor #location-extra{grid-area:locationExtra}#editor #faction-editor{grid-area:factionExtra}#editor #character-editor{grid-area:characterExtra}#editor #form-error{grid-area:error}#editor .dialog-actions{grid-area:actions}
@@ -339,3 +339,6 @@ body:has(#detail[open]){overflow:hidden}
 
 .form-error:empty{display:none}
 dialog .form-error{scroll-margin-top:16px}
+
+#editor #history-editor{grid-area:historyExtra}
+#history-sort-note{margin:12px 0}
