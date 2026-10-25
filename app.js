@@ -61,7 +61,7 @@ function render(){
  const query=$('search').value.trim().toLowerCase();const list=entries.filter(e=>(filter==='All'||e.category===filter)&&[e.title,e.summary||'',e.description,...e.tags,String(e.year),Factions.searchText(e)].join(' ').toLowerCase().includes(query));
  list.sort((a,b)=>$('sort').value==='title'?a.title.localeCompare(b.title):$('sort').value==='year'?(a.year===''?Infinity:a.year)-(b.year===''?Infinity:b.year)||a.title.localeCompare(b.title):b.updatedAt.localeCompare(a.updatedAt));
  $('list-title').textContent=filter==='All'?'All entries':filter==='History'?'Timeline':filter;$('result-count').textContent=`${list.length} ${list.length===1?'entry':'entries'}`;$('entries').className=filter==='History'?'cards timeline':'cards';$('entries').replaceChildren();
- EntryCards.grid($('entries'));list.forEach(e=>$('entries').append(EntryCards.card(e,{className:'card',showCategory:filter==='All',onOpen:()=>showDetail(e.id)})));
+ EntryCards.grid($('entries'));list.forEach(e=>$('entries').append(EntryCards.card(e,{className:'card',onOpen:()=>showDetail(e.id)})));
  $('empty').hidden=list.length>0;$('empty-title').textContent=query?'No entries found':'A new story starts here';$('empty-text').textContent=query?'Try another title, phrase, or tag.':'Create your first entry and bring your world to life.';
 }
 document.querySelector('.library-actions').prepend(EntryCards.control());
