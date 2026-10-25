@@ -296,3 +296,23 @@ body:has(#detail[open]){overflow:hidden}
 /* Keep section breathing room outside the standardized helper text itself. */
 #editor #entry-title-field,#editor #entry-category-fields{padding-top:16px}
 #editor #location-editor:not([hidden]){padding-bottom:16px}
+
+/* Shared reference badges: the same destination color and icon in every view. */
+.entry-profile .entry-field .category-entry-link,.entry-profile .entry-profile-group .category-entry-link,.category-entry-link.category-entry-link{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:2px 7px;margin:2px 3px;vertical-align:baseline;border:0;border-radius:6px;background:color-mix(in srgb,currentColor 12%,var(--surface-soft));text-decoration:none;white-space:normal;overflow-wrap:anywhere;line-height:1.6;font:inherit;color:var(--entry-link-color,var(--entry-link-light))}
+.entry-reference-icon{display:inline-flex;flex:none;width:14px;height:14px}.entry-reference-icon svg{width:14px!important;height:14px!important}
+.entry-grid{--card-width:460px;--entry-image-size:112px;--entry-preview-lines:6}
+.entry-grid[data-size=small]{--card-width:290px;--entry-image-size:80px}
+.entry-grid[data-size=large]{--card-width:530px;--entry-image-size:160px}
+.entry-card-open{display:block;width:100%;border:0;background:transparent;padding:0;color:inherit;font:inherit;text-align:left}
+.entry-card-open:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+.entry-card-media,.entry-card-copy{position:relative;pointer-events:auto}
+.entry-card-copy .category-entry-link{pointer-events:auto;position:relative}
+.entry-card .entry-card-summary{display:block;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
+.entry-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.entry-card-tags .tag{max-width:100%;overflow-wrap:anywhere;font-size:10px}
+.entry-card .entry-card-summary .category-entry-link{font:inherit}
+
+.description-reference-unavailable{display:inline-flex;align-items:center;gap:5px;max-width:100%;overflow-wrap:anywhere;padding:2px 7px;margin:2px 3px;border-radius:6px;background:var(--surface-soft);text-decoration:none}
+.entry-card{cursor:pointer}
+/* Clamp the title button itself so its keyboard/click target stays fully visible. */
+.entry-card .entry-card-title{display:block;overflow:visible;-webkit-line-clamp:unset}
+.entry-card-open{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
