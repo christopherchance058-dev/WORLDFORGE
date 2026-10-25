@@ -51,7 +51,7 @@ To stop the app, click the terminal window and press **Ctrl+C**. Wait until it s
 
 Choose **Characters** to browse your cast or create someone new—even with nothing filled in yet. Add a portrait and expand the optional sections whenever you are ready. Character type and life status accept your own words; saved character details are offered as suggestions while typing. Use the **Card size** slider to fit more characters on screen.
 
-Choose **New entry** to begin writing, **Geography** to organize places, or **Maps** to upload your artwork and place pins.
+Choose **New entry** to begin writing, **Location** to organize places, or **Maps** to upload your artwork and place pins.
 
 The large banner shows your current world. Use its **pencil** to change the name, description, or banner image. For artwork, **2400 × 800 pixels** works well; keep important details near the centre because the edges may be cropped. Use the **two-arrow button beside the pencil** to switch worlds, or use the **plus** in that window to create another world. New worlds start empty; your existing work stays in the first world.
 

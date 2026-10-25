@@ -17,7 +17,7 @@ const Maps=(()=>{
   async function updateMap(map){return save(data.map(m=>m.id===map.id?{...map,updatedAt:new Date().toISOString()}:m));}
   async function updateCanvas(next){return updateMap({...current(),canvases:current().canvases.map(c=>c.id===next.id?next:c)});}
   function leaveWorkspace(){observer?.disconnect();observer=null;gesture=null;document.body.classList.remove('map-editing');el('maps-section').classList.remove('map-workspace');if(ownsFullscreen&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});ownsFullscreen=false;}
-  function renderNav(){const b=button('',show,'maps-nav');b.append(glyph('map','nav-icon'),node('span','','Maps'));b.classList.toggle('active',visible);b.setAttribute('aria-current',visible?'page':'false');el('navigation').append(b);}
+  function renderNav(){const b=button('',show,'maps-nav');b.append(glyph('map','nav-icon'),node('span','','Maps'));b.classList.toggle('active',visible);b.setAttribute('aria-current',visible?'page':'false');const section=node('div','maps-navigation');section.append(node('p','nav-label','ATLAS'),b);el('navigation').append(section);}
   function show(){return Navigation.visit(showView);}
   function showView(){Characters.hide();Geography.hide();visible=true;el('workspace-section').textContent='Maps';el('encyclopedia').hidden=true;el('maps-section').hidden=false;document.querySelectorAll('#navigation button').forEach(b=>b.classList.remove('active'));el('navigation').querySelector('.maps-nav')?.classList.add('active');collection();}
   function hide(){leaveWorkspace();visible=false;currentId=null;canvasId=null;el('workspace-section').textContent='Encyclopedia';el('maps-section').hidden=true;el('encyclopedia').hidden=false;}

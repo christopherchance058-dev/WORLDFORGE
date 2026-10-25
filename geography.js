@@ -7,13 +7,13 @@ const Geography=(()=>{
  const action=(label,icon,handler,cls='square-button')=>{const b=node('button',cls);b.type='button';b.setAttribute('aria-label',label);b.title=label;b.append(glyph(icon));b.onclick=handler;return b;};
  function category(){return categories.includes('Locations')?'Locations':locations()[0]?.category||categories[0];}
  function hide(){visible=false;$('geography-section').hidden=true;}
- function nav(){const b=node('button',visible?'active':'');b.setAttribute('aria-label','Geography & Locations');b.title='Geography & Locations';b.setAttribute('aria-current',visible?'page':'false');b.append(glyph('map','nav-icon'),node('span','','Geography'),node('span','count',locations().length));b.onclick=()=>show();return b;}
+ function nav(){const b=node('button',visible?'active':'');b.setAttribute('aria-label','Location');b.title='Locations';b.setAttribute('aria-current',visible?'page':'false');b.append(glyph('house','nav-icon'),node('span','','Location'),node('span','count',locations().length));b.onclick=()=>show();return b;}
  function show(id=null){return Navigation.visit(()=>showView(id));}
  function showView(id=null){
-  Characters.hide();Maps.hide();visible=true;$('encyclopedia').hidden=true;$('geography-section').hidden=false;$('workspace-section').textContent='Geography & Locations';
+  Characters.hide();Maps.hide();visible=true;$('encyclopedia').hidden=true;$('geography-section').hidden=false;$('workspace-section').textContent='Locations';
   if(id)selectedId=id;if(!locations().some(e=>e.id===selectedId))selectedId=null;render();renderNavigation();
  }
- function renderNavigation(){document.querySelectorAll('#navigation button').forEach(b=>{const active=b.getAttribute('aria-label')==='Geography & Locations';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});}
+ function renderNavigation(){document.querySelectorAll('#navigation button').forEach(b=>{const active=b.getAttribute('aria-label')==='Location';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});}
  function create(parent=null){if($('detail').open)$('detail').close();openEditor(null,{category:category(),location:true,parentId:parent});}
  function select(id){return Navigation.visit(()=>selectView(id));}
  function selectView(id){selectedId=id;const e=entries.find(e=>e.id===id);if(!model.isLocation(e))return;model.ancestry(e,entries).forEach(a=>collapsed.delete(a.id));renderTree();renderDetail();if(innerWidth<=850)$('geography-detail').scrollIntoView({block:'start',behavior:'smooth'});}
@@ -21,7 +21,7 @@ const Geography=(()=>{
  function navigateView(id){const e=entries.find(e=>e.id===id);if(!e)return;if(model.isLocation(e)&&visible){if($('detail').open)$('detail').close();select(id);}else showDetail(id);}
  function refresh(){if(!visible)return;if(!locations().some(e=>e.id===selectedId))selectedId=null;render();}
  function render(){
-  const root=$('geography-section');root.replaceChildren();const heading=node('div','heading-row'),copy=node('div');copy.append(node('p','eyebrow','EVERY PLACE HAS A STORY'),node('h1','','Geography & Locations'),node('p','subtitle','Trace the places, people and passages that make your world feel alive.'));
+  const root=$('geography-section');root.replaceChildren();const heading=node('div','heading-row'),copy=node('div');copy.append(node('p','eyebrow','EVERY PLACE HAS A STORY'),node('h1','','Locations'),node('p','subtitle','Trace the places, people and passages that make your world feel alive.'));
   const add=action('New location','plus',()=>create(),'primary new-location');add.append(node('span','','New location'));heading.append(copy,add);root.append(heading);
   const layout=node('div','geography-layout'),browser=node('aside','geography-browser');browser.setAttribute('aria-label','Location browser');
   const searchLabel=node('label','search geography-search'),search=node('input');search.type='search';search.placeholder='Find a place, story or inhabitant…';search.setAttribute('aria-label','Search locations');search.value=query;search.oninput=()=>{query=search.value;renderTree();if(!selectedId)renderDetail();};searchLabel.append(glyph('zoom'),search);browser.append(searchLabel);
@@ -50,7 +50,7 @@ const Geography=(()=>{
   const tools=node('div','location-card-tools');tools.append(node('h2','','Places in your world'),EntryCards.control('Location card size'));box.append(tools);const cards=EntryCards.grid(node('div','location-cards'));for(const location of matchingLocations)cards.append(EntryCards.card(location,{className:'location-card',label:`Open location ${location.title}`,icon:iconFor(location),metadata:model.types[model.read(location).type]||'Location',onOpen:()=>select(location.id)}));box.append(cards);if(!matchingLocations.length)box.append(node('p','storage-note',locations().length?'No matching locations. Try another phrase or type.':'Start with one place. Create a location to begin.'));
  }
  function link(id,label=null){const e=entries.find(e=>e.id===id);if(!e)return node('span','unavailable-reference','Unavailable entry');const b=node('button','lore-link');b.type='button';b.setAttribute('aria-label',`Open ${e.title}`);b.title=`Open ${e.title}`;b.append(glyph(model.isLocation(e)?iconFor(e):categoryIcon(e.category)),node('span','',label||e.title));b.onclick=()=>navigate(id);return b;}
- function breadcrumbs(e,box){if(!model.isLocation(e))return;const nav=node('nav','location-breadcrumbs');nav.setAttribute('aria-label','Location breadcrumbs');const home=node('button','','Geography');home.type='button';home.onclick=()=>Navigation.visit(()=>{if($('detail').open)$('detail').close();selectedId=null;show();});nav.append(home);for(const ancestor of model.ancestry(e,entries)){nav.append(node('span','breadcrumb-separator','/'),link(ancestor.id));}nav.append(node('span','breadcrumb-separator','/'),node('span','breadcrumb-current',e.title));box.append(nav);}
+ function breadcrumbs(e,box){if(!model.isLocation(e))return;const nav=node('nav','location-breadcrumbs');nav.setAttribute('aria-label','Location breadcrumbs');const home=node('button','','Locations');home.type='button';home.onclick=()=>Navigation.visit(()=>{if($('detail').open)$('detail').close();selectedId=null;show();});nav.append(home);for(const ancestor of model.ancestry(e,entries)){nav.append(node('span','breadcrumb-separator','/'),link(ancestor.id));}nav.append(node('span','breadcrumb-separator','/'),node('span','breadcrumb-current',e.title));box.append(nav);}
  function detailGroup(box,title){const section=node('section','location-detail-group');section.append(node('h3','',title));box.append(section);return section;}
  function appendDetails(e,box){
   if(model.isLocation(e)){
@@ -98,5 +98,5 @@ const Geography=(()=>{
  function collect(){return editorActive()?editor():undefined;}
  function state(){return {selectedId,query,type,collapsed:[...collapsed]};}
  function restore(s){query=s.query;type=s.type;collapsed=new Set(s.collapsed);selectedId=s.selectedId;show();}
- return {state,restore,get visible(){return visible;},get selectedId(){return selectedId;},nav,show,hide,create,select,refresh,beginEditor,updateEditor,collect,breadcrumbs,appendDetails};
+ return {referencePicker,group,inputField,selectField,state,restore,get visible(){return visible;},get selectedId(){return selectedId;},nav,show,hide,create,select,refresh,beginEditor,updateEditor,collect,breadcrumbs,appendDetails};
 })();

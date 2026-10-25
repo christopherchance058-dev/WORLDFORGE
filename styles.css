@@ -173,3 +173,6 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 
 /* Shared application history controls, including modal and map contexts. */
 .history-controls{display:inline-flex;gap:4px;flex-shrink:0;align-items:center}.history-controls .square-button{width:32px;height:32px;padding:0;font-size:18px}.history-controls button:disabled{opacity:.35;cursor:default}#detail-content>.history-controls{margin-bottom:12px}#editor .dialog-heading>.history-controls{margin-right:8px}
+
+/* The atlas is a workspace, separate from entry categories. */
+.maps-navigation{border-top:1px solid var(--border);margin-top:16px;padding-top:10px}.maps-navigation>.nav-label{padding:0 16px;margin:0 0 5px}.faction-detail-field{margin:14px 0}.faction-detail-field h4,.faction-links h4{margin:10px 0 4px}.faction-links .lore-link{margin:4px 8px 4px 0}#faction-editor .reference-picker{margin-top:18px}
