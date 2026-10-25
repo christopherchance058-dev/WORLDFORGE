@@ -427,3 +427,28 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-era-band[data-certainty=approximate],.timeline-era-shade[data-certainty=approximate]{border-style:dashed}
 .timeline-era-band[data-certainty=disputed],.timeline-era-shade[data-certainty=disputed]{border-style:dotted}
 .timeline-track{z-index:1}
+/* History presents two kinds of record through the same browser conventions. */
+.history-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}.history-tabs[hidden]{display:none}
+.history-tabs [role=tab]{border:1px solid var(--border);border-radius:7px;padding:10px 18px;background:var(--surface);color:var(--ink)}
+.history-tabs [aria-selected=true]{background:var(--surface-soft);border-color:var(--muted);font-weight:650}
+#history-world-settings{margin-left:auto}
+.era-dialog{overflow-x:hidden}.era-dialog form{min-width:0;max-width:100%}
+.era-dialog .dialog-heading h2{min-width:0;overflow-wrap:anywhere}.era-dialog .dialog-heading>.icon-button{flex:0 0 36px;width:36px;height:36px;padding:0;display:grid;place-items:center;font:26px/1 sans-serif}
+.era-dialog :is(label,fieldset,.location-group-fields,.reference-editor){min-width:0;max-width:100%}
+#era-description-surface{min-height:120px;max-height:240px}
+.era-image-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px;margin:18px 0}
+.era-image-field{border:1px solid var(--border);border-radius:8px;padding:12px}.era-image-preview img{display:block;width:100%;height:130px;object-fit:cover;border-radius:6px}.era-image-preview.wide img{height:100px}.era-image-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.era-reading-banner{width:100%;max-height:280px;object-fit:contain}
+.timeline-event-heading{display:flex;align-items:flex-start;gap:9px}.timeline-event-icon{width:23px;height:23px;flex-shrink:0;color:var(--muted)}.timeline-event-icon svg{width:100%;height:100%}
+.timeline-event-card{max-height:136px;min-height:72px}.timeline-event-card.compact{max-height:120px;min-height:64px}
+.timeline-era-band.illustrated{height:96px;border-width:1px;background:linear-gradient(120deg,color-mix(in srgb,var(--era-color) 65%,#15221c),#16231f);color:white;isolation:isolate}
+.timeline-era-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;border-radius:2px;pointer-events:none}
+.timeline-era-band.illustrated::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#000b,#0005);z-index:-1;pointer-events:none}
+.timeline-era-band.illustrated .timeline-era-name{top:18px;padding:6px 10px;background:transparent;color:white;font-size:16px;line-height:1.4;max-width:240px;text-shadow:0 1px 3px #000}
+.timeline-era-band.illustrated .timeline-era-name small{font-size:12px;color:#fff;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.timeline-era-band.illustrated.point{background:var(--era-color);border-radius:0}.timeline-era-band.illustrated.point::after{display:none}.timeline-era-band.illustrated.point .timeline-era-name{background:var(--surface-soft);color:var(--ink);text-shadow:none}.timeline-era-band.illustrated.point small{color:var(--muted)}
+
+.timeline-event-heading .timeline-event-open{min-width:0;flex:1}
+.era-dialog{--entry-field-border:var(--border);--entry-field-bg:var(--surface);--entry-field-focus:var(--control-ink)}
+.era-image-preview.square img{width:150px;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover}
+
+@media(min-width:901px){.timeline-toolbar{gap:10px}.timeline-toolbar .search{flex-basis:200px;min-width:180px}}
