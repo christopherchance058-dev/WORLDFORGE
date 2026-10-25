@@ -274,3 +274,6 @@ body:has(#detail[open]){overflow:hidden}
 .color-preview-light{background:#fff}.color-preview-dark{background:#1d272b}
 .color-preview-light small{color:#59635e}.color-preview-dark small{color:#b3c0b8}
 .category-color-example{display:inline-block;text-decoration:underline;text-underline-offset:3px;margin-top:6px;font-size:13px}
+
+/* Editing chips share the target category color without behaving like navigation links. */
+.reference-chip.category-entry-link{color:var(--entry-link-color,var(--entry-link-light));background:color-mix(in srgb,currentColor 12%,var(--surface-soft));text-decoration:none}
