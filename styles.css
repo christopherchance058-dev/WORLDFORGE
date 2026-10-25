@@ -316,3 +316,14 @@ body:has(#detail[open]){overflow:hidden}
 /* Clamp the title button itself so its keyboard/click target stays fully visible. */
 .entry-card .entry-card-title{display:block;overflow:visible;-webkit-line-clamp:unset}
 .entry-card-open{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+
+/* One shared card format: square image + title, then full-width lore and tags. */
+.entry-grid{align-items:start}
+.entry-card,.entry-card.card,.entry-card.character-card{grid-template-columns:var(--entry-image-size) minmax(0,1fr);row-gap:12px;align-self:start}
+.entry-card-content{grid-column:1/-1;min-width:0}
+.entry-card .entry-card-content>.entry-card-summary{margin-top:0}
+.entry-card-content>.entry-card-tags:first-child{margin-top:0}
+/* Compact header portraits balance the title block at each card size. */
+.entry-grid{--entry-image-size:80px}
+.entry-grid[data-size=small]{--entry-image-size:56px}
+.entry-grid[data-size=large]{--entry-image-size:104px}
