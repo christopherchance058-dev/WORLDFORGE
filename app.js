@@ -89,11 +89,12 @@ function renderEntryDetail(e,box,options={}){
 function showDetail(id){return Navigation.visit(()=>openDetail(id));}
 function openDetail(id){const e=entries.find(e=>e.id===id);if(!e)return;$('detail').dataset.entryId=id;renderEntryDetail(e,$('detail-content'),{close:()=>Navigation.visit(()=>$('detail').close())});$('detail-content').prepend(Navigation.controls());if(!$('detail').open)$('detail').showModal();}
 async function deleteEntry(e){
- const plan=GeographyModel.deletion(entries,e),characterPlan=CharacterModel.deletion(plan.entries,e);plan.entries=characterPlan.entries;const factionPlan=FactionModel.deletion(plan.entries,e);plan.entries=factionPlan.entries;let message=`“${e.title}” will be removed. Linked map pins will keep copies of its text and image.`;
+ const plan=GeographyModel.deletion(entries,e),characterPlan=CharacterModel.deletion(plan.entries,e);plan.entries=characterPlan.entries;const factionPlan=FactionModel.deletion(plan.entries,e);plan.entries=factionPlan.entries;const historyPlan=HistoryModel.deletion(plan.entries,e);plan.entries=historyPlan.entries;let message=`“${e.title}” will be removed. Linked map pins will keep copies of its text and image.`;
  if(plan.children)message+=` Its ${plan.children} direct child location${plan.children===1?'':'s'} will ${plan.parent?`move under “${plan.parent.title}”`:'become top-level locations'}. Their children and stories will be kept.`;
  if(plan.referencing)message+=` Links in ${plan.referencing} location${plan.referencing===1?'':'s'} will be updated. Written travel information will be kept, with a former-destination label where needed.`;
  if(characterPlan.count)message+=` Links in ${characterPlan.count} character profiles will be updated. Relationship notes and shared history will be kept.`;
  if(factionPlan.count)message+=` Links in ${factionPlan.count} faction profiles will be removed. Written notes and @ references will be kept.`;
+ if(historyPlan.count)message+=` Links in ${historyPlan.count} historical events will be removed. Other event fields and written notes will be kept.`;
  message+=' Export a backup first if you want to keep the entry.';
  if(!(await confirmAction('Delete this entry?',message,'Delete entry')))return;notify('Saving entry deletion…');
  const nextMaps=Maps.data.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>p.entryId===e.id?{...p,entryId:null,image:e.image,title:e.title,description:DescriptionLinks.plain(e,entries),summary:DescriptionLinks.plain(e,entries,'summary')}:p)}))}));

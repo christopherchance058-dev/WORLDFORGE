@@ -120,3 +120,13 @@ All your worlds are stored in the **`data` folder** inside your WORLDFORGE folde
 4. Follow the setup commands in the new folder, then open the app and check your world.
 
 You can also set up a fresh copy and **Import backup** instead of copying the `data` folder. Keep your old folder and backup until the updated app opens your world correctly.
+
+### History timeline filters and connected entries
+
+Open **History → Visual timeline**. Use **Filter event type** and **Filter date certainty** alongside search; all active choices must match. Custom saved event types appear automatically. “No event type” and “Certainty not specified” cover blank values; Unknown certainty is a separate saved value. Undated and named-calendar results remain in their own sections below the axis. Filtering never edits dates or records.
+
+Search/filter changes retain your year and zoom and start at the first event row. Use **Fit to events** to frame the matching numeric dates, or **Clear search and filters** to restore all results. An empty result offers recovery controls. Back/Forward restores these session choices; reload/world switching resets the timeline session.
+
+In a History editor, expand **Connected history**. Search/select existing Characters, Factions and Locations; multiple selections are allowed. Selected badges can be removed independently. Optional unlinked notes never create entries and intentionally do not parse @ links. These neutral associations do not assert participation, combat or a single setting. Save, open the event and click its related entries to read them; referenced entries also show **Referenced in history**. Back returns through the existing reading/timeline context. A small linked count on timeline cards points to this details workflow.
+
+To check persistence, add a selection, save, reopen and reload, then export/import a ZIP in an isolated test world. Remove a selection and confirm its entity still exists. Deleting an event keeps its related entities; deleting an entity cleans only its structured links. Missing references in older/imported records appear as unavailable and remain removable. Existing descriptions, images, tags and chronology remain in the event. Use the current app for editing these optional relationship fields; older versions cannot reliably edit them.

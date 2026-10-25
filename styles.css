@@ -392,3 +392,8 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-event-date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .timeline-event-card.compact .timeline-event-facts{flex-wrap:nowrap;max-height:24px}
 .timeline-event-facts .tag{flex-shrink:0}
+
+.timeline-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:8px 0 14px}
+.timeline-filters label{display:grid;gap:5px;font-size:12px;color:var(--muted);min-width:180px;max-width:320px}
+.timeline-filters select{width:100%;min-height:38px;padding:8px 10px;border-radius:6px;background:var(--surface);color:var(--ink);border:1px solid var(--border)}
+.timeline-empty button{margin:6px}
