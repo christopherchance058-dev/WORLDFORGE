@@ -293,3 +293,6 @@ body:has(#detail[open]){overflow:hidden}
  display:block;font:var(--form-help-font);letter-spacing:normal;color:var(--muted);margin:var(--form-help-gap) 0 0;padding:0;
 }
 #location-editor>label:has(+.location-hint){margin-bottom:0}
+/* Keep section breathing room outside the standardized helper text itself. */
+#editor #entry-title-field,#editor #entry-category-fields{padding-top:16px}
+#editor #location-editor:not([hidden]){padding-bottom:16px}
