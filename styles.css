@@ -189,7 +189,7 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 .entry-profile-intro>.eyebrow{font-size:10px;letter-spacing:1.8px;margin:0 0 8px}
 .entry-profile .entry-detail-summary{font:italic 16px/1.75 var(--serif);color:var(--ink);border:0;padding:0;margin:14px 0;white-space:pre-wrap}
 .entry-profile .character-byline{font-size:13px;line-height:1.7;margin:0 0 10px}
-.entry-profile-actions{gap:8px;margin-top:20px}
+.entry-profile-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:20px}
 .entry-profile-actions button{font-size:12px;padding:9px 13px}
 .entry-profile-close{position:absolute;top:0;right:0;float:none;margin:0;width:32px;height:32px;font-size:23px}
 .entry-profile>.tags{margin:0 0 24px;gap:7px}
