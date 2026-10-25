@@ -252,3 +252,25 @@ body:has(#detail[open]){overflow:hidden}
 
 .entry-profile .entry-field .lore-link{border:0;background:none;padding:0;margin:0 10px 4px 0;color:var(--control-ink);font-size:inherit;line-height:1.8;text-decoration:underline;text-underline-offset:3px}
 .entry-profile .entry-field .character-relationship-detail{padding:0;border:0}.entry-profile .entry-field .character-relationship-detail p{margin:8px 0}
+
+/* Neutral label badges and faint row dividers belong to reading views only. */
+.entry-profile .entry-facts{gap:0}
+.entry-profile .entry-field{padding:10px 0;align-items:start}
+.entry-profile .entry-field+.entry-field{border-top:1px solid var(--border)}
+.entry-profile .entry-field dt{padding-top:0}
+.entry-field-label{display:inline-block;max-width:100%;padding:4px 10px;background:var(--surface-soft);border-radius:6px;color:var(--ink);font-weight:550;line-height:1.6}
+.entry-profile .entry-field dd{padding-top:4px}
+/* Destination-category colors are reserved for clickable entry references. */
+.entry-profile .entry-field .category-entry-link,.entry-profile .entry-profile-group .category-entry-link,.category-entry-link{color:var(--entry-link-color,var(--entry-link-light));text-decoration:underline;text-underline-offset:3px}
+[data-theme=dark] .category-entry-link{--entry-link-color:var(--entry-link-dark)}
+.category-color-settings{border:1px solid var(--border);border-radius:8px;padding:14px;margin:16px 0}
+.category-color-settings legend{padding:0 6px;font-weight:600}
+.category-color-settings label{display:flex;align-items:center;gap:12px;font-size:12px}
+.category-color-settings input[type=color]{width:48px;height:34px;padding:3px;margin:0;cursor:pointer}
+.category-color-presets{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.color-swatch{width:28px;height:28px;border:1px solid var(--border);border-radius:6px}
+.category-color-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.category-color-preview>span{padding:12px;border-radius:6px}
+.color-preview-light{background:#fff}.color-preview-dark{background:#1d272b}
+.color-preview-light small{color:#59635e}.color-preview-dark small{color:#b3c0b8}
+.category-color-example{display:inline-block;text-decoration:underline;text-underline-offset:3px;margin-top:6px;font-size:13px}

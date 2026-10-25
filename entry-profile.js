@@ -2,7 +2,7 @@
 const EntryProfile=(()=>{
  const hasText=value=>typeof value==='string'&&value.trim().length>0;
  function section(box,title,{secret=false,className=''}={}){const group=node(secret?'details':'section',`entry-profile-group ${className}`);group.append(node(secret?'summary':'h3','',title));box.append(group);return group;}
- function field(facts,label,value,{long=false,className=''}={}){const pair=node('div',`entry-field${long?' long-form':''} ${className}`),content=node('dd');pair.append(node('dt','',label),content);if(typeof value==='string')content.textContent=value;else content.append(value);facts.append(pair);return pair;}
+ function field(facts,label,value,{long=false,className=''}={}){const pair=node('div',`entry-field${long?' long-form':''} ${className}`),content=node('dd');const term=node('dt');term.append(node('span','entry-field-label',label));pair.append(term,content);if(typeof value==='string')content.textContent=value;else content.append(value);facts.append(pair);return pair;}
  function facts(box,className=''){const list=node('dl',`entry-facts ${className}`);box.append(list);return list;}
  function header(e,box,{kind=e.category,byline='',status='',close,editLabel='Edit entry',deleteLabel='Delete entry',modal=false}={}){
   const character=CharacterModel.isCharacter(e);box.classList.add('entry-profile');if(close){const button=node('button','icon-button entry-profile-close','×');button.type='button';button.setAttribute('aria-label','Close entry');button.onclick=close;box.append(button);}
