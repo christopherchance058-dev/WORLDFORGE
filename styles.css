@@ -169,7 +169,7 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 .reference-chip{display:inline-flex;align-items:center;gap:6px;vertical-align:baseline;max-width:100%;padding:1px 6px;border-radius:6px;background:var(--surface-soft);color:var(--green);white-space:normal;font-weight:600;line-height:1.6;user-select:all;cursor:default}.reference-chip.unavailable{color:var(--muted)}[data-theme=dark] .reference-chip{background:#2d5141;color:#c6e4d1}.reference-chip-remove{background:none!important;border:0;padding:0 2px;color:inherit;font:inherit;cursor:pointer;flex:none}
 .description-link-option{display:flex;align-items:center;gap:12px}.reference-suggestion-art{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:0 0 44px;overflow:hidden;border-radius:8px;background:var(--surface-soft);color:var(--control-ink)}.reference-suggestion-art img{width:100%;height:100%;object-fit:cover;object-position:center}.reference-suggestion-copy{min-width:0}.reference-suggestion-art svg{width:23px;height:23px}
 
-.reference-editor.compact{min-height:40px;max-height:110px;padding:7px 12px;line-height:1.65}.reference-editor.compact+.description-link-help{font-size:9px!important;margin:3px 0 0} .character-field .description-reference{font-size:inherit}
+.reference-editor.compact{min-height:40px;max-height:110px;padding:7px 12px;line-height:1.65}.reference-editor.compact+.description-link-help{margin-top:7px} .character-field .description-reference{font-size:inherit}
 
 /* Shared application history controls, including modal and map contexts. */
 .history-controls{display:inline-flex;gap:4px;flex-shrink:0;align-items:center}.history-controls .square-button{width:32px;height:32px;padding:0;font-size:18px}.history-controls button:disabled{opacity:.35;cursor:default}#detail-content>.history-controls{margin-bottom:12px}#editor .dialog-heading>.history-controls{margin-right:8px}
@@ -285,3 +285,11 @@ body:has(#detail[open]){overflow:hidden}
 .location-reference-picker>button{font-size:12px;margin:8px 0}
 .location-reference-picker>small{margin-top:8px}
 .location-reference-picker .reference-option small{font-size:9px;overflow-wrap:anywhere;max-width:42%}
+
+/* Form helper text shares the Description linking hint's typography and spacing.
+   Option labels, search-result metadata and preview labels are not helper text. */
+:root{--form-help-font:400 10px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--form-help-gap:7px}
+:is(dialog form,#editor #entry-form) :is(small,.storage-note):not(:where(.symbol-choice small,.reference-option small,.description-link-option small,.reference-options small,.category-color-preview small)){
+ display:block;font:var(--form-help-font);letter-spacing:normal;color:var(--muted);margin:var(--form-help-gap) 0 0;padding:0;
+}
+#location-editor>label:has(+.location-hint){margin-bottom:0}
