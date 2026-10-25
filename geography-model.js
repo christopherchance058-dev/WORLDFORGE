@@ -3,14 +3,14 @@
  const types={realm:'World / Realm',region:'Continent / Region',sea:'Ocean / Sea',island:'Island / Archipelago',settlement:'City / Settlement',district:'City District / Neighborhood',village:'Village / Outpost',landmark:'Landmark / Natural Feature',building:'Building / Establishment',dungeon:'Dungeon / Ruin',underwater:'Underwater Location',route:'Route / Sea Passage'};
  const statuses=['inhabited','abandoned','hidden','destroyed','uninhabited','unknown'];
  const texts={population:120,government:4000,climate:4000,dangers:6000,resources:4000,secrets:10000};
- const lists=['inhabitantIds','pointOfInterestIds','connectedLocationIds','relatedEntryIds'];
+ const lists=['inhabitantIds','pointOfInterestIds','connectedLocationIds','relatedEntryIds','rulerIds','controllingFactionIds'];
  const singles=['parentId','rulerId','controllingFactionId'];
  const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
  const isLocation=e=>!!e&&(e.category==='Locations'||object(e.location));
  const string=v=>typeof v==='string'?v:'';
  const read=e=>{
   const g=object(e?.location)?e.location:{};
-  return {...g,type:typeof g.type==='string'&&Object.hasOwn(types,g.type)?g.type:'',status:statuses.includes(g.status)?g.status:'',...Object.fromEntries(Object.keys(texts).map(k=>[k,string(g[k])])),...Object.fromEntries(singles.map(k=>[k,string(g[k])||null])),...Object.fromEntries(lists.map(k=>[k,Array.isArray(g[k])?g[k].filter(id=>typeof id==='string'):[]])),travel:Array.isArray(g.travel)?g.travel.filter(object).map(t=>({...t,destinationId:string(t.destinationId)||null,destinationLabel:string(t.destinationLabel),method:string(t.method),duration:string(t.duration),notes:string(t.notes)})):[]};
+  return {...g,type:string(g.type),status:string(g.status),...Object.fromEntries(Object.keys(texts).map(k=>[k,string(g[k])])),...Object.fromEntries(singles.map(k=>[k,string(g[k])||null])),...Object.fromEntries(lists.map(k=>[k,Array.isArray(g[k])?g[k].filter(id=>typeof id==='string'):k==='rulerIds'&&g.rulerId?[g.rulerId]:k==='controllingFactionIds'&&g.controllingFactionId?[g.controllingFactionId]:[]])),travel:Array.isArray(g.travel)?g.travel.filter(object).map(t=>({...t,destinationId:string(t.destinationId)||null,destinationLabel:string(t.destinationLabel),method:string(t.method),duration:string(t.duration),notes:string(t.notes)})):[]};
  };
  function ancestry(entry,entries){const byId=new Map(entries.map(e=>[e.id,e])),seen=new Set([entry.id]),result=[];let parent=read(entry).parentId;while(parent&&!seen.has(parent)&&result.length<64){seen.add(parent);const e=byId.get(parent);if(!isLocation(e))break;result.unshift(e);parent=read(e).parentId;}return result;}
  function descendants(id,entries){const found=new Set(),queue=[id],children=new Map();entries.filter(isLocation).forEach(e=>{const p=read(e).parentId;if(!children.has(p))children.set(p,[]);children.get(p).push(e.id);});while(queue.length){for(const child of children.get(queue.pop())||[])if(child!==id&&!found.has(child)){found.add(child);queue.push(child);}}return found;}
@@ -22,6 +22,7 @@
    if(g.parentId===entry.id){g.parentId=parentEntry?.id||null;children++;}
    for(const key of ['rulerId','controllingFactionId'])if(g[key]===entry.id)g[key]=null;
    for(const key of lists)g[key]=g[key].filter(id=>id!==entry.id);
+   g.rulerId=g.rulerIds[0]||null;g.controllingFactionId=g.controllingFactionIds[0]||null;
    g.travel=g.travel.map(t=>t.destinationId===entry.id?{...t,destinationId:null,destinationLabel:entry.title}:t);
    return {...e,location:g,updatedAt:new Date().toISOString()};
   });
@@ -34,8 +35,9 @@
   for(const e of entries){
    if(e.location===undefined)continue;const g=e.location;
    if(!object(g))fail('Location details must be an object.');
-   if(g.type!==undefined&&g.type!==''&&!Object.hasOwn(types,g.type))fail('Choose a supported location type.');
-   if(g.status!==undefined&&g.status!==''&&!statuses.includes(g.status))fail('Choose a supported location status.');
+   if(g.type!==undefined&&!validText(g.type,120))fail('Location type must be text, up to 120 characters.');
+   if(g.status!==undefined&&!validText(g.status,120))fail('Location status must be text, up to 120 characters.');
+   if(g.selectionNotes!==undefined){if(!object(g.selectionNotes)||Object.keys(g.selectionNotes).some(k=>!lists.includes(k)))fail('Invalid location selection notes.');for(const notes of Object.values(g.selectionNotes))if(!Array.isArray(notes)||notes.length>500||notes.some(n=>!validText(n,120)||!n.trim())||new Set(notes).size!==notes.length)fail('Use up to 500 unique notes of 120 characters per selection.');}
    for(const [key,max] of Object.entries(texts))if(g[key]!==undefined&&!validText(g[key],max))fail(`Invalid location field: ${key} (maximum ${max} characters).`);
    const reference=(id,locationsOnly=false)=>{
     if(id===null||id==='')return;

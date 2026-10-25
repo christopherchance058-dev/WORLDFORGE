@@ -277,3 +277,11 @@ body:has(#detail[open]){overflow:hidden}
 
 /* Editing chips share the target category color without behaving like navigation links. */
 .reference-chip.category-entry-link{color:var(--entry-link-color,var(--entry-link-light));background:color-mix(in srgb,currentColor 12%,var(--surface-soft));text-decoration:none}
+
+/* Location selections stay visible while their search results change. */
+.selected-location-links{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;min-width:0}
+.selected-location-links .reference-chip{gap:6px;padding:3px 8px}
+.location-unlinked-note{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;margin:3px}
+.location-reference-picker>button{font-size:12px;margin:8px 0}
+.location-reference-picker>small{margin-top:8px}
+.location-reference-picker .reference-option small{font-size:9px;overflow-wrap:anywhere;max-width:42%}
