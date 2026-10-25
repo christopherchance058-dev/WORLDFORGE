@@ -6,13 +6,13 @@
  function view(center,scale,width){return {center:clamp(center,-MAX_YEAR,MAX_YEAR),scale:clamp(scale,width/2200000,MAX_SCALE)};}
  const xForYear=(year,center,scale,width)=>(year-center)*scale+width/2;
  const yearAtX=(x,center,scale,width)=>center+(x-width/2)/scale;
- function partition(entries){
+ function partition(entries,axis=JSON.stringify(['','Year'])){
   const result={dated:[],undated:[],named:[],invalid:[]};
   for(const entry of entries.filter(History.isHistory)){
    try{History.validate([entry]);const h=History.read(entry),start=History.startYear(entry),end=h.endDate?.year??null;
     if(start!==null&&!History.validYear(start))throw new Error('Invalid start year.');
     const record={entry,start,end,calendar:h.calendar.trim(),certainty:h.dateCertainty,type:History.eventTypeLabel(h.eventType)};
-    result[record.calendar?'named':start===null?'undated':'dated'].push(record);
+    result[History.scaleKey(entry)!==axis?'named':start===null?'undated':'dated'].push(record);
    }catch(error){result.invalid.push({entry,reason:error.message});}
   }
   return result;

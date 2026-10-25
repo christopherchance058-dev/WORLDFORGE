@@ -397,3 +397,14 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-filters label{display:grid;gap:5px;font-size:12px;color:var(--muted);min-width:180px;max-width:320px}
 .timeline-filters select{width:100%;min-height:38px;padding:8px 10px;border-radius:6px;background:var(--surface);color:var(--ink);border:1px solid var(--border)}
 .timeline-empty button{margin:6px}
+
+/* Timeline toolbar: one shared control height, centred form labels, intentional wrapping. */
+.timeline-toolbar{justify-content:flex-start;align-items:center}
+.timeline-toolbar .search{max-width:none;flex:1 1 260px;min-height:40px}
+.timeline-toolbar .timeline-actions,.timeline-jump{flex:0 0 auto;flex-wrap:nowrap}
+.timeline-toolbar button,.timeline-jump input{height:40px;min-height:40px}
+.timeline-jump{margin:0;padding:0;align-items:center}
+.timeline-jump label{margin:0;align-items:center}
+.timeline-jump label>span{margin:0}
+.timeline-jump button{margin:0}
+.timeline-axis-label{max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

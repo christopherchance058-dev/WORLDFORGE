@@ -27,6 +27,10 @@ These are the default instructions for future coding tasks in this repository. U
 - Add focused tests for new linkable fields/categories: insertion, saving/reopening, readable current names after renaming, missing/deleted targets and preservation of surrounding text. Check affected existing categories when changing shared linking infrastructure, including persistence/backup compatibility where relevant.
 - Prioritize desktop behavior. Do not add mobile-specific implementation, screenshots or keyboard/IME testing unless explicitly requested; existing general regression checks remain subject to risk-based testing below.
 
+## Open worldbuilding vocabulary
+
+- Default creative classifications and descriptive choices to editable text with optional suggestions, including future categories and editors. Do not restrict the user's fantasy vocabulary to a fixed whitelist. Chronology must support custom time-unit names and written dates; never assume every world measures time in years. Keep optional numeric coordinates for reliable plotting and keep different units/calendars separate unless the user defines their correspondence. Structural navigation/filter controls, valid entry IDs, image safeguards and numeric calculations may remain constrained where needed for correctness; do not turn those safeguards into creative-content restrictions. Record real exceptions explicitly.
+
 ## Category rules
 
 - Show the world banner only on All entries. All existing and future categories allow an initial name and icon at creation; afterward, expose only color editing. Preserve saved names/icons and relationships. Reuse the shared expanded preset palette, custom color picker and default reset, with readable link shades in Light and Dark themes.
