@@ -27,6 +27,12 @@ These are the default instructions for future coding tasks in this repository. U
 - Add focused tests for new linkable fields/categories: insertion, saving/reopening, readable current names after renaming, missing/deleted targets and preservation of surrounding text. Check affected existing categories when changing shared linking infrastructure, including persistence/backup compatibility where relevant.
 - Prioritize desktop behavior. Do not add mobile-specific implementation, screenshots or keyboard/IME testing unless explicitly requested; existing general regression checks remain subject to risk-based testing below.
 
+## Shared entry presentation
+
+- Reuse `entry-profile.js` (`EntryProfile.header`, `section`, `facts`, `field`) and shared profile/editor styles for current and future categories. Keep category-specific fields and validation without creating a different header, heading scale, image layout or action pattern for each category. Cards continue to use `EntryCards`.
+- Recommend 1024 × 1024 px (1:1) for entry portraits, emblems, illustrations and gallery previews. Square framing is display-only: accept other dimensions, preserve original files and provide full-image links. Maps retain their natural aspect ratio; world banners retain their 2400 × 800 px (3:1) guidance. Do not resize/crop stored files to enforce a preview shape.
+- For shared presentation changes, check populated and sparse Character, Faction and Location views/editors in Light and Dark themes, including linked text and image bounds. Follow the existing risk-based testing and desktop-priority rules.
+
 ## Protect the actual library
 
 - Never casually delete, replace, reset or overwrite a user's data folder, SQLite database, image files or backups. Git-ignored data is not disposable. Never run destructive experiments/tests against the real library.

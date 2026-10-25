@@ -1,0 +1,17 @@
+/* Shared presentation for encyclopedia profiles. Records and linking stay unchanged. */
+const EntryProfile=(()=>{
+ const hasText=value=>typeof value==='string'&&value.trim().length>0;
+ function section(box,title,{secret=false,className=''}={}){const group=node(secret?'details':'section',`entry-profile-group ${className}`);group.append(node(secret?'summary':'h3','',title));box.append(group);return group;}
+ function field(facts,label,value,{long=false,className=''}={}){const pair=node('div',`entry-field${long?' long-form':''} ${className}`),content=node('dd');pair.append(node('dt','',label),content);if(typeof value==='string')content.textContent=value;else content.append(value);facts.append(pair);return pair;}
+ function facts(box,className=''){const list=node('dl',`entry-facts ${className}`);box.append(list);return list;}
+ function header(e,box,{kind=e.category,byline='',status='',close,editLabel='Edit entry',deleteLabel='Delete entry',modal=false}={}){
+  const character=CharacterModel.isCharacter(e);box.classList.add('entry-profile');if(close){const button=node('button','icon-button entry-profile-close','×');button.type='button';button.setAttribute('aria-label','Close entry');button.onclick=close;box.append(button);}
+  const head=node('div','entry-profile-header'+(character?' character-profile-header':'')),media=node('div','entry-profile-media'),portrait=node('div','entry-profile-image'+(character?' character-portrait':'')),copy=node('div','entry-profile-intro'+(character?' character-profile-intro':''));
+  if(e.image){const image=node('img',modal?'detail-image':'');image.src=e.image;image.alt=`${e.title} — ${CharacterModel.isCharacter(e)?'portrait':'illustration'}`;portrait.append(image);}else{portrait.append(glyph(CharacterModel.isCharacter(e)?'person':categoryIcon(e.category)));portrait.setAttribute('aria-label',CharacterModel.isCharacter(e)?'No portrait yet':'No image yet');}
+  media.append(portrait);if(e.image)media.append(EntryCards.fullImage(e.image,e.title));copy.append(node('p','eyebrow',kind),node('h2','entry-detail-title',e.title));if(hasText(byline))copy.append(node('p','character-byline',byline));if(hasText(e.summary))copy.append(DescriptionLinks.render(node('p','entry-detail-summary'),e,entries,showDetail,'summary'));if(hasText(status))copy.append(node('span','character-status',status));if(e.category==='History'&&e.year!=='')copy.append(node('p','year',`Year ${e.year}`));
+  const actions=node('div','entry-profile-actions'+(character?' character-profile-actions':''));for(const [label,handler,style] of [[editLabel,()=>{if($('detail').open)$('detail').close();openEditor(e.id);},'primary'],[deleteLabel,()=>deleteEntry(e),'secondary']]){const button=node('button',style,label);button.type='button';button.onclick=handler;actions.append(button);}copy.append(actions);head.append(media,copy);box.append(head);
+  if(e.tags.some(hasText)){const tags=node('div','tags');e.tags.filter(hasText).forEach(t=>tags.append(node('span','tag',t)));box.append(tags);}return head;
+ }
+ function imageHint(kind='illustration'){return `Recommended: 1024 × 1024 px, square (1:1), for ${kind==='portrait'?'a portrait':kind==='emblem'?'an emblem':'an entry illustration'}. ${kind==='portrait'?'A centered face or head-and-shoulders composition works best. ':''}Other sizes welcome. Square previews may crop the edges; full-image links show the untouched original. PNG, JPEG, WebP or GIF up to 50 MB.`;}
+ return {hasText,section,field,facts,header,imageHint};
+})();
