@@ -1,5 +1,9 @@
 # WORLDFORGE — development handoff
 
+## Latest completed work — universal connections and era banners
+
+Read [CONNECTION_IMPLEMENTATION_HANDOFF.md](CONNECTION_IMPLEMENTATION_HANDOFF.md) for the universal-connection revision atop the published folder milestone. Universal connections, unified reading rows and optional multiple lived-era banners are implemented; AGENTS.md and PROJECT_CONTEXT.md establish the future-category rule. All 227 distinct tests have passing results across a 225/227 broad run and 20 focused rechecks after two test fixes. Preserve subsequent working changes. The user authorized publishing this revision on feature/category-folders; verify the actual branch HEAD and remote. This does not authorize future publication. Older milestone notes below are historical.
+
 ## Latest completed work — shared folders
 
 The user authorized the shared folder feature on top of commit `05d0f7410d7bdf31d34cea1c092403c9bf778413`. Read [FOLDER_IMPLEMENTATION_HANDOFF.md](FOLDER_IMPLEMENTATION_HANDOFF.md) for the completed implementation and observed 221-test passing result before using the historical handoff below. Preserve all uncommitted changes. The user authorized publishing this milestone on `feature/category-folders`, leaving main unchanged. Verify its actual HEAD/remote; this does not authorize future publication.

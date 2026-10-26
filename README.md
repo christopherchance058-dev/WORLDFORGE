@@ -166,3 +166,7 @@ In a Magic editor, open **Connections & linked lore** to add users, associated f
 ### Organizing with folders
 
 Within a category, use **New folder** to organize cards. **All** shows everything; **Unfiled** shows cards without a folder. Open a folder before creating an entry to file it there. Use a card’s **⋯** button or drag it to a visible folder to move it. Each entry has one folder; use tags for overlapping groups. **Manage folder** renames or deletes the open folder; deletion keeps its entries in Unfiled. Location folders do not change geographic parents, and History folders work across Events and Eras. Use this version for backups that preserve folders.
+
+### Connections and eras lived through
+
+Every category has optional **Connections & linked lore**: choose any entries or eras, write your own connection type, and optionally add @-linked notes/shared history. Reading windows combine explicit and incoming connections into consistent horizontal rows; use the search/direction filter or expand notes when needed. Incoming wording belongs to its named source and never creates a reciprocal fact. Narrative @ mentions have their own filter. Characters and Creatures can select several **Eras lived through**; saved era banners appear in their reading window, with a plain fallback when artwork is absent. Dates and lifespan are never inferred.
