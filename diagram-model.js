@@ -2,11 +2,13 @@
 (function(root){
  const object=v=>v&&typeof v==='object'&&!Array.isArray(v),text=(v,n)=>typeof v==='string'&&v.length<=n,id=v=>text(v,120)&&!!v.trim();
  const Links=typeof module!=='undefined'?require('./description-links'):root.DescriptionLinks;
+ const MAX_COORDINATE=100000;
+ const direction=edge=>edge.direction||'forward';
  const empty=()=>({nodes:[],edges:[]});
  function validate(graph){
   if(!object(graph)||!Array.isArray(graph.nodes)||graph.nodes.length>500||!Array.isArray(graph.edges)||graph.edges.length>2000)throw new Error('Use up to 500 diagram cards and 2000 connections.');
-  const ids=new Set(),targets=new Set();for(const n of graph.nodes){if(!object(n)||!id(n.id)||ids.has(n.id)||!['entry','text'].includes(n.kind)||!text(n.label,120)||!n.label.trim()||!Number.isFinite(n.x)||!Number.isFinite(n.y)||Math.abs(n.x)>100000||Math.abs(n.y)>100000||(n.kind==='entry'&&(!id(n.entryId)||targets.has(n.entryId))))throw new Error('Diagram cards need unique IDs, labels and valid positions.');ids.add(n.id);if(n.kind==='entry')targets.add(n.entryId);}
-  const edgeIds=new Set();for(const e of graph.edges){if(!object(e)||!id(e.id)||edgeIds.has(e.id)||!ids.has(e.source)||!ids.has(e.target)||e.source===e.target||!text(e.label,120)||!e.label.trim()||!text(e.notes,6000)||typeof e.uncertain!=='boolean')throw new Error('Connections need unique IDs, two different cards, wording and valid notes.');edgeIds.add(e.id);Links.validate(e);}
+  const ids=new Set(),targets=new Set();for(const n of graph.nodes){if(!object(n)||!id(n.id)||ids.has(n.id)||!['entry','text'].includes(n.kind)||!text(n.label,120)||!n.label.trim()||!Number.isFinite(n.x)||!Number.isFinite(n.y)||Math.abs(n.x)>MAX_COORDINATE||Math.abs(n.y)>MAX_COORDINATE||(n.kind==='entry'&&(!id(n.entryId)||targets.has(n.entryId))))throw new Error('Diagram cards need unique IDs, labels and valid positions.');ids.add(n.id);if(n.kind==='entry')targets.add(n.entryId);}
+  const edgeIds=new Set();for(const e of graph.edges){if(!object(e)||!id(e.id)||edgeIds.has(e.id)||!ids.has(e.source)||!ids.has(e.target)||e.source===e.target||!text(e.label,120)||(e.direction===undefined?!e.label.trim():!['none','forward','both'].includes(e.direction))||!text(e.notes,6000)||typeof e.uncertain!=='boolean')throw new Error('Connections need unique IDs, two different cards, a valid direction and valid notes.');edgeIds.add(e.id);Links.validate(e);}
  }
  function arrange(graph){const columns=Math.max(1,Math.ceil(Math.sqrt(graph.nodes.length)));return {...graph,nodes:graph.nodes.map((n,i)=>({...n,x:60+(i%columns)*300,y:60+Math.floor(i/columns)*320}))};}
  function removeNode(graph,id){return {...graph,nodes:graph.nodes.filter(n=>n.id!==id),edges:graph.edges.filter(e=>e.source!==id&&e.target!==id)};}
@@ -19,13 +21,23 @@
    const used=new Set(),groups=[];
    for(const edge of [...edges].sort((a,b)=>a.id.localeCompare(b.id))){
     if(used.has(edge.id))continue;used.add(edge.id);
-    const reverse=edges.find(other=>!used.has(other.id)&&other.source===edge.target&&other.target===edge.source&&other.label.trim()===edge.label.trim()&&other.uncertain===edge.uncertain);
+    const reverse=direction(edge)==='forward'&&!!edge.label.trim()&&edges.find(other=>direction(other)==='forward'&&!used.has(other.id)&&other.source===edge.target&&other.target===edge.source&&other.label.trim()===edge.label.trim()&&other.uncertain===edge.uncertain);
     if(reverse)used.add(reverse.id);
-    groups.push({edge,ids:reverse?[edge.id,reverse.id]:[edge.id],mutual:!!reverse});
+    groups.push({edge,ids:reverse?[edge.id,reverse.id]:[edge.id],mutual:!!reverse||direction(edge)==='both'});
    }
    groups.forEach((group,index)=>result.push({...group,lane:(index-(groups.length-1)/2)*48}));
   }
   return result;
+ }
+ // Neutral connections are explicit user actions, not inferred relationship facts.
+ function connect(graph,sources,target,makeId){
+  const ids=new Set(graph.nodes.map(n=>n.id));if(!ids.has(target)||sources.some(id=>!ids.has(id)))throw new Error('Choose cards that are still in this canvas.');
+  if(sources.includes(target))throw new Error('Choose a target outside the selected source cards.');
+  const edges=[];for(const source of new Set(sources)){
+   if(graph.edges.some(e=>direction(e)==='none'&&!e.label.trim()&&((e.source===source&&e.target===target)||(e.source===target&&e.target===source))))continue;
+   edges.push({id:makeId(),source,target,label:'',direction:'none',notes:'',uncertain:false});
+  }
+  const next={...graph,edges:[...graph.edges,...edges]};validate(next);return {graph:next,added:edges};
  }
  function route(group,nodes,sizes=new Map()){
   const a=nodes.find(n=>n.id===group.edge.source),b=nodes.find(n=>n.id===group.edge.target);
@@ -41,5 +53,5 @@
   if(!focus)return new Set(graph.nodes.map(n=>n.id));const seen=new Set([focus]);let frontier=[focus];
   for(let step=0;frontier.length&&step<depth;step++){const next=new Set();for(const edge of graph.edges){if(frontier.includes(edge.source)&&!seen.has(edge.target))next.add(edge.target);if(frontier.includes(edge.target)&&!seen.has(edge.source))next.add(edge.source);}frontier=[...next];frontier.forEach(id=>seen.add(id));}return seen;
  }
- const api={empty,validate,arrange,removeNode,displayEdges,route,neighborhood};if(typeof module!=='undefined')module.exports=api;else root.DiagramModel=api;
+ const api={MAX_COORDINATE,direction,connect,empty,validate,arrange,removeNode,displayEdges,route,neighborhood};if(typeof module!=='undefined')module.exports=api;else root.DiagramModel=api;
 })(globalThis);
