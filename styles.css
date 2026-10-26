@@ -492,3 +492,6 @@ dialog .form-error{scroll-margin-top:16px}
 
 #editor #shared-connections-editor{grid-area:connections;min-width:0}#editor #lived-eras-editor{grid-area:livedEras;min-width:0}
 .connection-named-field>.panel-heading .connection-field-title{font-size:12px;font-weight:600}
+
+/* Adjacent grid wrappers must share the normal 12px editor-section gap. */
+#editor :is(#shared-connections-editor,#lived-eras-editor)>.location-editor-group{margin-top:0}
