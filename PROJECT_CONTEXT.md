@@ -28,7 +28,8 @@ Future categories automatically get the generic editor/reader through app.js. Re
 - Runtime dependencies: `sharp` validates/decodes images; `archiver` streams ZIP exports; `yauzl` reads/validates ZIP imports. Playwright is the test dependency.
 - `npm ci`: install locked dependencies on first setup or after lockfile/dependency changes; unnecessary for every task when already installed.
 - `npm start`: `node server.js`, default `http://localhost:3000`, bound to `127.0.0.1`. `PORT` overrides the port. Serve through Node, not by opening `index.html` directly.
-- `npm test`: `playwright test`. Target an affected suite with `npx playwright test tests/geography.spec.js` (substitute the relevant suite).
+- **Testing preference:** use the smallest relevant targeted checks without asking. Always ask for explicit approval before running the full suite, even for architecture, shared UI or persistence changes. Explain the benefit and expected time/cost when known; wait for approval. Implementation/commit/push requests and previous full-run approvals are not standing approval. Do not split a full run into batches to avoid asking. Continue implementation and targeted checks while awaiting a decision; disclose coverage limits if a full run is not approved. See AGENTS.md.
+- `npm test`: `playwright test` (full suite; approval required). Target an affected suite with `npx playwright test tests/geography.spec.js` (substitute the relevant suite).
 - If `/usr/bin/chromium` exists, test configuration uses it; otherwise install Playwright Chromium with `npx playwright install chromium`. Unprepared Linux hosts may need `npx playwright install --with-deps chromium` (CI uses this).
 - Tests import `tests/fixtures.js`: each library uses an OS temporary `worldforge-test-*` directory, its own server, an assigned port, and restart/cleanup helpers. The fixture overrides the config URL. CI uses Node 24/Chromium; configuration is not proof of a passing run.
 
