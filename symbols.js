@@ -44,7 +44,7 @@
   list:'<path d="M8 5h13M8 12h13M8 19h13M3 5h.1M3 12h.1M3 19h.1"/>'
  };
  const markers=['pin','person','house','castle','magic','beast','dragon','sword','shield','book','scroll','flag','mountain','tree','skull','gem','potion','portal','sun','moon'];
- const defaults=[{name:'Characters',icon:'person'},{name:'Locations',icon:'house'},{name:'History',icon:'scroll'},{name:'Factions',icon:'flag'},{name:'Magic',icon:'magic'},{name:'Bestiary',icon:'beast'}];
+ const defaults=[{name:'Characters',icon:'person'},{name:'Locations',icon:'house'},{name:'History',icon:'scroll'},{name:'Factions',icon:'flag'},{name:'Magic',icon:'magic'},{name:'Creatures',icon:'beast'}];
  const api={paths,markers,defaults,svg(name){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.pin}</svg>`;}};
  if(typeof module!=='undefined')module.exports=api;else root.Symbols=api;
 })(globalThis);

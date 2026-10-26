@@ -72,7 +72,7 @@ async function restoreZip(store,file,revision){
     const files=await unpack(file,directory);const manifestFile=files.get('manifest.json');if(!manifestFile)fail('Backup manifest is missing.');
     let manifest;try{manifest=JSON.parse(await fsp.readFile(manifestFile.path,'utf8'));}catch{fail('Backup manifest is not valid JSON.');}
     if(manifest?.format!=='worldforge'||![3,4,5,6].includes(manifest.version)||!Array.isArray(manifest.images)||!Array.isArray(manifest.migrations)||!manifest.migrations.every(h=>/^[a-f0-9]{64}$/.test(h)))fail('Unsupported or malformed backup.');
-    if(manifest.version<5)manifest=normalizeState(manifest);
+    manifest=manifest.version<5?normalizeState(manifest):require('./creature-model').rename(manifest);
     if(manifest.eras===undefined)manifest.eras=[];if(manifest.chronology===undefined)manifest.chronology=require('./era-model').defaultChronology();
     validateState(manifest);
     if(new Set(manifest.images.map(i=>i?.id)).size!==manifest.images.length||files.size!==manifest.images.length+1)fail('Backup has duplicate or unlisted image files.');

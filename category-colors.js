@@ -1,6 +1,6 @@
 /* Shared category color policy. Only clickable entry references receive these colors. */
 (function(root){
- const palette={Characters:'#b69bd6',Locations:'#72b5cc',History:'#d5b05f',Factions:'#c594b6',Magic:'#969ee0',Bestiary:'#c89b68'};
+ const palette={Characters:'#b69bd6',Locations:'#72b5cc',History:'#d5b05f',Factions:'#c594b6',Magic:'#969ee0',Bestiary:'#c89b68',Creatures:'#c89b68'};
  // Keep the original fallback palette stable for existing custom categories.
  const defaultSwatches=['#b69bd6','#72b5cc','#d5b05f','#c594b6','#969ee0','#c89b68','#7fb99a','#cf8d85'];
  const swatches=[...defaultSwatches,'#e57373','#c62828','#f48fb1','#ad1457','#ce93d8','#7b1fa2','#9575cd','#512da8','#7986cb','#283593','#64b5f6','#1565c0','#4dd0e1','#00838f','#4db6ac','#00695c','#81c784','#2e7d32','#c0ca33','#f9a825','#ffb74d','#ef6c00','#a1887f','#78909c'];

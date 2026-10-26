@@ -36,7 +36,7 @@ test('world banner appears only on All entries across categories and navigation 
  for(const theme of ['light','dark']){
   await page.getByLabel('Theme',{exact:true}).selectOption(theme);
   await page.getByRole('button',{name:/All entries/}).click();await expect(banner).toBeVisible();
-  for(const name of ['Characters','Location','History','Factions','Magic','Bestiary','Oceans','Maps']){await page.locator('#navigation').getByRole('button',{name:new RegExp('^'+name+'(?:\\s|$)')}).click();await expect(banner).toBeHidden();}
+  for(const name of ['Characters','Location','History','Factions','Magic','Creatures','Oceans','Maps']){await page.locator('#navigation').getByRole('button',{name:new RegExp('^'+name+'(?:\\s|$)')}).click();await expect(banner).toBeHidden();}
   await page.getByRole('button',{name:/All entries/}).click();await expect(banner).toBeVisible();await page.locator('#navigation').getByRole('button',{name:/^History/}).click();await expect(banner).toBeHidden();await page.keyboard.press('q');await expect(banner).toBeVisible();await page.keyboard.press('e');await expect(banner).toBeHidden();
   await page.screenshot({path:info.outputPath(`history-no-banner-${theme}.png`),animations:'disabled'});
  }

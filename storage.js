@@ -10,6 +10,7 @@ const {defaults,markers}=require('./symbols');
 const GeographyModel=require('./geography-model');
 const CharacterModel=require('./character-model');
 const FactionModel=require('./faction-model');
+const CreatureModel=require('./creature-model');
 const HistoryModel=require('./history-model');
 const EraModel=require('./era-model');
 const DescriptionLinks=require('./description-links');
@@ -27,11 +28,11 @@ function friendly(error) {
 function text(v,max,required=false){return typeof v==='string'&&v.length<=max&&(!required||v.trim().length>0);}
 function normalizeState(state){
   if(!state||!Array.isArray(state.maps))return state;
-  return {...state,categories:state.categories??structuredClone(defaults),maps:state.maps.map(m=>{
+  return CreatureModel.rename({...state,categories:state.categories??structuredClone(defaults),maps:state.maps.map(m=>{
     if(!m||m.canvases!==undefined)return m;
     const {image,pins,...rest}=m;
     return {...rest,canvases:[{id:'base',name:'Original image',filename:'',image,pins}]};
-  })};
+  })});
 }
 function imageRecords(state){return [...(state.appearance?[state.appearance]:[]),...(state.eras||[]).flatMap(era=>[era,...(era.timelineImage?[{get image(){return era.timelineImage;},set image(value){era.timelineImage=value;}}]:[])]),...state.entries,...state.entries.flatMap(e=>Array.isArray(e.character?.gallery)?e.character.gallery:[]),...state.maps.flatMap(m=>m.canvases.flatMap(c=>[c,...c.pins.filter(p=>p.image)]))];}
 function validateState(state, legacy=false) {
@@ -44,8 +45,8 @@ function validateState(state, legacy=false) {
   const common=x=>x&&text(x.id,120,true)&&text(x.title,120,true)&&text(x.description,30000)&&typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt));
   const pin=p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,30000)&&(p.image===undefined||image(p.image))&&(p.summary===undefined||text(p.summary,500))&&(p.entryId===undefined||p.entryId===null||text(p.entryId,120,true))&&(p.icon===undefined||markers.includes(p.icon))&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1;
   const canvas=c=>c&&text(c.id,120,true)&&text(c.name,120,true)&&text(c.filename,255)&&image(c.image,true)&&Array.isArray(c.pins)&&ids(c.pins)&&c.pins.every(pin);
-  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&(e.description.trim()||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e))&&names.includes(e.category)&&(e.summary===undefined||text(e.summary,500))&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
-  try{if(state.eras!==undefined)EraModel.validate(state.eras,image);if(state.chronology!==undefined)EraModel.validateChronology(state.chronology);GeographyModel.validate(entries);CharacterModel.validate(entries,image);FactionModel.validate(entries);HistoryModel.validate(entries);entries.forEach(DescriptionLinks.validate);}catch(error){fail(error.message);}
+  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&(e.description.trim()||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e)||CreatureModel.isCreature(e))&&names.includes(e.category)&&(e.summary===undefined||text(e.summary,500))&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
+  try{if(state.eras!==undefined)EraModel.validate(state.eras,image);if(state.chronology!==undefined)EraModel.validateChronology(state.chronology);GeographyModel.validate(entries);CharacterModel.validate(entries,image);FactionModel.validate(entries);CreatureModel.validate(entries);HistoryModel.validate(entries);entries.forEach(DescriptionLinks.validate);}catch(error){fail(error.message);}
 }
 async function receive(stream,destination,limit) {
   let bytes=0,handle;const hash=createHash('sha256');
@@ -121,13 +122,13 @@ class Store {
     const maps=this.db.prepare('SELECT * FROM maps ORDER BY rowid').all().map(r=>({...JSON.parse(r.payload),canvases:byMap.get(r.id)||[]}));
     const banner=this.db.prepare('SELECT image_id FROM world_appearance WHERE id=1').get().image_id;
     const eras=this.db.prepare('SELECT payload FROM historical_eras ORDER BY rowid').all().map(r=>JSON.parse(r.payload)),chronology=JSON.parse(this.db.prepare('SELECT payload FROM history_settings WHERE id=1').get()?.payload||JSON.stringify(EraModel.defaultChronology()));
-    return {eras,chronology,appearance:{image:banner?`/api/images/${banner}`:''},version:6,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT c.name,c.icon,a.color FROM library_categories c LEFT JOIN category_colors a ON a.name=c.name ORDER BY c.position').all().map(({name,icon,color})=>({name,icon,...(color?{color}:{})}))};
+    return CreatureModel.rename({eras,chronology,appearance:{image:banner?`/api/images/${banner}`:''},version:6,revision:meta.revision,initialized:!!meta.initialized,entries,maps,categories:this.db.prepare('SELECT c.name,c.icon,a.color FROM library_categories c LEFT JOIN category_colors a ON a.name=c.name ORDER BY c.position').all().map(({name,icon,color})=>({name,icon,...(color?{color}:{})}))});
   }
   imageList(){return this.db.prepare('SELECT * FROM images ORDER BY id').all();}
   image(id){return this.db.prepare('SELECT * FROM images WHERE id=?').get(id);}
   checkRevision(revision){if(revision!==this.state().revision)fail('Your world changed in another tab. Copy any unsaved text, then reload before saving.',409);}
   replace(state,revision,{newImages=[],migrationHash=null,migrationHashes=[]}={}){
-    validateState(state);this.checkRevision(revision);
+    state=CreatureModel.rename(state);validateState(state);this.checkRevision(revision);
     this.db.exec('BEGIN IMMEDIATE');
     try {
       const insert=this.db.prepare('INSERT OR IGNORE INTO images VALUES(?,?,?,?,?,?,?,?)');

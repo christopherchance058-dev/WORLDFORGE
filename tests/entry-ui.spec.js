@@ -14,7 +14,7 @@ test('character field labels align beside values on desktop; whitespace stays hi
  await expect(page.locator('#detail-content>.tags .tag')).toHaveCount(2);await page.getByRole('button',{name:'Open Veldport',exact:true}).click();await expect(page.locator('#detail .entry-detail-title')).toHaveText('Veldport');await expect(page.locator('#detail')).toContainText('Connected characters');await page.getByRole('button',{name:'Close entry',exact:true}).click();expect((await state(request)).entries).toEqual(records);
 });
 
-for(const group of [['Locations','Characters','History'],['Factions','Magic','Bestiary','Artifacts']])test('category forms share Geography styling and save edits: '+group.join(', '),async({page,request},testInfo)=>{
+for(const group of [['Locations','Characters','History'],['Factions','Magic','Creatures','Artifacts']])test('category forms share Geography styling and save edits: '+group.join(', '),async({page,request},testInfo)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await start(page);let initial=await state(request);await put(request,{...initial,categories:[...initial.categories,{name:'Artifacts',icon:'gem'}]});await page.reload();await page.getByLabel('Theme',{exact:true}).selectOption('dark');let reference;
  for(const category of group){
   if(await page.locator('#detail').isVisible())await page.getByRole('button',{name:'Close entry',exact:true}).click();await page.getByRole('button',{name:/All entries/}).click();await page.locator('#new-entry').click();await page.getByLabel('Category',{exact:true}).selectOption(category);
