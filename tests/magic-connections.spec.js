@@ -7,7 +7,7 @@ async function setup(page,request){await page.setViewportSize({width:1440,height
 async function browse(page){await page.locator('#navigation [data-category=Magic]').click();}
 async function edit(page){await page.getByRole('button',{name:'Open Echo craft',exact:true}).click();await page.getByRole('button',{name:'Edit entry',exact:true}).click();await page.locator('#editor details').evaluateAll(es=>es.forEach(e=>e.open=true));}
 async function save(page){await page.getByRole('button',{name:'Save entry',exact:true}).click();await expect(page.locator('#editor')).toBeHidden();}
-async function add(page){await page.getByRole('button',{name:'＋ Add connection',exact:true}).click();}
+async function add(page){await page.getByRole('button',{name:'＋ Add custom connection field',exact:true}).click();}
 const picker=(page,n=1)=>page.getByRole('group',{name:'Linked entry '+n,exact:true});
 async function choose(page,id,n=1){await picker(page,n).locator(`input[type=checkbox][value="${id}"]`).check();}
 async function linked(page,label,text){await page.getByRole('textbox',{name:label,exact:true}).pressSequentially(text);await page.getByRole('listbox',{name:label+' entry suggestions',exact:true}).getByRole('option').first().click();await page.getByRole('textbox',{name:label,exact:true}).pressSequentially(' after.');}

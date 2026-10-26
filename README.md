@@ -170,3 +170,8 @@ Within a category, use **New folder** to organize cards. **All** shows everythin
 ### Connections and eras lived through
 
 Every category has optional **Connections & linked lore**: choose any entries or eras, write your own connection type, and optionally add @-linked notes/shared history. Reading windows combine explicit and incoming connections into consistent horizontal rows; use the search/direction filter or expand notes when needed. Incoming wording belongs to its named source and never creates a reciprocal fact. Narrative @ mentions have their own filter. Characters and Creatures can select several **Eras lived through**; saved era banners appear in their reading window, with a plain fallback when artwork is absent. Dates and lifespan are never inferred.
+
+
+### Optional connection fields
+
+Open **Connections & linked lore** to choose from **Suggested connection fields** or **Add custom connection field**. Suggestions vary by category—for example, Magic offers Users/practitioners and Taught by—and all are optional. Each named field uses the familiar entry picker and unlinked notes. Rename it or expand its field-name/notes section for written @-linked details. Removing a field keeps its target entries. Existing generic Related lore selections appear as Other connections and are preserved when saved.

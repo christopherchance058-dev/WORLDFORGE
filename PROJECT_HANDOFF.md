@@ -1,5 +1,9 @@
 # WORLDFORGE — development handoff
 
+## Latest work — optional named connection fields, main publication
+
+Read [CONNECTION_FIELDS_HANDOFF.md](CONNECTION_FIELDS_HANDOFF.md). Optional category suggestions/custom named fields and safe Related lore preservation are implemented. The user authorized immediate publication to main, including the previous folder/universal-connection milestones. All 231 distinct tests have passing results across a 228/231 broad run and focused rechecks after three obsolete UI test selectors were updated. Verify actual Git HEAD/remote and preserve subsequent work. Older notes below are historical; this authorization is specific to this publication.
+
 ## Latest completed work — universal connections and era banners
 
 Read [CONNECTION_IMPLEMENTATION_HANDOFF.md](CONNECTION_IMPLEMENTATION_HANDOFF.md) for the universal-connection revision atop the published folder milestone. Universal connections, unified reading rows and optional multiple lived-era banners are implemented; AGENTS.md and PROJECT_CONTEXT.md establish the future-category rule. All 227 distinct tests have passing results across a 225/227 broad run and 20 focused rechecks after two test fixes. Preserve subsequent working changes. The user authorized publishing this revision on feature/category-folders; verify the actual branch HEAD and remote. This does not authorize future publication. Older milestone notes below are historical.

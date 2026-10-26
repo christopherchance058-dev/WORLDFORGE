@@ -21,5 +21,15 @@
   return changed?next:e;
  }
  function mentions(e){const refs=new Map();function visit(owner){if(!object(owner))return;for(const [field,registry] of [['description',owner.descriptionReferences],['summary',owner.summaryReferences],...Object.entries(owner.textReferences||{})])for(const r of registry?.items||[])if(typeof owner[field]==='string'&&owner[field].includes(r.token))refs.set(key(r.entryId,r.kind||'entry'),r);for(const [k,v] of Object.entries(owner)){if(['descriptionReferences','summaryReferences','textReferences'].includes(k))continue;if(Array.isArray(v))v.forEach(visit);else if(object(v))visit(v);}}visit(e);return [...refs.values()];}
- const api={key,rows,collections,normalize,validate,deletion,mentions};if(typeof module!=='undefined')module.exports=api;else root.ConnectionModel=api;
+ const suggestedFields={
+  Characters:['Mentors','Students','Allies','Rivals','Dependants'],
+  Factions:['Patrons','Supported causes','Associated magic','Significant events'],
+  Locations:['Founders','Visiting groups','Associated creatures','Associated magic','Significant events'],
+  Magic:['Users / practitioners','Taught by','Created / discovered by','Practiced at','Associated factions','Related magic'],
+  Creatures:['Found at','Associated groups','Interacts with','Threats','Associated magic','Significant events'],
+  History:['Causes','Consequences','Related events','Involved creatures','Involved magic'],
+  Eras:['Defining events','Associated factions / cultures','Important locations','Related eras']
+ };
+ function suggestionsFor(category){const key=category==='Bestiary'?'Creatures':category;return [...(Object.hasOwn(suggestedFields,key)?suggestedFields[key]:['Associated with','Created by','Found at','Significant events'])];}
+ const api={suggestionsFor,key,rows,collections,normalize,validate,deletion,mentions};if(typeof module!=='undefined')module.exports=api;else root.ConnectionModel=api;
 })(globalThis);
