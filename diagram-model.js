@@ -8,7 +8,7 @@
   const ids=new Set(),targets=new Set();for(const n of graph.nodes){if(!object(n)||!id(n.id)||ids.has(n.id)||!['entry','text'].includes(n.kind)||!text(n.label,120)||!n.label.trim()||!Number.isFinite(n.x)||!Number.isFinite(n.y)||Math.abs(n.x)>100000||Math.abs(n.y)>100000||(n.kind==='entry'&&(!id(n.entryId)||targets.has(n.entryId))))throw new Error('Diagram cards need unique IDs, labels and valid positions.');ids.add(n.id);if(n.kind==='entry')targets.add(n.entryId);}
   const edgeIds=new Set();for(const e of graph.edges){if(!object(e)||!id(e.id)||edgeIds.has(e.id)||!ids.has(e.source)||!ids.has(e.target)||e.source===e.target||!text(e.label,120)||!e.label.trim()||!text(e.notes,6000)||typeof e.uncertain!=='boolean')throw new Error('Connections need unique IDs, two different cards, wording and valid notes.');edgeIds.add(e.id);Links.validate(e);}
  }
- function arrange(graph){const columns=Math.max(1,Math.ceil(Math.sqrt(graph.nodes.length)));return {...graph,nodes:graph.nodes.map((n,i)=>({...n,x:60+(i%columns)*340,y:60+Math.floor(i/columns)*200}))};}
+ function arrange(graph){const columns=Math.max(1,Math.ceil(Math.sqrt(graph.nodes.length)));return {...graph,nodes:graph.nodes.map((n,i)=>({...n,x:60+(i%columns)*300,y:60+Math.floor(i/columns)*320}))};}
  function removeNode(graph,id){return {...graph,nodes:graph.nodes.filter(n=>n.id!==id),edges:graph.edges.filter(e=>e.source!==id&&e.target!==id)};}
  // Combine only matching reverse records for display. The stored edges remain untouched.
  function displayEdges(graph){
@@ -29,7 +29,7 @@
  }
  function route(group,nodes,sizes=new Map()){
   const a=nodes.find(n=>n.id===group.edge.source),b=nodes.find(n=>n.id===group.edge.target);
-  const size=n=>sizes.get(n.id)||{width:200,height:90},sa=size(a),sb=size(b),ac={x:a.x+sa.width/2,y:a.y+sa.height/2},bc={x:b.x+sb.width/2,y:b.y+sb.height/2};
+  const size=n=>sizes.get(n.id)||{width:210,height:265},sa=size(a),sb=size(b),ac={x:a.x+sa.width/2,y:a.y+sa.height/2},bc={x:b.x+sb.width/2,y:b.y+sb.height/2};
   // A canonical normal prevents opposite directions from accidentally sharing a curve.
   const sign=a.id.localeCompare(b.id)<=0?1:-1,dx=(bc.x-ac.x)*sign,dy=(bc.y-ac.y)*sign,length=Math.hypot(dx,dy),normal=length?{x:-dy/length,y:dx/length}:{x:0,y:1};
   const control={x:(ac.x+bc.x)/2+(length?0:240)+normal.x*group.lane*2,y:(ac.y+bc.y)/2+normal.y*group.lane*2};

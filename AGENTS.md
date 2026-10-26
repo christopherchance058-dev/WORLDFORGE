@@ -40,7 +40,7 @@ Read this and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) at the start of a task. U
 
 ## Vocabulary and shared UI
 
-- Prefer existing square SVG icon buttons for recognizable actions, with accessible names and tooltips. Keep meaningful text for content choices, tabs and relationship wording. Reuse shared theme surfaces, spacing and entry/category design; category colors still belong only to clickable references.
+- Prefer existing square SVG icon buttons for recognizable actions, with accessible names and tooltips. Save actions use green text buttons labelled “Save [subject]”, never floppy-disk icons. Use Maps’ magnifying-glass zoom icons and distinguish different actions with different icons; avoid redundant close/back controls. Keep meaningful text for content choices, tabs and relationship wording. Reuse shared theme surfaces, spacing and entry/category design; category colors still belong only to clickable references.
 
 - Creative classifications accept custom text with optional suggestions. Keep custom calendar/unit names and written dates; never assume all worlds use years or convert between calendars without user-defined correspondence. Retain structural ID, hierarchy, numeric and image safeguards.
 - Category names/icons are chosen at creation and fixed afterward; existing categories expose color editing only. Use shared presets/custom/reset and readable Light/Dark colors. Show the world banner/controls only on All entries.
@@ -54,4 +54,4 @@ Read this and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) at the start of a task. U
 
 ## Deferred direction
 
-Ecosystem Atlas has a first implementation with separate habitat records and explicit food webs. Extend its reusable diagram model/editor for future domains; family trees, faction hierarchies and ecological simulation require their own design. Ecosystem tools must reuse Creature records and stable IDs. Do not create another creature library or infer ecological facts from current free-text lore. Preserve all optional Creature fields, relationships, galleries and shared UI/navigation.
+Ecosystem Atlas has a first implementation with separate ecosystem records and a general-purpose Canvas workspace. Extend its reusable diagram model/editor for future domains; family trees, faction hierarchies and ecological simulation require their own design. Ecosystem tools must reuse Creature records and stable IDs. Do not create another creature library or infer ecological facts from current free-text lore. Preserve all optional Creature fields, relationships, galleries and shared UI/navigation.

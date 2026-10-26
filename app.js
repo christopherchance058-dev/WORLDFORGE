@@ -89,8 +89,8 @@ function renderEntryDetail(e,box,options={}){
  box.replaceChildren();Geography.breadcrumbs(e,box);EntryProfile.header(e,box,{close:options.close,modal:!options.geography,editLabel:options.geography?'Edit location':'Edit entry',deleteLabel:options.geography?'Delete location':'Delete entry'});
  if(EntryProfile.hasText(e.description))EntryProfile.section(box,'Overview').append(DescriptionLinks.render(node('p','detail-description location-prose'),e,entries,showDetail));Geography.appendDetails(e,box);Characters.appendBacklinks(e,box);Factions.appendDetails(e,box);Creatures.appendDetails(e,box);MagicEntries.appendDetails(e,box);HistoryEntries.appendDetails(e,box);Connections.banners(e,box);Connections.render(e,box);
 }
-function showDetail(id){return Navigation.visit(()=>openDetail(id));}
-function openDetail(id){const e=entries.find(e=>e.id===id);if(!e)return;delete $('detail').dataset.eraId;$('detail').dataset.entryId=id;renderEntryDetail(e,$('detail-content'),{close:()=>Navigation.visit(()=>$('detail').close())});$('detail-content').prepend(Navigation.controls());if(!$('detail').open)$('detail').showModal();}
+function showDetail(id){return Navigation.visit(()=>openDetail(id),{preserveCanvas:true});}
+function openDetail(id){const e=entries.find(e=>e.id===id);if(!e)return;delete $('detail').dataset.eraId;$('detail').dataset.entryId=id;renderEntryDetail(e,$('detail-content'),{close:()=>Navigation.visit(()=>$('detail').close(),{preserveCanvas:true})});$('detail-content').prepend(Navigation.controls());if(!$('detail').open)$('detail').showModal();}
 async function deleteEntry(e){
  const plan=GeographyModel.deletion(entries,e),characterPlan=CharacterModel.deletion(plan.entries,e);plan.entries=characterPlan.entries;const factionPlan=FactionModel.deletion(plan.entries,e);plan.entries=factionPlan.entries;const historyPlan=HistoryModel.deletion(plan.entries,e);plan.entries=historyPlan.entries;const creaturePlan=CreatureModel.deletion(plan.entries,e);plan.entries=creaturePlan.entries;const magicPlan=MagicModel.deletion(plan.entries,e);plan.entries=magicPlan.entries;let message=`“${e.title}” will be removed. Linked map pins will keep copies of its text and image.`;
  if(plan.children)message+=` Its ${plan.children} direct child location${plan.children===1?'':'s'} will ${plan.parent?`move under “${plan.parent.title}”`:'become top-level locations'}. Their children and stories will be kept.`;
@@ -119,6 +119,7 @@ $('export').onclick=()=>{const a=node('a');a.href='/api/backup?world='+encodeURI
 $('import').onclick=()=>$('backup-file').click();
 $('backup-file').onchange=async()=>{
  const file=$('backup-file').files[0];$('backup-file').value='';if(!file)return;
+ if(!await Ecosystems.beforeLeave())return;
  if(!(await confirmAction('Restore this backup?',`This replaces entries, maps, ecosystems, historical eras and chronology settings in “${activeWorld().title}” only. Other worlds are untouched. Backups without ecosystems or eras restore empty lists for those features and default chronology. Legacy JSON version 1 preserves existing maps. A rollback ZIP is saved before changing records.`,'Import backup')))return;
  restoring=true;const notice=$('storage-notice');notice.hidden=false;notice.textContent='Validating and restoring backup. Please leave this window open…';notify('Restoring backup…');
  try{const state=await LocalAPI.restore(file);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);storageBlocked=false;$('new-entry').disabled=false;historyTab='events';Ecosystems.reset();Folders.reset();HistoryTimeline.reset();Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';renderWorld();render();Navigation.reset();notice.hidden=true;notify('Backup imported successfully. A rollback backup was saved in the data folder.');}
@@ -140,6 +141,7 @@ function renderWorld(){const world=activeWorld();$('world-banner-title').textCon
 async function refreshWorlds(){worldList=await LocalAPI.request('/api/worlds');renderWorld();}
 function applyWorldState(state){Ecosystems.reset();Folders.reset();historyTab='events';entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);HistoryTimeline.reset();Characters.reset();Geography.hide();Maps.hide();filter='All';$('search').value='';editingId=null;draftImage='';}
 async function switchWorld(id){
+ if(!await Ecosystems.beforeLeave())return;
  if(saving||imageLoading||restoring)throw new Error('Please wait for the current save or upload to finish.');
  const state=await LocalAPI.request('/api/state',{headers:{'X-Worldforge-World':id}});
  LocalAPI.worldId=id;LocalAPI.accept(state);applyWorldState(state);renderWorld();render();Navigation.reset();

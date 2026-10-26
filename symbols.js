@@ -1,6 +1,8 @@
 /* Shared, fixed SVG vocabulary. No remote fonts or icon service required. */
 (function(root){
  const paths={
+  panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M18 7h1M18 11h1M18 15h1"/>',
+
   undo:'<path d="m8 3-5 5 5 5M3 8h10a7 7 0 0 1 0 14"/>',
   redo:'<path d="m16 3 5 5-5 5M21 8H11a7 7 0 0 0 0 14"/>',
   text:'<path d="M4 5h16M12 5v15M8 20h8"/>',
