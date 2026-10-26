@@ -52,6 +52,12 @@ These are the default instructions for future coding tasks in this repository. U
 
 - History’s visual timeline is a functional exception to ordinary category cards: show numeric chronology/type/certainty in its anchored cards and retain the standard metadata-free format elsewhere. Derive event and era positions from HistoryModel; keep unpositioned or incompatible calendar/unit records off the selected numeric axis. Eras are separate persistent records, never disguised events; unknown boundaries must not imply durations. Timeline views/pan/zoom are not library records; reuse Navigation for entry opening and workspace restoration.
 
+## Creature and future Ecosystem continuity
+
+- Keep all creative Creature editor fields optional, including the name (use the existing Unnamed creature fallback); validate supplied text, stable IDs and image data normally.
+- Plan future Ecosystem Atlas work around the existing Creature records and stable relationship IDs. Preserve their lore, relationships, gallery and shared navigation/UI conventions; do not create a disconnected duplicate creature library.
+- Treat ecological diagrams, food chains, hierarchy and biome/habitat interactions as a deferred milestone until the user requests implementation. Never silently reinterpret free-text relationships or habitat prose as ecological rules. Follow PROJECT_CONTEXT.md for the current planned scope.
+
 ## Protect the actual library
 
 - Never casually delete, replace, reset or overwrite a user's data folder, SQLite database, image files or backups. Git-ignored data is not disposable. Never run destructive experiments/tests against the real library.
