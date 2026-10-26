@@ -10,5 +10,36 @@
  }
  function arrange(graph){const columns=Math.max(1,Math.ceil(Math.sqrt(graph.nodes.length)));return {...graph,nodes:graph.nodes.map((n,i)=>({...n,x:60+(i%columns)*340,y:60+Math.floor(i/columns)*200}))};}
  function removeNode(graph,id){return {...graph,nodes:graph.nodes.filter(n=>n.id!==id),edges:graph.edges.filter(e=>e.source!==id&&e.target!==id)};}
- const api={empty,validate,arrange,removeNode};if(typeof module!=='undefined')module.exports=api;else root.DiagramModel=api;
+ // Combine only matching reverse records for display. The stored edges remain untouched.
+ function displayEdges(graph){
+  const pairs=new Map();
+  for(const edge of graph.edges){const key=JSON.stringify([edge.source,edge.target].sort());if(!pairs.has(key))pairs.set(key,[]);pairs.get(key).push(edge);}
+  const result=[];
+  for(const edges of pairs.values()){
+   const used=new Set(),groups=[];
+   for(const edge of [...edges].sort((a,b)=>a.id.localeCompare(b.id))){
+    if(used.has(edge.id))continue;used.add(edge.id);
+    const reverse=edges.find(other=>!used.has(other.id)&&other.source===edge.target&&other.target===edge.source&&other.label.trim()===edge.label.trim()&&other.uncertain===edge.uncertain);
+    if(reverse)used.add(reverse.id);
+    groups.push({edge,ids:reverse?[edge.id,reverse.id]:[edge.id],mutual:!!reverse});
+   }
+   groups.forEach((group,index)=>result.push({...group,lane:(index-(groups.length-1)/2)*48}));
+  }
+  return result;
+ }
+ function route(group,nodes,sizes=new Map()){
+  const a=nodes.find(n=>n.id===group.edge.source),b=nodes.find(n=>n.id===group.edge.target);
+  const size=n=>sizes.get(n.id)||{width:200,height:90},sa=size(a),sb=size(b),ac={x:a.x+sa.width/2,y:a.y+sa.height/2},bc={x:b.x+sb.width/2,y:b.y+sb.height/2};
+  // A canonical normal prevents opposite directions from accidentally sharing a curve.
+  const sign=a.id.localeCompare(b.id)<=0?1:-1,dx=(bc.x-ac.x)*sign,dy=(bc.y-ac.y)*sign,length=Math.hypot(dx,dy),normal=length?{x:-dy/length,y:dx/length}:{x:0,y:1};
+  const control={x:(ac.x+bc.x)/2+(length?0:240)+normal.x*group.lane*2,y:(ac.y+bc.y)/2+normal.y*group.lane*2};
+  function boundary(center,target,dimensions){let x=target.x-center.x,y=target.y-center.y;if(!x&&!y)x=1;const scale=1/Math.max(Math.abs(x)/(dimensions.width/2+4),Math.abs(y)/(dimensions.height/2+4));return {x:center.x+x*scale,y:center.y+y*scale};}
+  const start=boundary(ac,control,sa),end=boundary(bc,control,sb);
+  return {path:`M${start.x} ${start.y} Q${control.x} ${control.y} ${end.x} ${end.y}`,label:{x:(start.x+2*control.x+end.x)/4,y:(start.y+2*control.y+end.y)/4}};
+ }
+ function neighborhood(graph,focus,depth=1){
+  if(!focus)return new Set(graph.nodes.map(n=>n.id));const seen=new Set([focus]);let frontier=[focus];
+  for(let step=0;frontier.length&&step<depth;step++){const next=new Set();for(const edge of graph.edges){if(frontier.includes(edge.source)&&!seen.has(edge.target))next.add(edge.target);if(frontier.includes(edge.target)&&!seen.has(edge.source))next.add(edge.source);}frontier=[...next];frontier.forEach(id=>seen.add(id));}return seen;
+ }
+ const api={empty,validate,arrange,removeNode,displayEdges,route,neighborhood};if(typeof module!=='undefined')module.exports=api;else root.DiagramModel=api;
 })(globalThis);

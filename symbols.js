@@ -1,6 +1,12 @@
 /* Shared, fixed SVG vocabulary. No remote fonts or icon service required. */
 (function(root){
  const paths={
+  undo:'<path d="m8 3-5 5 5 5M3 8h10a7 7 0 0 1 0 14"/>',
+  redo:'<path d="m16 3 5 5-5 5M21 8H11a7 7 0 0 0 0 14"/>',
+  text:'<path d="M4 5h16M12 5v15M8 20h8"/>',
+  arrange:'<rect x="2" y="3" width="7" height="6" rx="1"/><rect x="15" y="3" width="7" height="6" rx="1"/><rect x="8" y="16" width="8" height="6" rx="1"/><path d="M5 9v4h14V9M12 13v3"/>',
+  search:'<circle cx="10" cy="10" r="7"/><path d="m15 15 7 7"/>',
+
   timeline:'<path d="M3 12h18M6 9v6M12 9v6M18 9v6M6 4h6M12 20h6"/><circle cx="6" cy="4" r="2"/><circle cx="18" cy="20" r="2"/>',
   switchworld:'<path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/>',
   pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',

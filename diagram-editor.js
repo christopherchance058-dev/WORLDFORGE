@@ -1,41 +1,128 @@
-/* Canvas UI owns only selection, layout and graph editing. The host resolves lore and saves. */
+/* Reusable graph workspace. The host supplies domain wording, lore resolution and persistence. */
 const DiagramEditor=(()=>{
- function mount(root,{graph,resolve,candidates,onRead,onError,readOnly=false,view=null,entryLabel='Entry',title='Relationships',defaultRelationship='connected to'}){
+ function mount(root,{graph,resolve,candidates,onRead,onError,readOnly=false,view=null,entryLabel='Entry',title='Relationships',defaultRelationship='connected to',suggestions=[]}){
   const markerId='diagram-arrow-'+crypto.randomUUID();
-  let value=structuredClone(graph),selected=null,focus=null,zoom=1,undo=[],redo=[],drag=null,pan=null,fieldBaseline="";
-  const toolbar=node('div','diagram-toolbar'),body=node('div','diagram-body'),viewport=node('div','diagram-viewport'),plane=node('div','diagram-plane'),inspector=node('div','diagram-inspector'),list=node('div','diagram-list');viewport.tabIndex=0;viewport.setAttribute('aria-label','Relationship diagram');viewport.append(plane);body.append(viewport,inspector);root.append(toolbar,body,list);
-  const button=(label,fn)=>{const b=node('button','secondary',label);b.type='button';b.onclick=fn;return b;};
+  let value=structuredClone(graph),selected=null,focus=view?.focus||null,depth=view?.depth||1,zoom=view?.zoom||1;
+  let undo=[],redo=[],readInspector=null,inspectorBaseline='',editRemembered=false,lastError='',drag=null,pan=null,layer,edgesLayer,suppressClick=false,collecting=false;
+  const toolbar=node('div','diagram-toolbar'),tools=node('div','diagram-tools'),filters=node('div','diagram-filters');
+  const body=node('div','diagram-body'),viewport=node('div','diagram-viewport'),plane=node('div','diagram-plane'),inspector=node('aside','diagram-inspector'),list=node('div','diagram-list');
+  inspector.setAttribute('aria-label','Selection details');viewport.tabIndex=0;viewport.setAttribute('aria-label','Relationship diagram');viewport.append(plane);body.append(viewport,inspector);toolbar.append(tools,filters);root.append(toolbar,body,list);
+  const button=(label,fn,icon)=>{const b=node('button',icon?'square-button':'secondary',icon?undefined:label);b.type='button';b.setAttribute('aria-label',label);b.title=label;if(icon)b.append(glyph(icon));b.onclick=fn;return b;};
+  const report=message=>{lastError=message;onError(message);};
   const remember=()=>{undo.push(structuredClone(value));if(undo.length>100)undo.shift();redo=[];};
-  function change(fn,applied=false){if(!applied&&fields()!==fieldBaseline)return onError('Apply the current edits first.');remember();fn();draw();inspect();}
-  function label(n){return resolve(n)?.title||n.label+(n.kind==='entry'?' (unavailable)':'');}
-  function linkedField(parent,owner,key,labelText,max){const input=Geography.inputField(parent,labelText,owner[key]||'','textarea',max);DescriptionLinks.bind(input,owner,key,{label:labelText});return input;}
-  const picker=Geography.selectField(toolbar,entryLabel+' to add','',[]);
-  const focusPicker=Geography.selectField(toolbar,'Show connections for','',[]);focusPicker.onchange=()=>{focus=focusPicker.value||null;draw();};
-  function choices(){const options=[node('option','','Choose an '+entryLabel.toLowerCase())];options[0].value='';for(const e of candidates().filter(e=>!value.nodes.some(n=>n.kind==='entry'&&n.entryId===e.id))){const o=node('option','',e.title);o.value=e.id;options.push(o);}picker.replaceChildren(...options);const all=node('option','','All cards');all.value='';focusPicker.replaceChildren(all,...value.nodes.map(n=>{const o=node('option','',label(n));o.value=n.id;return o;}));focusPicker.value=focus||'';}
-  toolbar.append(button('Add '+entryLabel.toLowerCase(),()=>{const e=candidates().find(e=>e.id===picker.value);if(!e)return onError('Choose an '+entryLabel.toLowerCase()+' to add first.');change(()=>{const n={id:crypto.randomUUID(),kind:'entry',entryId:e.id,label:e.title,x:80+(value.nodes.length%4)*340,y:80+Math.floor(value.nodes.length/4)*200};value.nodes.push(n);selected={kind:'node',id:n.id};});}),button('Add text card',()=>change(()=>{const n={id:crypto.randomUUID(),kind:'text',label:'New text card',x:80,y:80};value.nodes.push(n);selected={kind:'node',id:n.id};})),button('Connect cards',()=>{if(fields()!==fieldBaseline)return onError('Apply the current edits first.');selected={kind:'newEdge'};inspect();}),button('Undo',()=>{if(fields()!==fieldBaseline)return onError('Apply the current edits first.');if(!undo.length)return;redo.push(value);value=undo.pop();selected=null;draw();inspect();}),button('Redo',()=>{if(fields()!==fieldBaseline)return onError('Apply the current edits first.');if(!redo.length)return;undo.push(value);value=redo.pop();selected=null;draw();inspect();}),button('Arrange automatically',()=>change(()=>{value=DiagramModel.arrange(value);})),button('−',()=>setZoom(zoom/1.2)),button('+',()=>setZoom(zoom*1.2)),button('Fit all',fit),button('Show all',()=>{focus=null;draw();}));
-  if(readOnly)toolbar.replaceChildren(focusPicker.closest('label'),button('−',()=>setZoom(zoom/1.2)),button('+',()=>setZoom(zoom*1.2)),button('Fit all',fit));
-  function setZoom(z){zoom=Math.max(.15,Math.min(2.5,z));draw();}
-  function fit(){const maxX=Math.max(500,...value.nodes.map(n=>n.x+240)),maxY=Math.max(350,...value.nodes.map(n=>n.y+130));setZoom(Math.min((viewport.clientWidth-30)/maxX,(viewport.clientHeight-30)/maxY));viewport.scrollTo(0,0);}
+  const rawFields=()=>JSON.stringify([...inspector.querySelectorAll('input,textarea,select')].map(el=>[el.value,el.checked]));
+  const label=n=>resolve(n)?.title||n.label+(n.kind==='entry'?' (unavailable)':'');
+  function flush(force=false,showError=true){
+   if(collecting)return true;
+   if(!readInspector||(!force&&rawFields()===inspectorBaseline))return true;
+   try{
+    collecting=true;const next=readInspector();DiagramModel.validate(next);
+    if(JSON.stringify(next)!==JSON.stringify(value)){if(!editRemembered){remember();editRemembered=true;}value=next;draw();}
+    inspectorBaseline=rawFields();report('');return true;
+   }catch(error){if(showError)report(error.message);return false;}finally{collecting=false;}
+  }
+  function select(next){if(!flush())return;selected=next;inspect();draw();}
+  function change(fn){if(!flush())return;remember();fn();inspect();draw();report('');}
+  function inspect(){
+   readInspector=null;editRemembered=false;inspector.replaceChildren();
+   if(readOnly){inspector.hidden=true;inspectorBaseline=rawFields();return;}
+   if(!selected){inspector.append(node('h3','',title),node('p','storage-note','Select a card or connection to edit it. Drag cards to arrange them; drag blank space to pan. Changes are kept in this draft until you save.'));inspectorBaseline=rawFields();return;}
+   if(selected.kind==='node'){
+    const n=value.nodes.find(n=>n.id===selected.id);if(!n){selected=null;return inspect();}
+    inspector.append(node('h3','',label(n)));const actions=node('div','diagram-selection-actions');
+    if(n.kind==='text'){
+     const input=Geography.inputField(inspector,'Card label',n.label,'input',120);
+     readInspector=()=>{if(!input.value.trim())throw new Error('Enter a card label.');return {...value,nodes:value.nodes.map(item=>item.id===n.id?{...item,label:input.value.trim()}:item)};};
+    }else if(resolve(n))actions.append(button('Read entry',()=>{if(flush())onRead(n.entryId);},'book'));
+    actions.append(button('Connect from this card',()=>select({kind:'newEdge',source:n.id}),'link'),button('Show its connections',()=>{if(!flush())return;focus=n.id;focusPicker.value=n.id;draw();},'search'),button('Remove card',()=>{readInspector=null;change(()=>{value=DiagramModel.removeNode(value,n.id);selected=null;});},'trash'));
+    inspector.append(actions,node('p','storage-note','Removing a card also removes its diagram connections. The entry and ecosystem membership are kept.'));
+   }else{
+    const existing=selected.kind==='edge'?value.edges.find(e=>e.id===selected.id):null;
+    if(selected.kind==='edge'&&!existing){selected=null;return inspect();}
+    const draft=existing||{id:crypto.randomUUID(),source:selected.source||value.nodes[0]?.id||'',target:value.nodes.find(n=>n.id!==(selected.source||value.nodes[0]?.id))?.id||'',label:defaultRelationship,notes:'',uncertain:false};
+    const options=value.nodes.map(n=>({value:n.id,label:label(n)}));
+    inspector.append(node('h3','',existing?'Edit connection':'New connection'));
+    const mutual=existing&&DiagramModel.displayEdges(value).find(group=>group.mutual&&group.ids.includes(existing.id));if(mutual){const directions=node('div','diagram-directions');directions.append(node('small','','Direction to edit'));for(const id of mutual.ids){const edge=value.edges.find(e=>e.id===id),a=value.nodes.find(n=>n.id===edge.source),b=value.nodes.find(n=>n.id===edge.target),choice=button(label(a)+' → '+label(b),()=>select({kind:'edge',id}));choice.setAttribute('aria-label','Edit direction: '+label(a)+' → '+label(b));choice.setAttribute('aria-pressed',String(id===existing.id));directions.append(choice);}inspector.append(directions);}
+    const source=Geography.selectField(inspector,'From',draft.source,options),target=Geography.selectField(inspector,'To',draft.target,options),wording=Geography.inputField(inspector,'Relationship',draft.label,'input',120);
+    const datalist=node('datalist');datalist.id='diagram-wording-'+crypto.randomUUID();for(const text of new Set([...suggestions,...value.edges.map(e=>e.label)])){const option=node('option');option.value=text;datalist.append(option);}wording.setAttribute('list',datalist.id);inspector.append(datalist);
+    const notes=Geography.inputField(inspector,'Connection notes',draft.notes,'textarea',6000);DescriptionLinks.bind(notes,draft,'notes',{label:'Connection notes'});
+    const uncertain=node('input'),check=node('label','diagram-checkbox');uncertain.type='checkbox';uncertain.checked=draft.uncertain;check.append(uncertain,document.createTextNode(' Uncertain relationship'));inspector.append(check);
+    readInspector=()=>{
+     const base=value.edges.find(e=>e.id===draft.id)||draft,next=DescriptionLinks.collectFields({...base,source:source.value,target:target.value,label:wording.value.trim(),uncertain:uncertain.checked},{notes});
+     return {...value,edges:value.edges.some(e=>e.id===draft.id)?value.edges.map(e=>e.id===draft.id?next:e):[...value.edges,next]};
+    };
+    const actions=node('div','diagram-selection-actions');actions.append(button('New connection',()=>{if(flush(true))select({kind:'newEdge'});},'plus'));
+    actions.append(button(existing?'Remove connection':'Cancel connection',()=>{readInspector=null;change(()=>{value={...value,edges:value.edges.filter(e=>e.id!==draft.id)};selected=null;});},existing?'trash':'close'));
+    inspector.append(actions,node('p','storage-note','Arrows read: From → relationship → To. Matching reverse relationships share a double-headed line; each direction keeps its own notes.'));
+   }
+   inspectorBaseline=rawFields();
+  }
+  // Collect valid field changes into the local graph without rebuilding focused controls.
+  inspector.addEventListener('input',()=>flush(false,false));inspector.addEventListener('change',()=>flush(false,false));
+
+  const addPanel=node('details','diagram-add-panel'),addSummary=node('summary','square-button');addSummary.append(glyph('plus'));addSummary.title='Add entry';addSummary.setAttribute('aria-label','Add entry');addPanel.append(addSummary);
+  const addBody=node('div','diagram-add-body'),search=Geography.inputField(addBody,'Search entries','','input',120),category=Geography.selectField(addBody,'Entry category','',[]),choices=node('div','reference-options');search.type='search';addBody.append(choices);addPanel.append(addBody);
+  function drawCandidates(){
+   const selectedCategory=category.value,names=[...new Set(candidates().map(e=>e.category))].sort();category.replaceChildren(new Option('All categories',''),...names.map(name=>new Option(name,name)));category.value=names.includes(selectedCategory)?selectedCategory:'';
+   choices.replaceChildren();const q=search.value.trim().toLowerCase(),all=candidates().filter(e=>!value.nodes.some(n=>n.kind==='entry'&&n.entryId===e.id)&&(!category.value||e.category===category.value)&&[e.title,e.category,...e.tags||[]].join(' ').toLowerCase().includes(q));
+   for(const entry of all.slice(0,30)){const row=button(entry.title,()=>change(()=>{const n={id:crypto.randomUUID(),kind:'entry',entryId:entry.id,label:entry.title,x:80+(value.nodes.length%4)*340,y:80+Math.floor(value.nodes.length/4)*200};value.nodes.push(n);selected={kind:'node',id:n.id};focus=null;addPanel.open=false;}));row.className='diagram-add-option';const name=node('span','',entry.title);CategoryColors.apply(name,entry);row.replaceChildren(name,node('small','',entry.category));choices.append(row);}
+   if(!all.length)choices.append(node('p','storage-note','No matching entries available.'));if(all.length>30)choices.append(node('small','','Search to narrow these results.'));
+  }
+  search.oninput=category.onchange=drawCandidates;
+  const undoButton=button('Undo',()=>{if(!flush()||!undo.length)return;redo.push(value);value=undo.pop();selected=null;inspect();draw();},'undo');
+  const redoButton=button('Redo',()=>{if(!flush()||!redo.length)return;undo.push(value);value=redo.pop();selected=null;inspect();draw();},'redo');
+  if(!readOnly)tools.append(addPanel,button('Add text card',()=>change(()=>{const n={id:crypto.randomUUID(),kind:'text',label:'New text card',x:80,y:80};value.nodes.push(n);selected={kind:'node',id:n.id};focus=null;}),'text'),button('Connect cards',()=>{if(value.nodes.length<2)return report('Add at least two cards to connect them.');if(flush())select({kind:'newEdge'});},'link'),undoButton,redoButton,button('Arrange automatically',()=>change(()=>{value=DiagramModel.arrange(value);focus=null;}),'arrange'));
+  tools.append(button('Zoom out',()=>setZoom(zoom/1.2),'minus'),button('Zoom in',()=>setZoom(zoom*1.2),'plus'),button('Fit all',fit,'fit'),button('Show all',()=>{focus=null;depth=1;find.value='';draw();},'grid'));
+  const find=Geography.inputField(filters,'Find a card','','input',120);find.type='search';find.placeholder='Search this diagram…';
+  const focusPicker=Geography.selectField(filters,'Show connections for',focus||'',[]),depthPicker=Geography.selectField(filters,'Explore',String(depth),[{value:'1',label:'Direct connections'},{value:'500',label:'Connected chain'}]);
+  focusPicker.onchange=()=>{focus=focusPicker.value||null;draw();};depthPicker.onchange=()=>{depth=Number(depthPicker.value);draw();};find.oninput=()=>draw();
+  function shownIds(){const shown=DiagramModel.neighborhood(value,focus,depth),q=find.value.trim().toLowerCase();if(!q)return shown;return new Set(value.nodes.filter(n=>shown.has(n.id)&&label(n).toLowerCase().includes(q)).map(n=>n.id));}
+  function updateChoices(){const selectedFocus=focus;focusPicker.replaceChildren(new Option('All cards',''),...value.nodes.map(n=>new Option(label(n),n.id)));focusPicker.value=selectedFocus||'';depthPicker.value=String(depth);undoButton.disabled=!undo.length;redoButton.disabled=!redo.length;if(!readOnly)drawCandidates();}
+  function setZoom(next){const x=(viewport.scrollLeft+viewport.clientWidth/2)/zoom,y=(viewport.scrollTop+viewport.clientHeight/2)/zoom;zoom=Math.max(.15,Math.min(2.5,next));draw();viewport.scrollTo(x*zoom-viewport.clientWidth/2,y*zoom-viewport.clientHeight/2);}
+  function fit(){const shown=shownIds(),nodes=value.nodes.filter(n=>shown.has(n.id));if(!nodes.length)return;const left=Math.min(...nodes.map(n=>n.x))-40,top=Math.min(...nodes.map(n=>n.y))-40,right=Math.max(...nodes.map(n=>n.x+240)),bottom=Math.max(...nodes.map(n=>n.y+140));zoom=Math.max(.15,Math.min(2.5,viewport.clientWidth/(right-left),viewport.clientHeight/(bottom-top)));draw();viewport.scrollTo(Math.max(0,left*zoom),Math.max(0,top*zoom));}
   function draw(){
-   choices();plane.replaceChildren();const width=Math.max(1200,...value.nodes.map(n=>n.x+300)),height=Math.max(700,...value.nodes.map(n=>n.y+200));plane.style.width=width*zoom+'px';plane.style.height=height*zoom+'px';
-   const layer=node('div','diagram-layer');layer.style.width=width+'px';layer.style.height=height+'px';layer.style.transform=`scale(${zoom})`;plane.append(layer);
-   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('width',width);svg.setAttribute('height',height);svg.classList.add('diagram-lines');
-   const defs=document.createElementNS(ns,'defs'),marker=document.createElementNS(ns,'marker');marker.id=markerId;for(const [k,v] of Object.entries({viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'}))marker.setAttribute(k,v);const arrow=document.createElementNS(ns,'path');arrow.setAttribute('d','M 0 0 L 10 5 L 0 10 z');marker.append(arrow);defs.append(marker);svg.append(defs);layer.append(svg);
-   const shown=new Set(focus?[focus,...value.edges.filter(e=>e.source===focus||e.target===focus).flatMap(e=>[e.source,e.target])]:value.nodes.map(n=>n.id));
-   list.replaceChildren(node('h3','','Connections'));if(!value.edges.length)list.append(node('p','storage-note','No connections yet. Add cards, then connect them.'));
-   for(const e of value.edges){if(!shown.has(e.source)||!shown.has(e.target))continue;const a=value.nodes.find(n=>n.id===e.source),b=value.nodes.find(n=>n.id===e.target),g=document.createElementNS(ns,'g'),line=document.createElementNS(ns,'path');const horizontal=Math.abs(b.x-a.x)>=Math.abs(b.y-a.y),direction=horizontal?(b.x>=a.x?1:-1):(b.y>=a.y?1:-1),x=horizontal?a.x+(direction>0?200:0):a.x+100,y=horizontal?a.y+45:a.y+(direction>0?90:0),tx=horizontal?b.x+(direction>0?0:200):b.x+100,ty=horizontal?b.y+45:b.y+(direction>0?0:90),bend=70*direction;line.setAttribute('d',horizontal?`M${x} ${y} C${x+bend} ${y} ${tx-bend} ${ty} ${tx} ${ty}`:`M${x} ${y} C${x} ${y+bend} ${tx} ${ty-bend} ${tx} ${ty}`);line.setAttribute('marker-end',`url(#${markerId})`);if(e.uncertain)line.setAttribute('stroke-dasharray','7 5');g.append(line);const text=document.createElementNS(ns,'text');text.setAttribute('x',(x+tx)/2);text.setAttribute('y',(y+ty)/2-8);text.textContent=e.label;g.append(text);g.onclick=()=>{if(fields()!==fieldBaseline)return onError('Apply the current edits before selecting another connection.');selected={kind:'edge',id:e.id};inspect();};svg.append(g);const row=button(`${label(a)} → ${e.label} → ${label(b)}${e.uncertain?' · uncertain':''}`,()=>{if(fields()!==fieldBaseline)return onError('Apply the current edits before selecting another connection.');selected={kind:'edge',id:e.id};inspect();});row.classList.add('diagram-connection-row');if(readOnly){const sentence=node('p','diagram-connection-row',row.textContent);list.append(sentence);}else list.append(row);if(e.notes)list.append(DescriptionLinks.renderField(node('p','location-prose'),e,'notes',entries,showDetail));}
-   for(const n of value.nodes){if(!shown.has(n.id))continue;const card=button('',()=>{if(readOnly){if(resolve(n))onRead(n.entryId);return;}if(fields()!==fieldBaseline)return onError('Apply the current edits first.');selected={kind:'node',id:n.id};inspect();});card.className='diagram-node';card.dataset.nodeId=n.id;card.style.left=n.x+'px';card.style.top=n.y+'px';const entry=resolve(n);if(entry?.image){const image=node('img');image.src=entry.image;image.alt='';card.append(image);}const name=node('span','',label(n));if(entry)CategoryColors.apply(name,entry);card.append(name,node('small','',n.kind==='text'?'Diagram text':entry?entry.category:'Missing entry'));card.onpointerdown=e=>{if(readOnly)return;if(fields()!==fieldBaseline)return;if(e.button!==0)return;drag={id:n.id,x:e.clientX,y:e.clientY,ox:n.x,oy:n.y,moved:false};card.setPointerCapture(e.pointerId);};card.onpointermove=e=>{if(!drag||drag.id!==n.id)return;const dx=(e.clientX-drag.x)/zoom,dy=(e.clientY-drag.y)/zoom;if(!drag.moved&&Math.hypot(dx,dy)>3){remember();drag.moved=true;}if(drag.moved){n.x=Math.max(0,Math.min(100000,drag.ox+dx));n.y=Math.max(0,Math.min(100000,drag.oy+dy));card.style.left=n.x+'px';card.style.top=n.y+'px';}};card.onpointerup=card.onpointercancel=()=>{if(drag?.moved){drag=null;draw();}else drag=null;};card.onkeydown=e=>{if(readOnly)return;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();change(()=>{n.x=Math.max(0,Math.min(100000,n.x+(e.key==='ArrowLeft'?-20:e.key==='ArrowRight'?20:0)));n.y=Math.max(0,Math.min(100000,n.y+(e.key==='ArrowUp'?-20:e.key==='ArrowDown'?20:0)));});};layer.append(card);}
+   updateChoices();const activeId=document.activeElement?.dataset.nodeId;plane.replaceChildren();
+   const width=Math.max(1200,...value.nodes.map(n=>n.x+300)),height=Math.max(700,...value.nodes.map(n=>n.y+200));plane.style.width=width*zoom+'px';plane.style.height=height*zoom+'px';
+   layer=node('div','diagram-layer');layer.style.width=width+'px';layer.style.height=height+'px';layer.style.transform=`scale(${zoom})`;plane.append(layer);edgesLayer=node('div','diagram-edge-layer');layer.append(edgesLayer);
+   const shown=shownIds();for(const n of value.nodes){if(!shown.has(n.id))continue;
+    const card=button(label(n),()=>{if(suppressClick){suppressClick=false;return;}if(readOnly){if(resolve(n))onRead(n.entryId);}else select({kind:'node',id:n.id});});
+    card.className='diagram-node';card.dataset.nodeId=n.id;card.setAttribute('aria-pressed',String(selected?.kind==='node'&&selected.id===n.id));card.style.left=n.x+'px';card.style.top=n.y+'px';
+    const entry=resolve(n),image=node('div','diagram-node-image');if(entry?.image){const img=node('img');img.src=entry.image;img.alt='';image.append(img);}else image.append(glyph(entry?categoryIcon(entry.category):n.kind==='text'?'text':'book'));
+    const name=node('span','diagram-node-title',label(n));if(entry)CategoryColors.apply(name,entry);card.replaceChildren(image,name);
+    card.onpointerdown=event=>{if(readOnly||event.button!==0||!flush())return;drag={id:n.id,x:event.clientX,y:event.clientY,ox:n.x,oy:n.y,moved:false};card.setPointerCapture(event.pointerId);};
+    card.onpointermove=event=>{if(!drag||drag.id!==n.id)return;const dx=(event.clientX-drag.x)/zoom,dy=(event.clientY-drag.y)/zoom;if(!drag.moved&&Math.hypot(dx,dy)>3){remember();drag.moved=true;}if(drag.moved){n.x=Math.max(0,Math.min(100000,drag.ox+dx));n.y=Math.max(0,Math.min(100000,drag.oy+dy));card.style.left=n.x+'px';card.style.top=n.y+'px';drawEdges();}};
+    card.onpointerup=card.onpointercancel=()=>{if(drag?.moved){suppressClick=true;setTimeout(()=>suppressClick=false,0);drag=null;draw();}else drag=null;};
+    card.onkeydown=event=>{if(readOnly||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();change(()=>{n.x=Math.max(0,Math.min(100000,n.x+(event.key==='ArrowLeft'?-20:event.key==='ArrowRight'?20:0)));n.y=Math.max(0,Math.min(100000,n.y+(event.key==='ArrowUp'?-20:event.key==='ArrowDown'?20:0)));});};
+    layer.append(card);
+   }
+   if(!shown.size)layer.append(node('p','diagram-empty','No cards match this view. Use Show all to reset the filters.'));
+   drawEdges();if(activeId)[...layer.querySelectorAll('[data-node-id]')].find(el=>el.dataset.nodeId===activeId)?.focus({preventScroll:true});
   }
-  function fields(){return JSON.stringify([...inspector.querySelectorAll('input,textarea,select')].map(el=>[el.value,el.checked]));}
-  function inspect(){inspectFields();fieldBaseline=fields();}
-  function inspectFields(){inspector.replaceChildren();if(readOnly)return;if(!selected){inspector.append(node('h3','',title),node('p','storage-note','Drag cards to arrange them. Arrow keys move a focused card. Drag blank space to pan. Arrows read: source → relationship → target.'));return;}
-   if(selected.kind==='node'){const n=value.nodes.find(n=>n.id===selected.id);if(!n)return;inspector.append(node('h3','',label(n)));if(n.kind==='text'){const input=Geography.inputField(inspector,'Card label',n.label,'input',120);inspector.append(button('Apply label',()=>{if(!input.value.trim())return onError('Enter a card label.');change(()=>n.label=input.value.trim(),true);}));}else if(resolve(n))inspector.append(button('Read entry',()=>onRead(n.entryId)));
-    inspector.append(button('Show its connections',()=>{focus=n.id;draw();}),button('Remove card',()=>change(()=>{value=DiagramModel.removeNode(value,n.id);selected=null;},true)),node('p','storage-note','Removing a card also removes its diagram connections. Its encyclopedia entry and ecosystem membership are kept.'));return;}
-   const old=selected.kind==='edge'?value.edges.find(e=>e.id===selected.id):null;if(selected.kind==='edge'&&!old)return;
-   const draft=old||{id:crypto.randomUUID(),source:value.nodes[0]?.id||'',target:value.nodes[1]?.id||'',label:defaultRelationship,notes:'',uncertain:false},options=value.nodes.map(n=>({value:n.id,label:label(n)}));inspector.append(node('h3','',old?'Edit connection':'New connection'));const source=Geography.selectField(inspector,'From',draft.source,options),target=Geography.selectField(inspector,'To',draft.target,options),wording=Geography.inputField(inspector,'Relationship',draft.label,'input',120),notes=linkedField(inspector,draft,'notes','Connection notes',6000),uncertain=node('input'),ul=node('label');uncertain.type='checkbox';uncertain.checked=draft.uncertain;ul.append(uncertain,document.createTextNode(' Uncertain relationship'));inspector.append(ul,button('Apply connection',()=>{try{const next=DescriptionLinks.collectFields({...draft,source:source.value,target:target.value,label:wording.value.trim(),uncertain:uncertain.checked},{notes});const candidate={...value,edges:old?value.edges.map(e=>e.id===old.id?next:e):[...value.edges,next]};DiagramModel.validate(candidate);change(()=>{value=candidate;selected={kind:'edge',id:next.id};},true);}catch(e){onError(e.message);}}));if(old)inspector.append(button('Remove connection',()=>change(()=>{value.edges=value.edges.filter(e=>e.id!==old.id);selected=null;},true)));
+  function drawEdges(){
+   edgesLayer.replaceChildren();const shown=shownIds(),sizes=new Map([...layer.querySelectorAll('[data-node-id]')].map(el=>[el.dataset.nodeId,{width:el.offsetWidth||200,height:el.offsetHeight||90}]));
+   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.classList.add('diagram-lines');svg.setAttribute('width',layer.style.width);svg.setAttribute('height',layer.style.height);
+   const defs=document.createElementNS(ns,'defs'),marker=document.createElementNS(ns,'marker');marker.id=markerId;for(const [key,v] of Object.entries({viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'}))marker.setAttribute(key,v);const arrow=document.createElementNS(ns,'path');arrow.setAttribute('d','M 0 0 L 10 5 L 0 10 z');marker.append(arrow);defs.append(marker);svg.append(defs);edgesLayer.append(svg);
+   for(const group of DiagramModel.displayEdges(value)){
+    if(!shown.has(group.edge.source)||!shown.has(group.edge.target))continue;
+    const geometry=DiagramModel.route(group,value.nodes,sizes),g=document.createElementNS(ns,'g'),line=document.createElementNS(ns,'path'),hit=document.createElementNS(ns,'path');g.dataset.edgeIds=JSON.stringify(group.ids);g.classList.toggle('selected',group.ids.includes(selected?.id));
+    for(const path of [line,hit])path.setAttribute('d',geometry.path);line.classList.add('diagram-edge');hit.classList.add('diagram-edge-hit');line.setAttribute('marker-end',`url(#${markerId})`);if(group.mutual)line.setAttribute('marker-start',`url(#${markerId})`);if(group.edge.uncertain)line.setAttribute('stroke-dasharray','7 5');g.append(hit,line);g.onclick=()=>{if(!readOnly)select({kind:'edge',id:group.edge.id});};svg.append(g);
+    const caption=button(group.edge.label,()=>{if(!readOnly)select({kind:'edge',id:group.edge.id});});caption.className='diagram-edge-label';caption.dataset.edgeIds=JSON.stringify(group.ids);caption.style.left=geometry.label.x+'px';caption.style.top=geometry.label.y+'px';caption.title=group.mutual?group.edge.label+' · both directions':group.edge.label;caption.setAttribute('aria-label',(group.mutual?'Mutual connection: ':'Edit connection: ')+group.edge.label);if(readOnly)caption.disabled=true;edgesLayer.append(caption);
+   }
+   list.replaceChildren();const heading=node('div','section-title');heading.append(node('h3','','Connections'),node('span','',String(value.edges.filter(e=>shown.has(e.source)&&shown.has(e.target)).length)));list.append(heading);
+   for(const e of value.edges){if(!shown.has(e.source)||!shown.has(e.target))continue;const a=value.nodes.find(n=>n.id===e.source),b=value.nodes.find(n=>n.id===e.target),row=node('div','diagram-connection-item'),sentence=`${label(a)} → ${e.label} → ${label(b)}${e.uncertain?' · uncertain':''}`;
+    const text=readOnly?node('p','diagram-connection-row',sentence):button(sentence,()=>select({kind:'edge',id:e.id}));text.classList.add('diagram-connection-row');text.dataset.edgeId=e.id;row.append(text);if(e.notes)row.append(DescriptionLinks.renderField(node('p','location-prose'),e,'notes',entries,onRead));list.append(row);
+   }
+   if(!value.edges.length)list.append(node('p','storage-note','No connections yet. Add cards, then connect them.'));else if(!value.edges.some(e=>shown.has(e.source)&&shown.has(e.target)))list.append(node('p','storage-note','No connections match this view.'));
   }
-  viewport.onpointerdown=e=>{if(e.button!==0||e.target.closest('button,g'))return;pan={x:e.clientX,y:e.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};viewport.setPointerCapture(e.pointerId);};viewport.onpointermove=e=>{if(pan){viewport.scrollLeft=pan.left-(e.clientX-pan.x);viewport.scrollTop=pan.top-(e.clientY-pan.y);}};viewport.onpointerup=viewport.onpointercancel=()=>pan=null;
-  if(view)zoom=view.zoom||1;draw();inspect();if(view)requestAnimationFrame(()=>viewport.scrollTo(view.left||0,view.top||0));return {get view(){return {zoom,left:viewport.scrollLeft,top:viewport.scrollTop};},get pending(){return fields()!==fieldBaseline;},get value(){return structuredClone(value);},dispose(){inspector.replaceChildren();},fit};
+  viewport.onpointerdown=event=>{if(event.button!==0||event.target.closest('button,g'))return;pan={x:event.clientX,y:event.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};viewport.setPointerCapture(event.pointerId);};viewport.onpointermove=event=>{if(pan)viewport.scrollTo(pan.left-(event.clientX-pan.x),pan.top-(event.clientY-pan.y));};viewport.onpointerup=viewport.onpointercancel=()=>pan=null;
+  draw();inspect();requestAnimationFrame(()=>{if(root.isConnected)drawEdges();});if(view){find.value=view.search||'';draw();requestAnimationFrame(()=>viewport.scrollTo(view.left||0,view.top||0));}
+  return {
+   get view(){return {zoom,left:viewport.scrollLeft,top:viewport.scrollTop,focus,depth,search:find.value};},
+   get snapshot(){return JSON.stringify([value,rawFields()!==inspectorBaseline?rawFields():'']);},
+   get value(){return structuredClone(value);},
+   collect(){if(!flush(true))throw new Error(lastError);return structuredClone(value);},
+   setBusy(busy){root.inert=busy;},dispose(){inspector.replaceChildren();},fit
+  };
  }
  return {mount};
 })();
