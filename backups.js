@@ -73,6 +73,7 @@ async function restoreZip(store,file,revision){
     let manifest;try{manifest=JSON.parse(await fsp.readFile(manifestFile.path,'utf8'));}catch{fail('Backup manifest is not valid JSON.');}
     if(manifest?.format!=='worldforge'||![3,4,5,6].includes(manifest.version)||!Array.isArray(manifest.images)||!Array.isArray(manifest.migrations)||!manifest.migrations.every(h=>/^[a-f0-9]{64}$/.test(h)))fail('Unsupported or malformed backup.');
     manifest=manifest.version<5?normalizeState(manifest):require('./creature-model').rename(manifest);
+    if(manifest.ecosystems===undefined)manifest.ecosystems=[];
     if(manifest.eras===undefined)manifest.eras=[];if(manifest.chronology===undefined)manifest.chronology=require('./era-model').defaultChronology();
     manifest.organization=require('./folder-model').recover(manifest.organization,manifest);
     validateState(manifest);
@@ -103,7 +104,7 @@ async function legacyImport(store,raw,revision,migrate=false){
   const rollback=await checkpoint(store,migrate?'before-migration':'before-import');
   const {state,newImages}=await store.convertLegacy(parsed);
   if(migrate){
-    const old=store.state();state.organization=old.organization;
+    const old=store.state();state.organization=old.organization;state.ecosystems=old.ecosystems;
     for(const key of ['entries','maps']){
       const merged=[...old[key]];
       for(const record of state[key]){

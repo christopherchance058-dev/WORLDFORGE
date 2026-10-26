@@ -52,4 +52,4 @@ Read this and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) at the start of a task. U
 
 ## Deferred direction
 
-Ecosystem Atlas is planned, not authorized implementation. Future food webs/hierarchy/biome tools must reuse Creature records and stable relationship IDs. Do not create another creature library or infer ecological facts from current free-text lore. Preserve all optional Creature fields, relationships, galleries and shared UI/navigation.
+Ecosystem Atlas has a first implementation with separate habitat records and explicit food webs. Extend its reusable diagram model/editor for future domains; family trees, faction hierarchies and ecological simulation require their own design. Ecosystem tools must reuse Creature records and stable IDs. Do not create another creature library or infer ecological facts from current free-text lore. Preserve all optional Creature fields, relationships, galleries and shared UI/navigation.
