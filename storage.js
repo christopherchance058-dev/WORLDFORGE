@@ -11,6 +11,7 @@ const GeographyModel=require('./geography-model');
 const CharacterModel=require('./character-model');
 const FactionModel=require('./faction-model');
 const CreatureModel=require('./creature-model');
+const MagicModel=require('./magic-model');
 const HistoryModel=require('./history-model');
 const EraModel=require('./era-model');
 const DescriptionLinks=require('./description-links');
@@ -45,8 +46,8 @@ function validateState(state, legacy=false) {
   const common=x=>x&&text(x.id,120,true)&&text(x.title,120,true)&&text(x.description,30000)&&typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt));
   const pin=p=>p&&text(p.id,120,true)&&text(p.title,120,true)&&text(p.description,30000)&&(p.image===undefined||image(p.image))&&(p.summary===undefined||text(p.summary,500))&&(p.entryId===undefined||p.entryId===null||text(p.entryId,120,true))&&(p.icon===undefined||markers.includes(p.icon))&&['gold','green','blue','red','purple'].includes(p.color)&&Number.isFinite(p.x)&&p.x>=0&&p.x<=1&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1;
   const canvas=c=>c&&text(c.id,120,true)&&text(c.name,120,true)&&text(c.filename,255)&&image(c.image,true)&&Array.isArray(c.pins)&&ids(c.pins)&&c.pins.every(pin);
-  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&(e.description.trim()||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e)||CreatureModel.isCreature(e))&&names.includes(e.category)&&(e.summary===undefined||text(e.summary,500))&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
-  try{if(state.eras!==undefined)EraModel.validate(state.eras,image);if(state.chronology!==undefined)EraModel.validateChronology(state.chronology);GeographyModel.validate(entries);CharacterModel.validate(entries,image);FactionModel.validate(entries);CreatureModel.validate(entries,image);HistoryModel.validate(entries);entries.forEach(DescriptionLinks.validate);}catch(error){fail(error.message);}
+  if(!Array.isArray(entries)||!Array.isArray(maps)||!ids(entries)||!ids(maps)||!entries.every(e=>common(e)&&(e.description.trim()||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e)||CreatureModel.isCreature(e)||MagicModel.isMagic(e))&&names.includes(e.category)&&(e.summary===undefined||text(e.summary,500))&&Array.isArray(e.tags)&&e.tags.length<=30&&e.tags.every(t=>text(t,100))&&(e.year===''||Number.isInteger(e.year)&&Math.abs(e.year)<=999999)&&image(e.image))||!maps.every(m=>common(m)&&!('image' in m)&&!('pins' in m)&&Array.isArray(m.canvases)&&ids(m.canvases)&&m.canvases.every(canvas))) fail('This is not a valid WORLDFORGE document. Check entries, map canvases, images and pin coordinates.');
+  try{if(state.eras!==undefined)EraModel.validate(state.eras,image);if(state.chronology!==undefined)EraModel.validateChronology(state.chronology);GeographyModel.validate(entries);CharacterModel.validate(entries,image);FactionModel.validate(entries);CreatureModel.validate(entries,image);MagicModel.validate(entries);HistoryModel.validate(entries);entries.forEach(DescriptionLinks.validate);}catch(error){fail(error.message);}
 }
 async function receive(stream,destination,limit) {
   let bytes=0,handle;const hash=createHash('sha256');

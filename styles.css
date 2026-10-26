@@ -216,10 +216,11 @@ body.map-editing{overflow:hidden}body.map-editing>.sidebar,body.map-editing .top
 
 /* The Character form's image sidebar and section rhythm apply to all categories. */
 #editor,#editor.character-entry-editor{width:min(900px,calc(100vw - 28px))}
-#editor #entry-form{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px,26%,220px);grid-template-areas:'head head' 'error error' 'keys keys' 'note note' 'title category' 'location location' 'summary portrait' 'description portrait' 'tags portrait' 'locationExtra locationExtra' 'factionExtra factionExtra' 'creatureExtra creatureExtra' 'historyExtra historyExtra' 'characterExtra characterExtra' 'actions actions';column-gap:24px}
+#editor #entry-form{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px,26%,220px);grid-template-areas:'head head' 'error error' 'keys keys' 'note note' 'title category' 'location location' 'summary portrait' 'description portrait' 'tags portrait' 'locationExtra locationExtra' 'factionExtra factionExtra' 'creatureExtra creatureExtra' 'magicExtra magicExtra' 'historyExtra historyExtra' 'characterExtra characterExtra' 'actions actions';column-gap:24px}
 #editor .dialog-heading{grid-area:head}#editor #character-editor-note{grid-area:note}#editor #entry-title-field{grid-area:title}#editor #entry-category-fields{grid-area:category;grid-template-columns:minmax(0,1fr)}
 #editor #location-editor{grid-area:location}#editor #entry-summary-field{grid-area:summary}#editor #entry-description-field{grid-area:description}#editor #entry-tags-field{grid-area:tags}#editor #image-controls{grid-area:portrait}
 #editor #creature-editor{grid-area:creatureExtra}
+#editor #magic-editor{grid-area:magicExtra}
 #editor #location-extra{grid-area:locationExtra}#editor #faction-editor{grid-area:factionExtra}#editor #character-editor{grid-area:characterExtra}#editor #form-error{grid-area:error}#editor .dialog-actions{grid-area:actions}
 #editor #image-controls{min-width:0}#editor #entry-image{max-width:100%;font-size:11px}#editor #entry-image-help{font-size:11px;line-height:1.7}
 #editor #image-preview img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:1;object-fit:cover;object-position:center;background:var(--surface-soft);margin:14px 0;border-radius:8px}
