@@ -2,7 +2,7 @@ const {test,expect,manifest}=require('./fixtures');
 const Model=require('../history-model'),Layout=require('../timeline-layout');
 const headers={'X-Worldforge':'1'},state=async request=>(await request.get('/api/state')).json();
 async function init(page){await page.setViewportSize({width:1920,height:1080});await page.goto('/');await expect(page.locator('#entries .card')).toHaveCount(8);}
-async function timeline(page){await page.locator('#navigation button[data-category=History]').click();await page.getByRole('button',{name:'Visual timeline',exact:true}).click();await expect(page.locator('.timeline-scene')).toHaveAttribute('data-scale',/\d/);}
+async function timeline(page){await page.locator('#navigation .timeline-nav').click();await expect(page.locator('.timeline-scene')).toHaveAttribute('data-scale',/\d/);}
 async function save(page){await page.getByRole('button',{name:'Save entry',exact:true}).click();await expect(page.locator('#editor')).toBeHidden();}
 const date=year=>({year,precision:'year'});
 

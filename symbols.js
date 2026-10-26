@@ -1,6 +1,7 @@
 /* Shared, fixed SVG vocabulary. No remote fonts or icon service required. */
 (function(root){
  const paths={
+  timeline:'<path d="M3 12h18M6 9v6M12 9v6M18 9v6M6 4h6M12 20h6"/><circle cx="6" cy="4" r="2"/><circle cx="18" cy="20" r="2"/>',
   switchworld:'<path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/>',
   pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
   person:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3M9 15l3 4 3-4"/>',

@@ -67,11 +67,11 @@ History entries keep the normal title, short description, description, image, an
 
 Choose **Unknown** certainty to save without dates. The editor disables the year inputs; switching back before saving restores what you typed. Unknown saves no start/end year. Confirmed, Approximate, Disputed, or Not specified can be used with incomplete dates. End year cannot precede Start year. **Historical classification** suggests event types and accepts your own wording. Calendar names are labels; no conversion is performed. Year sorting groups calendar names alphabetically (unnamed first), orders events within each calendar by start year, and places undated events last.
 
-Existing events retain their old year and other content. Editing chronology synchronizes that legacy year with the start year. Use the current app for chronology edits and portable backups; older versions cannot reliably edit the new date details. Open **Visual timeline** in History to explore these events on a horizontal axis.
+Existing events retain their old year and other content. Editing chronology synchronizes that legacy year with the start year. Use the current app for chronology edits and portable backups; older versions cannot reliably edit the new date details. Open **Timeline** under Atlas to explore these events on a horizontal axis.
 
 ## Visual history timeline
 
-In **History**, choose **Visual timeline**. The ruler positions events by numeric start year; a bar appears only when both start and end are recorded. Dashed outlines mean Approximate and dotted outlines mean Disputed; labels also show certainty. Negative years and explicitly entered Year 0 follow the same numeric scale.
+Under **Atlas**, choose **Timeline**. The ruler positions events by numeric start year; a bar appears only when both start and end are recorded. Dashed outlines mean Approximate and dotted outlines mean Disputed; labels also show certainty. Negative years and explicitly entered Year 0 follow the same numeric scale.
 
 Drag blank space or use the earlier/later arrows to move through time. Use **+ / −**, **Fit**, or **Jump to…** to find a useful period. Ctrl + wheel (Meta + wheel where supported) zooms around the pointer. Shift + wheel pans horizontally. With the timeline background focused, Left/Right pans, +/− zooms, Home fits, and Page Up/Down scrolls through overlapping event rows. Zooming never introduces month/day precision. Choose **History** in the sidebar to return to the normal cards.
 
@@ -123,7 +123,7 @@ You can also set up a fresh copy and **Import backup** instead of copying the `d
 
 ### History timeline filters and connected entries
 
-Open **History → Visual timeline**. Use **Filter event type** and **Filter date certainty** alongside search; all active choices must match. Custom saved event types appear automatically. “No event type” and “Certainty not specified” cover blank values; Unknown certainty is a separate saved value. Undated and named-calendar results remain in their own sections below the axis. Filtering never edits dates or records.
+Open **Atlas → Timeline**. Use **Filter event type** and **Filter date certainty** alongside search; all active choices must match. Custom saved event types appear automatically. “No event type” and “Certainty not specified” cover blank values; Unknown certainty is a separate saved value. Undated and named-calendar results remain in their own sections below the axis. Filtering never edits dates or records.
 
 Search/filter changes retain your year and zoom and start at the first event row. Use **Fit** to frame the matching numeric dates, or **Clear filters** (shown only while filtering) to restore all results. An empty result offers recovery controls. Back/Forward restores these session choices; reload/world switching resets the timeline session.
 
@@ -152,3 +152,5 @@ History has **Events** and **Eras** tabs sharing the normal card browser. Eras a
 Era **Card image** recommends 1024 × 1024 px (1:1); **Timeline banner** recommends 2400 × 800 px (3:1). Upload, replace, remove and view each independently. Other dimensions are accepted, previews crop only for display and original files remain unchanged. Current ZIPs include both images, including when restoring into another world. **Era band display → Illustrated / Compact** controls visual density. A missing end position still shows only a boundary marker, without inventing a banner duration.
 
 Timeline event cards now show names/dates and useful indicators rather than description snippets. Predefined event types get icons; custom or unspecified types have none. Click to read the full event. In any existing @-enabled field, find eras labelled **History · Era** and select them like other entries. Links follow renames and open the era reading view; deleted eras leave unavailable references without deleting surrounding prose. Use the current app for era references/images because older versions cannot reliably edit or restore them.
+
+Timeline is an Atlas workspace beside Maps. History retains Events/Eras cards and World chronology settings. Event and era reading windows offer **Show on timeline**: it selects the record’s calendar/unit, clears search/type/certainty filters and focuses its numeric position (including overlap rows). Undated records open their expanded list without an invented date. Era targets enable bands if hidden. Back/Forward restores the prior reading and browsing context. The same records, artwork, links and backups serve both views.
