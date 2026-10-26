@@ -162,3 +162,7 @@ In a Creature editor, expand **Relationships & linked lore** to select entries a
 ### Magic connections
 
 In a Magic editor, open **Connections & linked lore** to add users, associated factions, places or other entries. Each connection has optional wording, notes and shared history; use @ in the narrative fields. Referenced entries show **Connected magic**. These are manual lore connections: linking a faction does not assign its magic to every member. Removing a connection keeps its targets; deleting a target keeps its former name and written lore.
+
+### Organizing with folders
+
+Within a category, use **New folder** to organize cards. **All** shows everything; **Unfiled** shows cards without a folder. Open a folder before creating an entry to file it there. Use a card’s **⋯** button or drag it to a visible folder to move it. Each entry has one folder; use tags for overlapping groups. **Manage folder** renames or deletes the open folder; deletion keeps its entries in Unfiled. Location folders do not change geographic parents, and History folders work across Events and Eras. Use this version for backups that preserve folders.

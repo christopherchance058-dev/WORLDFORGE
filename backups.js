@@ -74,6 +74,7 @@ async function restoreZip(store,file,revision){
     if(manifest?.format!=='worldforge'||![3,4,5,6].includes(manifest.version)||!Array.isArray(manifest.images)||!Array.isArray(manifest.migrations)||!manifest.migrations.every(h=>/^[a-f0-9]{64}$/.test(h)))fail('Unsupported or malformed backup.');
     manifest=manifest.version<5?normalizeState(manifest):require('./creature-model').rename(manifest);
     if(manifest.eras===undefined)manifest.eras=[];if(manifest.chronology===undefined)manifest.chronology=require('./era-model').defaultChronology();
+    manifest.organization=require('./folder-model').recover(manifest.organization,manifest);
     validateState(manifest);
     if(new Set(manifest.images.map(i=>i?.id)).size!==manifest.images.length||files.size!==manifest.images.length+1)fail('Backup has duplicate or unlisted image files.');
     const newImages=[],remap=new Map();
@@ -102,7 +103,7 @@ async function legacyImport(store,raw,revision,migrate=false){
   const rollback=await checkpoint(store,migrate?'before-migration':'before-import');
   const {state,newImages}=await store.convertLegacy(parsed);
   if(migrate){
-    const old=store.state();
+    const old=store.state();state.organization=old.organization;
     for(const key of ['entries','maps']){
       const merged=[...old[key]];
       for(const record of state[key]){

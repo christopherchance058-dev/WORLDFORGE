@@ -1,5 +1,9 @@
 # WORLDFORGE — development handoff
 
+## Latest completed work — shared folders
+
+The user authorized the shared folder feature on top of commit `05d0f7410d7bdf31d34cea1c092403c9bf778413`. Read [FOLDER_IMPLEMENTATION_HANDOFF.md](FOLDER_IMPLEMENTATION_HANDOFF.md) for the completed implementation and observed 221-test passing result before using the historical handoff below. Preserve all uncommitted changes. The user authorized publishing this milestone on `feature/category-folders`, leaving main unchanged. Verify its actual HEAD/remote; this does not authorize future publication.
+
 Prepared 26 October 2026. A session snapshot: verify the actual checkout and diff before working. AGENTS.md contains development rules; PROJECT_CONTEXT.md maps the architecture and implemented/planned features; README.md contains user procedures.
 
 ## Copy into the next chat

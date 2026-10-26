@@ -11,7 +11,7 @@ const EntryCards=(()=>{
   if(e.image){const image=node('img');image.src=e.image;image.alt='';image.loading='lazy';thumbnail.append(image);}else{thumbnail.classList.add('entry-card-placeholder');thumbnail.append(glyph(icon||categoryIcon(e.category)));}media.append(thumbnail);
   const copy=node('div','entry-card-copy'),title=node(heading,'entry-card-title',e.title);title.textContent='';open.textContent=e.title;title.append(open);copy.append(title);
   const body=node('div','entry-card-content');const field=DescriptionLinks.plain(e,entries,'summary').trim()?'summary':'description';if(DescriptionLinks.plain(e,entries,field).trim()){const preview=node('div','entry-card-summary');button._updatePreview=()=>DescriptionLinks.preview(preview,e,entries,showDetail,field,({small:18,medium:40,large:70})[size]);button._updatePreview();body.append(preview);}if(e.tags?.length){const tags=node('div','entry-card-tags');for(const tag of e.tags.slice(0,3))tags.append(node('span','tag',tag));if(e.tags.length>3){const more=node('span','tag',`+${e.tags.length-3} more`);more.title=e.tags.slice(3).join(', ');tags.append(more);}copy.append(tags);}
-  button.append(media,copy);if(body.childNodes.length)button.append(body);return button;
+  Folders.card(button,e);button.append(media,copy);if(body.childNodes.length)button.append(body);return button;
  }
  function fullImage(image,title){const link=node('a','full-image-link','View full image ↗');link.href=image;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label',`View full image of ${title}`);return link;}
  return {card,grid,control,fullImage};
