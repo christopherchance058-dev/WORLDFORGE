@@ -1,5 +1,11 @@
 # WORLDFORGE — development handoff
 
+## Latest work — common connection questions and final gallery ordering
+
+The user's clarified rule: common relationship questions must already exist in ordinary editor sections; leaving them unanswered is allowed. Suggestions are reserved for niche associations, and custom fields remain. Implemented atop main `d593116`: central `ConnectionModel.standardGroupsFor`, common groups for all existing categories/eras and a generic future-category Associations group; niche-only suggestions; saved matching rows keep owners/IDs/notes and unanswered defaults are not persisted. Character/Creature galleries use `data-editor-gallery` and the final shared gallery slot. The era heading is now “Eras lived through”. Guidance and README reflect these durable requirements. No schema/dependency change or real-library writes.
+
+Verification: all 232 distinct cases have passing results across the full run (231/232), the 5-case common-field suite, and the 7-case shared-link recheck after updating the one obsolete gallery-location selector. The failed broad case was a test looking under the old Character root, not a failed caption save. Light/Dark desktop screenshots were inspected; final section gaps are checked at 12 px. Tests used isolated temporary libraries. The user authorized committing and pushing this correction to main. Verify the actual local HEAD and remote before continuing; this authorization applies to this publication only. Older push requests below are historical, completed tasks.
+
 ## Latest work — optional named connection fields, main publication
 
 Read [CONNECTION_FIELDS_HANDOFF.md](CONNECTION_FIELDS_HANDOFF.md). Optional category suggestions/custom named fields and safe Related lore preservation are implemented. The user authorized immediate publication to main, including the previous folder/universal-connection milestones. All 231 distinct tests have passing results across a 228/231 broad run and focused rechecks after three obsolete UI test selectors were updated. Verify actual Git HEAD/remote and preserve subsequent work. Older notes below are historical; this authorization is specific to this publication.

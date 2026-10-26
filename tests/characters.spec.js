@@ -13,7 +13,7 @@ async function start(page){await page.goto('/');await expect(page.locator('.card
 async function closeReading(page){if(await page.locator('#detail').isVisible())await page.getByRole('button',{name:'Close entry',exact:true}).click();}
 async function create(page){await closeReading(page);await page.getByRole('button',{name:'New entry',exact:true}).click();}
 const save=page=>page.getByRole('button',{name:'Save entry',exact:true}).click();
-const openGroup=(page,name)=>page.locator(name==='Connections & linked lore'?'#shared-connections-editor':'#character-editor').getByText(name,{exact:true}).click();
+const openGroup=(page,name)=>page.locator(name==='Connections & linked lore'?'#shared-connections-editor':name==='Other appearances & images'?'#entry-gallery-editor>details:visible':'#character-editor').getByText(name,{exact:true}).click();
 async function back(page){await page.getByRole('button',{name:'Close entry',exact:true}).click();}
 
 test('blank, name-only and portrait-only characters save without mandatory fields or empty profile sections',async({page,request})=>{

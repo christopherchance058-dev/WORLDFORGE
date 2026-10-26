@@ -161,7 +161,7 @@ In a Creature editor, expand **Relationships & linked lore** to select entries a
 
 ### Magic connections
 
-In a Magic editor, open **Connections & linked lore** to add users, associated factions, places or other entries. Each connection has optional wording, notes and shared history; use @ in the narrative fields. Referenced entries show **Connected magic**. These are manual lore connections: linking a faction does not assign its magic to every member. Removing a connection keeps its targets; deleting a target keeps its former name and written lore.
+In a Magic editor, open **Practitioners & teaching** or **Origins & associations** to connect users, teachers, factions, places or related magic. Use **Connections & linked lore** for niche or custom associations. Each connection has optional wording, notes and shared history; use @ in the narrative fields. Referenced entries show **Connected magic**. These are manual lore connections: linking a faction does not assign its magic to every member. Removing a connection keeps its targets; deleting a target keeps its former name and written lore.
 
 ### Organizing with folders
 
@@ -174,4 +174,4 @@ Every category has optional **Connections & linked lore**: choose any entries or
 
 ### Optional connection fields
 
-Open **Connections & linked lore** to choose from **Suggested connection fields** or **Add custom connection field**. Suggestions vary by category—for example, Magic offers Users/practitioners and Taught by—and all are optional. Each named field uses the familiar entry picker and unlinked notes. Rename it or expand its field-name/notes section for written @-linked details. Removing a field keeps its target entries. Existing generic Related lore selections appear as Other connections and are preserved when saved.
+Common connection questions are already available in the regular editor sections. Magic, for example, has **Practitioners & teaching** and **Origins & associations**, with questions such as Taught by and Users / practitioners. Leave any question unanswered. Open **Connections & linked lore** for less common suggested fields or **Add custom connection field** for your own wording. Every connection uses the familiar entry picker and unlinked notes; expand its notes section for @-linked details. Rename/remove custom fields without deleting target entries. Existing generic Related lore selections appear as Other connections and are preserved when saved. **Other appearances & images** is always the last section in editors with a gallery, after **Eras lived through** where applicable.

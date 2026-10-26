@@ -21,15 +21,28 @@
   return changed?next:e;
  }
  function mentions(e){const refs=new Map();function visit(owner){if(!object(owner))return;for(const [field,registry] of [['description',owner.descriptionReferences],['summary',owner.summaryReferences],...Object.entries(owner.textReferences||{})])for(const r of registry?.items||[])if(typeof owner[field]==='string'&&owner[field].includes(r.token))refs.set(key(r.entryId,r.kind||'entry'),r);for(const [k,v] of Object.entries(owner)){if(['descriptionReferences','summaryReferences','textReferences'].includes(k))continue;if(Array.isArray(v))v.forEach(visit);else if(object(v))visit(v);}}visit(e);return [...refs.values()];}
- const suggestedFields={
-  Characters:['Mentors','Students','Allies','Rivals','Dependants'],
-  Factions:['Patrons','Supported causes','Associated magic','Significant events'],
-  Locations:['Founders','Visiting groups','Associated creatures','Associated magic','Significant events'],
-  Magic:['Users / practitioners','Taught by','Created / discovered by','Practiced at','Associated factions','Related magic'],
-  Creatures:['Found at','Associated groups','Interacts with','Threats','Associated magic','Significant events'],
-  History:['Causes','Consequences','Related events','Involved creatures','Involved magic'],
-  Eras:['Defining events','Associated factions / cultures','Important locations','Related eras']
+ // Common questions are present in ordinary sections; suggestions are niche extras.
+ const standardGroups={
+  Characters:[['People & relationships',['Mentors','Students','Allies','Rivals','Dependants']]],
+  Factions:[['Support & associations',['Patrons','Supported causes','Associated magic','Significant events']]],
+  Locations:[['Origins & associations',['Founders','Visiting groups','Associated creatures','Associated magic','Significant events']]],
+  Magic:[['Practitioners & teaching',['Users / practitioners','Taught by']],['Origins & associations',['Created / discovered by','Practiced at','Associated factions','Related magic']]],
+  Creatures:[['Habitat & interactions',['Found at','Associated groups','Interacts with','Threats']],['Magic & significance',['Associated magic','Significant events']]],
+  History:[['Causes & consequences',['Causes','Consequences']],['Other participants & related events',['Related events','Involved creatures','Involved magic']]],
+  Eras:[['Events & associations',['Defining events','Associated factions / cultures','Important locations','Related eras']]]
  };
- function suggestionsFor(category){const key=category==='Bestiary'?'Creatures':category;return [...(Object.hasOwn(suggestedFields,key)?suggestedFields[key]:['Associated with','Created by','Found at','Significant events'])];}
- const api={suggestionsFor,key,rows,collections,normalize,validate,deletion,mentions};if(typeof module!=='undefined')module.exports=api;else root.ConnectionModel=api;
+ const suggestedFields={
+  Characters:['Oaths sworn','Bound to','Unusual influences'],
+  Factions:['Secret sponsors','Splinter groups','Oaths and pacts'],
+  Locations:['Hidden connections','Cursed by','Seasonal visitors'],
+  Magic:['Incompatible with','Restricted by','Transformed by','Resonates with'],
+  Creatures:['Symbiotic with','Bound to','Worshipped by'],
+  History:['Disputed accounts','Hidden instigators','Alternate interpretations'],
+  Eras:['Competing chronologies','Recurring cycles','Forgotten legacies']
+ };
+ const categoryKey=category=>category==='Bestiary'?'Creatures':category;
+ function standardGroupsFor(category){const key=categoryKey(category);return (Object.hasOwn(standardGroups,key)?standardGroups[key]:[['Associations',['Associated with','Created by','Found at','Significant events']]]).map(([title,fields])=>[title,[...fields]]);}
+ function suggestionsFor(category){const key=categoryKey(category);return [...(Object.hasOwn(suggestedFields,key)?suggestedFields[key]:['Secret associations','Unusual influences'])];}
+ function hasContent(r){return !!(r.entryIds?.length||r.entryId||r.eraIds?.length||Object.values(r.selectionNotes||{}).some(a=>a.length)||r.formerTargets?.length||r.formerEraTargets?.length||r.formerName||r.description?.trim()||r.history?.trim());}
+ const api={standardGroupsFor,hasContent,suggestionsFor,key,rows,collections,normalize,validate,deletion,mentions};if(typeof module!=='undefined')module.exports=api;else root.ConnectionModel=api;
 })(globalThis);
