@@ -83,12 +83,13 @@ These are the default instructions for future coding tasks in this repository. U
 
 ## Test according to risk
 
+- Reserve full-suite testing for the end of a development milestone: a completed feature or coherent set of related changes ready for review/release. A prompt, follow-up correction, minor fix, commit or push is not automatically a milestone. Use focused checks during the work; do not run or repeatedly propose the full suite after every prompt. At the milestone, summarize what is complete and ask for approval for one full run under the rule below.
 - Default to the smallest relevant targeted checks. **Always ask the user before running the full test suite**, including for architecture, shared UI, persistence or other cross-cutting changes. Briefly explain why the full run would help and its expected time/cost when known; wait for explicit approval. A request to implement, fix, commit or push is not approval to run the full suite. Approval applies only to the stated run; ask again before another full run. Do not bypass this rule by splitting the full suite into batches. Continue authorized implementation and targeted checks while awaiting a decision, and report any remaining coverage limits.
 - Documentation-only: check accuracy, referenced files/commands, Markdown and the actual diff; a full app suite is unnecessary.
 - Small isolated presentation change: run appropriate targeted checks, including visual/responsive/accessibility checks when affected.
 - Feature spanning modules: exercise affected user flows and relevant integrations.
 - Database, persistence, imports/exports, location relationships or image storage: run relevant regression tests and broader checks where appropriate, including old-data/error/restart/round-trip cases.
-- Major architecture or substantial cross-cutting work: explain the case for a full run and ask for approval; otherwise use targeted integration/regression checks and disclose the limits.
+- Major architecture or substantial cross-cutting work: use targeted integration/regression checks during development; at the completed milestone, explain the case for a full run and ask for approval. Disclose any remaining coverage limits.
 - Do not automatically run the full suite for every minor edit, reinstall dependencies/browsers every task, or repeat broad passing checks without a reason. Do not skip important checks merely to save credits. Investigate failures; do not conceal them by removing assertions, inflating timeouts, or claiming a retry proves a root cause fixed.
 - If a check cannot run, state why and what remains unverified. Claim a test passed only after observing its successful execution; source inspection, test counts, old reports and CI configuration are not current passing results.
 
