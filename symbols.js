@@ -43,6 +43,7 @@
   images:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="2"/><path d="m3 18 6-6 4 4 3-3 5 5"/>',
   upload:'<path d="M12 16V2M7 7l5-5 5 5M3 15v6h18v-6"/>',
   download:'<path d="M12 2v14M7 11l5 5 5-5M3 16v5h18v-5"/>',
+  copy:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
   canvas:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h4v4H7ZM15 15h3v3h-3M11 10h5v5"/>',
   eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
   back:'<path d="m10 5-7 7 7 7M3 12h18"/>',close:'<path d="m5 5 14 14M19 5 5 19"/>',
