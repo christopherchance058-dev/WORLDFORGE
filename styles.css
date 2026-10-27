@@ -376,10 +376,11 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-event-card{position:absolute;top:24px;height:auto;min-height:88px;max-height:176px;border:1px solid var(--border);border-radius:9px;padding:12px 14px;background:var(--surface);color:var(--ink);box-shadow:0 2px 8px color-mix(in srgb,var(--ink) 5%,transparent);pointer-events:auto;cursor:pointer;overflow:hidden}
 .timeline-event-card.compact{min-height:72px;max-height:132px;padding:10px 12px}
 .timeline-event-card[data-certainty=approximate]{border-style:dashed}.timeline-event-card[data-certainty=disputed]{border-style:dotted}
-.timeline-event-card:hover{border-color:var(--muted)}
-.timeline-event-open{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;width:100%;padding:0;background:transparent;border:0;font:19px/1.25 var(--serif);color:var(--ink);text-align:left}
-.timeline-event-card.compact .timeline-event-open{font-size:16px}
-.timeline-event-date{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);margin:6px 0}
+.timeline-event-card:hover,.timeline-other-entry:hover{border-color:var(--muted);box-shadow:0 2px 8px color-mix(in srgb,var(--ink) 14%,transparent)}
+.timeline-event-card:focus-visible,.timeline-era-band:focus-visible,.timeline-other-entry:focus-visible{outline:2px solid var(--control-ink);outline-offset:2px}
+.timeline-event-open{display:block;font:inherit;text-align:left;isolation:isolate}
+
+.timeline-event-date{display:block;font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);margin:6px 0}
 .timeline-event-facts{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;font-size:11px;max-height:24px;overflow:hidden}
 .timeline-event-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;color:var(--muted)}
 .timeline-preview{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
@@ -424,7 +425,7 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-era-labels{position:relative;min-width:100%}
 .timeline-era-band{position:absolute;height:25px;min-width:2px;padding:0;border:1px solid var(--era-color);border-radius:3px;background:color-mix(in srgb,var(--era-color) 16%,var(--surface));color:var(--ink);text-align:left}
 .timeline-era-name{position:absolute;top:1px;display:block;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:20px;padding:0 5px;background:var(--surface-soft);border-radius:3px}
-.timeline-era-band:hover .timeline-era-name{outline:1px solid var(--ink)}
+.timeline-era-band:hover .timeline-era-name{outline:1px solid var(--control-ink)}
 .timeline-era-shade{position:absolute;top:46px;bottom:0;z-index:0;pointer-events:none;background:color-mix(in srgb,var(--era-color) 5%,transparent);border-inline:1px solid color-mix(in srgb,var(--era-color) 40%,transparent)}
 .timeline-era-band[data-certainty=approximate],.timeline-era-shade[data-certainty=approximate]{border-style:dashed}
 .timeline-era-band[data-certainty=disputed],.timeline-era-shade[data-certainty=disputed]{border-style:dotted}
@@ -442,14 +443,15 @@ dialog .form-error{scroll-margin-top:16px}
 .era-image-field{border:1px solid var(--border);border-radius:8px;padding:12px}.era-image-preview img{display:block;width:100%;height:130px;object-fit:cover;border-radius:6px}.era-image-preview.wide img{height:100px}.era-image-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.era-reading-banner{width:100%;max-height:280px;object-fit:contain}
 .timeline-event-heading{display:flex;align-items:flex-start;gap:9px}.timeline-event-icon{width:23px;height:23px;flex-shrink:0;color:var(--muted)}.timeline-event-icon svg{width:100%;height:100%}
 .timeline-event-card{max-height:136px;min-height:72px}.timeline-event-card.compact{max-height:120px;min-height:64px}
-.timeline-era-band.illustrated{height:96px;border-width:1px;background:linear-gradient(120deg,color-mix(in srgb,var(--era-color) 65%,#15221c),#16231f);color:white;isolation:isolate}
-.timeline-era-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;border-radius:2px;pointer-events:none}
-.timeline-era-band.illustrated::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#000b,#0005);z-index:-1;pointer-events:none}
-.timeline-era-band.illustrated .timeline-era-name{top:18px;padding:6px 10px;background:transparent;color:white;font-size:16px;line-height:1.4;max-width:240px;text-shadow:0 1px 3px #000}
+.timeline-era-band.illustrated{height:96px;border-width:1px;background:color-mix(in srgb,var(--era-color) 65%,#15221c);color:white;isolation:isolate}
+.timeline-era-art-window{position:absolute;inset:0;overflow:hidden;z-index:-2;pointer-events:none}
+.timeline-era-art{position:absolute;top:0;height:100%;max-width:none;object-fit:cover;object-position:left center;mask-image:linear-gradient(90deg,#000 0%,#000 55%,transparent 100%);pointer-events:none}
+
+.timeline-era-band.illustrated .timeline-era-name{top:18px;padding:6px 10px;background:#15221cb3;color:white;font:13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:240px;text-shadow:none}
 .timeline-era-band.illustrated .timeline-era-name small{font-size:12px;color:#fff;max-width:220px;overflow:hidden;text-overflow:ellipsis}
 .timeline-era-band.illustrated.point{background:var(--era-color);border-radius:0}.timeline-era-band.illustrated.point::after{display:none}.timeline-era-band.illustrated.point .timeline-era-name{background:var(--surface-soft);color:var(--ink);text-shadow:none}.timeline-era-band.illustrated.point small{color:var(--muted)}
 
-.timeline-event-heading .timeline-event-open{min-width:0;flex:1}
+
 .era-dialog{--entry-field-border:var(--border);--entry-field-bg:var(--surface);--entry-field-focus:var(--control-ink)}
 .era-image-preview.square img{width:150px;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover}
 
@@ -588,3 +590,23 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 .diagram-text-node[data-text-shape=circle] .diagram-node-title{width:65%;padding:17.5% 0}.diagram-text-node[data-text-shape=diamond] .diagram-node-title{width:50%;padding:25% 0}
 
 .diagram-node.diagram-text-node{outline:none}.diagram-text-node:focus-visible:before{box-shadow:0 0 0 2px var(--green)}.diagram-inspector .reference-editor[aria-label="Canvas text"]{min-height:70px;max-height:180px;font-size:14px}
+
+/* Timeline uses the same destination badges and preview controller as Canvas. */
+.timeline-badge-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timeline-workspace :is(.timeline-event-card,.timeline-era-name,.timeline-other-entry) .description-reference{display:inline-flex;align-items:center;max-width:100%;gap:5px;font:500 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-shadow:none;vertical-align:middle}
+.timeline-workspace :is(.timeline-event-card,.timeline-era-name,.timeline-other-entry) .description-reference .entry-reference-icon{flex-shrink:0}
+.timeline-event-heading{display:block;position:relative;min-width:0}
+.timeline-event-card.illustrated{height:136px;min-height:136px;padding-top:36px;background:#15221c;color:white}
+.timeline-event-card.illustrated.compact{height:120px;min-height:120px;padding-top:20px}
+.timeline-event-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;pointer-events:none}
+.timeline-event-card.illustrated::before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#000e,#0008 55%,#0001);z-index:-1;pointer-events:none}
+.timeline-event-card.illustrated .timeline-event-date,.timeline-event-card.illustrated .timeline-event-type{color:#fff}
+.timeline-event-card .description-reference,.timeline-era-name .description-reference{background:var(--surface);padding:3px 6px;border-radius:4px}
+.timeline-event-facts{position:relative}
+.timeline-era-name{overflow:visible;min-width:160px;width:200px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--surface-soft)}
+.timeline-era-name small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timeline-era-band.compact .timeline-era-name{padding:0 4px}
+.timeline-era-band.compact .description-reference{padding:0 3px;font-size:12px}
+.timeline-era-continuation{position:absolute;left:1px;bottom:0;font:12px/1 sans-serif;background:var(--surface);color:var(--ink);border-radius:2px;pointer-events:none}
+.timeline-era-continuation.end{left:auto;right:1px}
+.event-banner-field{margin:14px 0}

@@ -1,6 +1,6 @@
 /* Reusable, bounded entry-preview stacks. No lore or navigation state is persisted. */
 const EntryPreviews=(()=>{
- function mount(root,{getEntries,onRead,blocked=()=>false}){
+ function mount(root,{getEntries,onRead,blocked=()=>false,renderDetails=()=>{}}){
   let lastPointer=null;function track(event){lastPointer={x:event.clientX,y:event.clientY,time:performance.now()};}root.addEventListener('pointermove',track);
   let stack=[],pending=null,serial=0,disposed=false;const prefix='entry-preview-'+crypto.randomUUID()+'-';
   const key=e=>(e.referenceKind||'entry')+':'+e.id;
@@ -30,7 +30,7 @@ const EntryPreviews=(()=>{
    },180);
   }
   function entry(record,source,event){show(source,event,box=>{
-   const badge=node('button','description-reference',record.title);badge.type='button';badge.setAttribute('role','link');badge.setAttribute('aria-label','Open '+record.title);CategoryColors.apply(badge,record);badge.onclick=()=>{clear();DescriptionLinks.openTarget(record,onRead);};box.append(badge);
+   const badge=node('button','description-reference',record.title);badge.type='button';badge.setAttribute('role','link');badge.setAttribute('aria-label','Open '+record.title);CategoryColors.apply(badge,record);badge.onclick=()=>{clear();DescriptionLinks.openTarget(record,onRead);};box.append(badge);renderDetails(record,box);
    if(record.tags?.length){const tags=node('div','tags');for(const text of record.tags.slice(0,3))tags.append(node('span','tag',text));if(record.tags.length>3)tags.append(node('span','tag',`+${record.tags.length-3} more`));box.append(tags);}
    const field=DescriptionLinks.plain(record,getEntries(),'summary').trim()?'summary':'description';if(DescriptionLinks.plain(record,getEntries(),field).trim())box.append(DescriptionLinks.preview(node('p'),record,getEntries(),onRead,field,field==='description'||record.referenceKind==='ecosystem'?70:Infinity));
   },key(record));}
