@@ -608,8 +608,6 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 .timeline-event-facts{position:relative}
 .timeline-era-name{display:flex;flex-direction:column;align-items:flex-start;overflow:visible;min-width:160px;width:200px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--surface-soft)}
 .timeline-era-name .timeline-date{max-width:100%}
-.timeline-era-band.compact .timeline-era-name{padding:0 4px}
-.timeline-era-band.compact .description-reference{padding:0 3px;font-size:12px}
 .timeline-era-continuation{position:absolute;left:1px;bottom:0;font:12px/1 sans-serif;background:var(--surface);color:var(--ink);border-radius:2px;pointer-events:none}
 .timeline-era-continuation.end{left:auto;right:1px}
 .event-banner-field{margin:14px 0}
@@ -617,11 +615,7 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 /* A readable era label is separate from its true duration at distant zooms. */
 .timeline-era-card{position:absolute;height:96px;padding:0;border:1px solid var(--era-color);border-radius:8px;background:var(--surface-soft);color:var(--ink);isolation:isolate;text-align:left;overflow:hidden}
 .timeline-era-card .timeline-era-name{width:100%;min-width:0;max-width:none;background:transparent}
-.timeline-era-card.compact{height:25px;border-radius:4px}
-.timeline-era-card.compact .timeline-era-name{top:0;padding:0 4px}
-.timeline-era-card.compact .description-reference{padding:0 3px;font-size:12px}
 .timeline-era-band.detached,.timeline-era-band.illustrated.detached{height:8px;border-radius:4px;background:var(--era-color)}
-.timeline-era-band.compact.detached{height:5px}
 .timeline-era-connector{position:absolute;height:12px;min-width:1px;border-left:1px solid var(--muted);border-bottom:1px solid var(--muted);pointer-events:none}
 .timeline-era-card:hover{outline:1px solid var(--control-ink)}
 /* Document fullscreen preserves top-layer dialogs and the existing nested preview panels. */
@@ -638,3 +632,5 @@ body.timeline-expanded #toast{left:50%;z-index:100}
 .timeline-expanded .timeline-unplaced:empty{display:none}
 .timeline-expanded .timeline-unplaced{flex:none;max-height:18dvh;overflow:auto;margin-top:10px}
 .timeline-expanded #timeline-section>.form-error:empty{display:none}
+/* Timeline previews use smaller text within the original shared panel layout. */
+.timeline-workspace .entry-preview{font-size:13px}
