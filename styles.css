@@ -624,14 +624,6 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 .timeline-era-band.compact.detached{height:5px}
 .timeline-era-connector{position:absolute;height:12px;min-width:1px;border-left:1px solid var(--muted);border-bottom:1px solid var(--muted);pointer-events:none}
 .timeline-era-card:hover{outline:1px solid var(--control-ink)}
-/* Event-type circles use the exact saved classification; empty and custom are distinct. */
-.timeline-event-heading{align-items:center;gap:10px}
-.timeline-event-copy{display:block;flex:1;min-width:0}
-.timeline-event-circle{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border-radius:50%;background:var(--green);color:#fff}
-.timeline-event-circle .glyph,.timeline-event-circle svg{width:19px;height:19px}
-.timeline-event-circle.neutral{background:var(--surface-soft);color:var(--muted);border:1px solid var(--border)}
-.timeline-event-circle.neutral::after{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
-.timeline-event-facts{margin-left:42px}
 /* Document fullscreen preserves top-layer dialogs and the existing nested preview panels. */
 body.timeline-expanded{overflow:hidden}
 body.timeline-expanded>.sidebar,body.timeline-expanded .topbar{display:none}
