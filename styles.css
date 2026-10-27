@@ -380,7 +380,8 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-event-card:focus-visible,.timeline-era-band:focus-visible,.timeline-other-entry:focus-visible{outline:2px solid var(--control-ink);outline-offset:2px}
 .timeline-event-open{display:block;font:inherit;text-align:left;isolation:isolate}
 
-.timeline-event-date{display:block;font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);margin:6px 0}
+.timeline-date{display:block;font:400 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:0;color:var(--muted);margin:6px 0 0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timeline-event-facts:not(:empty){margin-top:6px}
 .timeline-event-facts{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;font-size:11px;max-height:24px;overflow:hidden}
 .timeline-event-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;color:var(--muted)}
 .timeline-preview{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
@@ -389,7 +390,7 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-other{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px 16px}
 .timeline-other>summary{cursor:pointer;font-weight:600;font-size:13px}.timeline-other-body{padding-top:8px}
 .timeline-other-entry{display:block;width:100%;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;padding:12px 0;color:var(--ink);overflow-wrap:anywhere}
-.timeline-other-entry strong{font-weight:550}.timeline-other-entry small{margin-top:4px}
+.timeline-other-entry strong{font-weight:550}.timeline-other-entry small{margin-top:6px}
 .timeline-more{margin-top:12px}
 @media(max-width:900px){.timeline-workspace{padding:20px}.timeline-workspace .heading-row{flex-wrap:wrap}.timeline-toolbar .search{max-width:none;flex-basis:100%}.timeline-caption{align-items:flex-start}.timeline-viewport{height:55dvh}}
 .timeline-event-date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -450,7 +451,7 @@ dialog .form-error{scroll-margin-top:16px}
 .timeline-era-art{position:absolute;top:0;height:100%;max-width:none;object-fit:cover;object-position:left center;pointer-events:none}
 
 .timeline-era-band.illustrated .timeline-era-name{top:18px;padding:6px 12px;background:transparent;color:white;font:13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:240px;text-shadow:none}
-.timeline-era-band.illustrated .timeline-era-name small{font-size:12px;color:#fff;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.timeline-era-band.illustrated:not(.point) .timeline-date,.timeline-event-card.illustrated .timeline-date{color:#f1f4f2;text-shadow:0 1px 3px #0009}
 .timeline-era-band.illustrated.point{background:var(--era-color);border-radius:0}.timeline-era-band.illustrated.point::after{display:none}.timeline-era-band.illustrated.point .timeline-era-name{background:var(--surface-soft);color:var(--ink);text-shadow:none}.timeline-era-band.illustrated.point small{color:var(--muted)}
 
 
@@ -595,18 +596,18 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 
 /* Timeline uses the same destination badges and preview controller as Canvas. */
 .timeline-badge-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.timeline-workspace :is(.timeline-event-card,.timeline-era-name,.timeline-other-entry) .description-reference{display:inline-flex;align-items:center;max-width:100%;gap:5px;font:500 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-shadow:none;vertical-align:middle}
+.timeline-workspace :is(.timeline-event-card,.timeline-era-name,.timeline-other-entry) .description-reference{display:inline-flex;align-items:center;max-width:100%;gap:5px;font:500 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-shadow:none;vertical-align:middle;margin:0}
 .timeline-workspace :is(.timeline-event-card,.timeline-era-name,.timeline-other-entry) .description-reference .entry-reference-icon{flex-shrink:0}
-.timeline-event-heading{display:block;position:relative;min-width:0}
+.timeline-event-heading{display:flex;align-items:flex-start;position:relative;min-width:0}
 .timeline-event-card.illustrated{height:136px;min-height:136px;padding-top:36px;background:#15221c;color:white}
 .timeline-event-card.illustrated.compact{height:120px;min-height:120px;padding-top:20px}
 .timeline-event-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;pointer-events:none}
 .timeline-event-card.illustrated::before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#000e,#0008 55%,#0001);z-index:-1;pointer-events:none}
-.timeline-event-card.illustrated .timeline-event-date,.timeline-event-card.illustrated .timeline-event-type{color:#fff}
+.timeline-event-card.illustrated .timeline-event-type{color:#fff}
 .timeline-event-card .description-reference,.timeline-era-name .description-reference{background:var(--surface);padding:3px 6px;border-radius:4px}
 .timeline-event-facts{position:relative}
-.timeline-era-name{overflow:visible;min-width:160px;width:200px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--surface-soft)}
-.timeline-era-name small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timeline-era-name{display:flex;flex-direction:column;align-items:flex-start;overflow:visible;min-width:160px;width:200px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--surface-soft)}
+.timeline-era-name .timeline-date{max-width:100%}
 .timeline-era-band.compact .timeline-era-name{padding:0 4px}
 .timeline-era-band.compact .description-reference{padding:0 3px;font-size:12px}
 .timeline-era-continuation{position:absolute;left:1px;bottom:0;font:12px/1 sans-serif;background:var(--surface);color:var(--ink);border-radius:2px;pointer-events:none}
