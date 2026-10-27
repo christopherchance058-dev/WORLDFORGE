@@ -26,7 +26,7 @@ class Worlds {
   if(!this.opened.has(id)){const directory=path.join(this.root.root,'worlds',id);if(!fs.existsSync(path.join(directory,'worldforge.sqlite')))fail('This world’s database is missing. Download its backup and restore it into an empty world.',409);this.opened.set(id,new Store(directory));}
   return this.opened.get(id);
  }
- validate(value){if(typeof value?.title!=='string'||!value.title.trim()||value.title.length>120||typeof value.description!=='string'||value.description.length>3000)fail('Give your world a name (up to 120 characters) and a description of up to 3,000 characters.');}
+ validate(value){if(typeof value?.title!=='string'||!value.title.trim()||value.title.length>120||typeof value.description!=='string'||require('./text-limits').count(value.description)>6000)fail('Give your world a name (up to 120 characters) and a description of up to 6,000 characters.');}
  create(value){
   this.validate(value);this.uniqueTitle(value.title);const id=randomUUID(),directory=path.join(this.root.root,'worlds',id);let store;
   try{store=new Store(directory);const initial=store.state();store.replace({...initial,entries:[],maps:[]},initial.revision);this.root.db.prepare('INSERT INTO world_catalog(id,title,description) VALUES(?,?,?)').run(id,value.title.trim(),value.description.trim());this.opened.set(id,store);return this.profile(id);}

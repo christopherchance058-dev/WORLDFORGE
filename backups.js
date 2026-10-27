@@ -90,7 +90,7 @@ async function restoreZip(store,file,revision){
     for(const r of imageRecords(manifest))if(r.image){const id=remap.get(r.image.match(IMAGE_URL)[1]);if(!id)fail('A record references an image missing from this backup.');r.image=`/api/images/${id}`;}
     const rollback=await checkpoint(store,'before-restore');
     for(const info of newImages)await store.installFile(info.source,info);
-    const state=store.replace(manifest,revision,{newImages,migrationHashes:manifest.migrations});return {...state,rollback};
+    const state=store.replace(manifest,revision,{newImages,migrationHashes:manifest.migrations,preserveDescriptions:true});return {...state,rollback};
   }finally{await fsp.rm(directory,{recursive:true,force:true});}
 }
 async function legacyImport(store,raw,revision,migrate=false){
@@ -114,6 +114,6 @@ async function legacyImport(store,raw,revision,migrate=false){
       }state[key]=merged;
     }
   }
-  return {...store.replace(state,revision,{newImages,migrationHash:migrate?hash:null}),rollback};
+  return {...store.replace(state,revision,{newImages,migrationHash:migrate?hash:null,preserveDescriptions:true}),rollback};
 }
 module.exports={exportZip,checkpoint,verifyCheckpoint,restoreZip,legacyImport,ARCHIVE_LIMIT};
