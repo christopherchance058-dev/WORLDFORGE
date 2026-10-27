@@ -84,8 +84,10 @@
   link:'<path d="m10 7 3-3a5 5 0 0 1 7 7l-3 3M14 17l-3 3a5 5 0 0 1-7-7l3-3M8 16l8-8"/>',
   list:'<path d="M8 5h13M8 12h13M8 19h13M3 5h.1M3 12h.1M3 19h.1"/>'
  };
- const markers=['pin','person','house','castle','magic','beast','dragon','sword','shield','book','scroll','flag','mountain','tree','skull','gem','potion','portal','sun','moon'];
+ const pack=typeof module!=='undefined'?require('./icon-pack'):root.GameIconPack;const imported=new Map(pack.map(icon=>[icon.id,icon]));
+ const builtins=['pin','person','house','castle','magic','beast','dragon','sword','shield','book','scroll','flag','mountain','tree','skull','gem','potion','portal','sun','moon'];
+ const markers=[...builtins,...pack.map(icon=>icon.id)];
  const defaults=[{name:'Characters',icon:'person'},{name:'Locations',icon:'house'},{name:'History',icon:'scroll'},{name:'Factions',icon:'flag'},{name:'Magic',icon:'magic'},{name:'Creatures',icon:'beast'}];
- const api={paths,markers,defaults,svg(name){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.pin}</svg>`;}};
+ const api={paths,markers,builtins,pack,defaults,label(name){return imported.get(name)?.label||name[0].toUpperCase()+name.slice(1);},info(name){return imported.get(name)||null;},svg(name){if(imported.has(name))return `<svg viewBox="0 0 512 512" fill="currentColor" stroke="none" aria-hidden="true"><path d="${imported.get(name).path}"/></svg>`;return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.pin}</svg>`;}};
  if(typeof module!=='undefined')module.exports=api;else root.Symbols=api;
 })(globalThis);

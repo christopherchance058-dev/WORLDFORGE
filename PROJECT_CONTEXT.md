@@ -40,7 +40,7 @@ Plain HTML/CSS/browser JS with shared globals; Node **24+**, CommonJS, built-in 
 | `history-model.js`, `history.js` | Event chronology and shared date/unit/label/certainty fields |
 | `era-model.js`, `eras.js` | Independent era records/editor/reading, world chronology settings |
 | `timeline-layout.js`, `history-timeline.js` | Numeric geometry, overlap rows/culling, timeline controls and reveal |
-| `maps.js`, `symbols.js` | Ordered map canvases/pins, linked lore, map workspace, fixed SVG vocabulary |
+| `maps.js`, `symbols.js`, `icon-pack.js` | Ordered map canvases/pins, linked lore, shared SVG vocabulary and bundled icon registry |
 | `tests/*.spec.js` | Choose tests by affected flow; fixtures and config define isolation/browser setup |
 
 Preserve global script dependencies in index.html and the server allowlist when adding modules. UI shares `entries`/`persist()`; only successful saves replace in-memory state. New workspaces/links reuse `Navigation.visit` and state/restore hooks.
@@ -55,6 +55,12 @@ Preserve global script dependencies in index.html and the server allowlist when 
 - Immutable images use generated file IDs, SQLite checksums and `/api/images/<id>`, not localStorage/base64 payloads. Limit: 50 MB / 80 million pixels. Entry images accept PNG/JPEG/WebP/GIF; map UI accepts PNG/JPEG/WebP. Duplicate bytes may be reused. Removed/cancelled images remain registered/exportable; no cleanup exists. Cross-world lookup preserves stable references.
 - A ZIP exports the selected world only: manifest, metadata and all its registered images. Restore keeps the destination world's name/description; validates paths, records, checksums/images/references; creates rollback and replaces transactionally. Accept ZIP 3–6 and legacy JSON arrays/versions 1–2 (v1 preserves current maps). Old replacement imports without eras/folders explicitly clear those features. Browser `worldforge.entries.v1` migration is idempotent and preserves originals/checkpoints.
 - Use current-version backups for expanded metadata; older releases may omit folders/eras/colors or reject newer optional fields. Restore/migration experiments require isolated recovery verification.
+
+## Bundled icons and attribution
+
+`icon-pack.js` registers the supplied 100 Game-icons.net SVGs using stable `gi:author:slug` IDs. `symbols.js` keeps the original 20 marker IDs and renders imported paths with `currentColor` for Light/Dark themes. Original SVGs and the supplied license notice remain unchanged in `vendor/game-icons/`; `THIRD_PARTY_ICONS.md` maps each icon to its creator, source path and CC BY 3.0 license. The shared `symbolPicker` in `app.js` supplies search, set filtering, retained selection, creator notes and an Icon credits dialog for category creation, map pins and Canvas. Only trusted bundled paths are rendered; the server explicitly allows each asset, not arbitrary vendor files.
+
+Canvas icons reuse `kind:"text"` nodes with optional validated `icon`, `showLabel` and `iconColor`; labels/summary/description use shared @ linking. They retain resizing, connections, locking, undo and independent duplication. These are additive JSON fields with no schema/API/ZIP version change or startup rewrite. Existing records/IDs and unknown fields are preserved. Older builds can show the text label fallback for these nodes, but may reject imported category/pin IDs: use this release or later when editing or restoring libraries using the new pack. Portable backups retain IDs; icon assets and attribution ship with the app rather than each library archive. Recovery checks use isolated worlds.
 
 ## Shared UI and linking
 

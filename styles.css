@@ -646,3 +646,20 @@ body.timeline-expanded #toast{left:50%;z-index:100}
 :root:not([data-theme=dark]) :is(input,textarea)::placeholder{color:var(--muted);opacity:1}
 :root:not([data-theme=dark]) .reference-editor:empty::before{color:var(--muted);opacity:1}
 :root:not([data-theme=dark]) .banner.has-world-image .eyebrow{color:#fff}
+
+/* The same searchable icon library serves categories, maps and canvas annotations. */
+.symbol-picker{min-width:0;max-width:100%}
+.symbol-picker-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.symbol-picker-tools input{min-width:0;flex:1}.symbol-picker-tools select{width:auto!important;max-width:45%}
+.symbol-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));max-height:260px;overflow:auto;padding:4px}
+.symbol-choice{min-width:0}.symbol-choice small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.symbol-selected{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;color:var(--ink)}
+.symbol-selected>.glyph svg{width:28px;height:28px}.symbol-selected>small{flex-basis:100%;color:var(--muted)}
+.symbol-picker>button{margin-top:10px}.symbol-picker .symbol-grid input{width:auto!important}
+.icon-credits-dialog,.canvas-icon-dialog{width:min(760px,calc(100vw - 40px));max-height:88dvh;overflow:auto;background:var(--surface)}
+.icon-credit-links{display:flex;gap:6px;flex-wrap:wrap}.icon-credits-dialog a{color:var(--control-ink)}
+.icon-credits-dialog section{border-top:1px solid var(--border);padding-top:8px}.icon-credits-dialog ul{columns:2;padding-left:20px}.icon-credits-dialog h3{font-size:14px}
+.diagram-icon-node{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.diagram-icon-art{display:flex;align-items:center;justify-content:center;pointer-events:none;flex:none}
+.diagram-icon-art .glyph,.diagram-icon-art svg{width:var(--canvas-icon-size,136px);height:var(--canvas-icon-size,136px)}
+.diagram-icon-node .diagram-node-title{width:100%;text-align:center}
