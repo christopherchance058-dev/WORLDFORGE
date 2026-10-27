@@ -1,6 +1,6 @@
 /* Shared category color policy. Only clickable entry references receive these colors. */
 (function(root){
- const palette={Ecosystem:'#7fb99a',Characters:'#b69bd6',Locations:'#72b5cc',History:'#d5b05f',Factions:'#c594b6',Magic:'#969ee0',Bestiary:'#c89b68',Creatures:'#c89b68'};
+ const palette={Canvas:'#7fb99a',Ecosystem:'#7fb99a',Characters:'#b69bd6',Locations:'#72b5cc',History:'#d5b05f',Factions:'#c594b6',Magic:'#969ee0',Bestiary:'#c89b68',Creatures:'#c89b68'};
  // Keep the original fallback palette stable for existing custom categories.
  const defaultSwatches=['#b69bd6','#72b5cc','#d5b05f','#c594b6','#969ee0','#c89b68','#7fb99a','#cf8d85'];
  const swatches=[...defaultSwatches,'#e57373','#c62828','#f48fb1','#ad1457','#ce93d8','#7b1fa2','#9575cd','#512da8','#7986cb','#283593','#64b5f6','#1565c0','#4dd0e1','#00838f','#4db6ac','#00695c','#81c784','#2e7d32','#c0ca33','#f9a825','#ffb74d','#ef6c00','#a1887f','#78909c'];
@@ -12,6 +12,6 @@
  function readable(color,dark=false){const backgrounds=dark?['#1d272b','#31463c']:['#ffffff','#edf2ec'],base=rgb(color),edge=dark?255:0;for(let step=0;step<=100;step++){const hex='#'+base.map(n=>Math.round(n+(edge-n)*step/100).toString(16).padStart(2,'0')).join('');if(backgrounds.every(bg=>contrast(hex,bg)>=4.5))return hex;}return dark?'#ffffff':'#000000';}
  function resolve(name,definitions=[]){const color=definitions.find(c=>c.name===name)?.color;return valid(color)?color:fallback(name);}
  function style(element,category,definitions=[]){const color=resolve(category,definitions);element.classList.add('category-entry-link');element.dataset.linkCategory=category;element.style.setProperty('--entry-link-light',readable(color));element.style.setProperty('--entry-link-dark',readable(color,true));return element;}
- function apply(element,entry){style(element,entry.category,typeof categoryDefinitions==='undefined'?[]:categoryDefinitions);if(!element.querySelector('.entry-reference-icon')){const icon=document.createElement('span');icon.className='glyph entry-reference-icon';icon.setAttribute('aria-hidden','true');icon.innerHTML=Symbols.svg(entry.referenceKind==='ecosystem'?'tree':typeof categoryIcon==='function'?categoryIcon(entry.category):'book');const previous=element.querySelector(':scope>.glyph');if(previous)previous.remove();element.prepend(icon);}return element;}
+ function apply(element,entry){style(element,entry.category,typeof categoryDefinitions==='undefined'?[]:categoryDefinitions);if(!element.querySelector('.entry-reference-icon')){const icon=document.createElement('span');icon.className='glyph entry-reference-icon';icon.setAttribute('aria-hidden','true');icon.innerHTML=Symbols.svg(entry.referenceKind==='ecosystem'?'canvas':typeof categoryIcon==='function'?categoryIcon(entry.category):'book');const previous=element.querySelector(':scope>.glyph');if(previous)previous.remove();element.prepend(icon);}return element;}
  const api={valid,fallback,resolve,readable,contrast,style,apply,swatches};if(typeof module!=='undefined')module.exports=api;else root.CategoryColors=api;
 })(globalThis);

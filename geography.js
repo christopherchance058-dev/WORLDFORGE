@@ -11,7 +11,7 @@ const Geography=(()=>{
  function hide(){visible=false;$('geography-section').hidden=true;}
  function nav(){const b=node('button',visible?'active':'');b.setAttribute('aria-label','Location');b.title='Locations';b.setAttribute('aria-current',visible?'page':'false');b.append(glyph('house','nav-icon'),node('span','','Location'),node('span','count',locations().length));b.onclick=()=>show();return b;}
  function show(id=null){return Navigation.visit(()=>showView(id));}
- function showView(id=null){Ecosystems.hide();HistoryTimeline.hide();
+ function showView(id=null){Canvases.hide();HistoryTimeline.hide();
   Characters.hide();Maps.hide();visible=true;$('encyclopedia').hidden=true;$('geography-section').hidden=false;$('workspace-section').textContent='Locations';
   if(id)selectedId=id;if(!locations().some(e=>e.id===selectedId))selectedId=null;render();renderNavigation();
  }

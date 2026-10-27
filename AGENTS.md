@@ -54,4 +54,4 @@ Read this and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) at the start of a task. U
 
 ## Deferred direction
 
-Ecosystem Atlas has a first implementation with separate ecosystem records and a general-purpose Canvas workspace. Extend its reusable diagram model/editor for future domains; family trees, faction hierarchies and ecological simulation require their own design. Ecosystem tools must reuse Creature records and stable IDs. Do not create another creature library or infer ecological facts from current free-text lore. Preserve all optional Creature fields, relationships, galleries and shared UI/navigation.
+Canvas is a standalone Atlas workspace. Add existing entries directly; its displayed entry list comes from diagram nodes, never a separate membership requirement. Extend the reusable diagram model/editor for future domains; family trees and faction hierarchies require their own rules and layouts. Preserve legacy serialized collection/link keys behind the compatibility boundary so old libraries and backups remain readable. Do not duplicate encyclopedia records or infer ecological facts from free-text lore.

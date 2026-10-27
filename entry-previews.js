@@ -32,7 +32,7 @@ const EntryPreviews=(()=>{
   function entry(record,source,event){show(source,event,box=>{
    const badge=node('button','description-reference',record.title);badge.type='button';badge.setAttribute('role','link');badge.setAttribute('aria-label','Open '+record.title);CategoryColors.apply(badge,record);badge.onclick=()=>{clear();DescriptionLinks.openTarget(record,onRead);};box.append(badge);
    if(record.tags?.length){const tags=node('div','tags');for(const text of record.tags.slice(0,3))tags.append(node('span','tag',text));if(record.tags.length>3)tags.append(node('span','tag',`+${record.tags.length-3} more`));box.append(tags);}
-   if(DescriptionLinks.plain(record,getEntries(),'summary').trim())box.append(DescriptionLinks.preview(node('p'),record,getEntries(),onRead,'summary',record.referenceKind==='ecosystem'?70:Infinity));
+   const field=DescriptionLinks.plain(record,getEntries(),'summary').trim()?'summary':'description';if(DescriptionLinks.plain(record,getEntries(),field).trim())box.append(DescriptionLinks.preview(node('p'),record,getEntries(),onRead,field,field==='description'||record.referenceKind==='ecosystem'?70:Infinity));
   },key(record));}
   function escape(event){if(root.isConnected&&event.key==='Escape'&&stack.length){event.preventDefault();event.stopImmediatePropagation();closeFrom(stack.length-1);}}
   document.addEventListener('keydown',escape,true);

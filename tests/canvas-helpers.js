@@ -1,0 +1,12 @@
+const {expect}=require('./fixtures');
+const headers={'X-Worldforge':'1'},state=async request=>(await request.get('/api/state')).json();
+async function put(request,s){const r=await request.put('/api/state',{headers,data:s});expect(r.status(),await r.text()).toBe(200);return r.json();}
+const record=(id='board',name='Story board')=>({id,name,description:'A canvas for all sorts of ideas.',image:'',updatedAt:new Date().toISOString(),inhabitantIds:['sample-0','sample-1','sample-2'],locationIds:['sample-1'],custom:{keep:true},diagram:{custom:'graph',nodes:[{id:'a',kind:'entry',entryId:'sample-0',label:'Elara',x:40,y:40},{id:'b',kind:'entry',entryId:'sample-1',label:'Woods',x:460,y:40}],edges:[{id:'ab',source:'a',target:'b',label:'visits',notes:'Original note.',uncertain:false,custom:42}]}});
+async function seed(page,request,{records=[record()]}={}){await page.setViewportSize({width:1500,height:1050});await page.goto('/');await expect(page.locator('#entries .card')).toHaveCount(8);const s=await state(request);await put(request,{...s,ecosystems:records});await page.reload();await page.locator('.canvas-nav').click();}
+async function open(page,name='Story board'){await page.getByRole('button',{name:'Open canvas '+name,exact:true}).click();return page.locator('#canvas-section');}
+async function save(page){await page.getByRole('button',{name:'Save canvas',exact:true}).click();await expect(page.locator('#canvas-status')).toHaveText('Saved locally');}
+async function apply(page){await page.getByRole('button',{name:'Apply details',exact:true}).click();await expect(page.locator('#canvas-editor')).toHaveCount(0);}
+async function allDetails(page){await page.locator('#canvas-editor details').evaluateAll(es=>es.forEach(e=>e.open=true));}
+async function add(page,title){await page.locator('summary[aria-label="Add entry"]').click();await page.getByRole('searchbox',{name:'Search entries',exact:true}).fill(title);await page.locator('.diagram-add-body').getByRole('button',{name:title,exact:true}).click();}
+async function image(request,color='#52796b'){const bytes=await require('sharp')({create:{width:80,height:80,channels:3,background:color}}).png().toBuffer();const response=await request.post('/api/images',{headers:{...headers,'Content-Type':'image/png','X-Filename':'art.png'},data:bytes});expect(response.ok()).toBe(true);return {bytes,path:(await response.json()).image};}
+module.exports={headers,state,put,record,seed,open,save,apply,allDetails,add,image};
