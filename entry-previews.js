@@ -1,6 +1,8 @@
 /* Reusable, bounded entry-preview stacks. No lore or navigation state is persisted. */
 const EntryPreviews=(()=>{
- function mount(root,{getEntries,onRead,blocked=()=>false,renderDetails=()=>{}}){
+ const controllers=new Set();let application=null;
+ function clearAll(){for(const controller of controllers)controller.clear();}
+ function mount(root,{getEntries,onRead,blocked=()=>false,renderDetails=()=>{},portal=()=>root}){
   let lastPointer=null;function track(event){lastPointer={x:event.clientX,y:event.clientY,time:performance.now()};}root.addEventListener('pointermove',track);
   let stack=[],pending=null,serial=0,disposed=false;const prefix='entry-preview-'+crypto.randomUUID()+'-';
   const key=e=>(e.referenceKind||'entry')+':'+e.id;
@@ -11,6 +13,7 @@ const EntryPreviews=(()=>{
   function show(source,event,build,identity){
    clearTimeout(pending);if(disposed||blocked())return;
    const parent=stack.findIndex(item=>item.box.contains(source));
+   if(parent<0)for(const other of controllers)if(other!==controller)other.clear();
    if(parent>=0&&!stack[parent].locked)return;
    const existing=identity&&stack.find(item=>item.identity===identity);
    if(existing){clearTimeout(existing.closeTimer);existing.box.classList.add('preview-revisited');setTimeout(()=>existing.box.classList.remove('preview-revisited'),700);return;}
@@ -19,7 +22,7 @@ const EntryPreviews=(()=>{
     if(disposed||!source.isConnected||blocked())return;
     closeFrom(parent+1);const box=node('div','diagram-hover entry-preview');box.id=prefix+(++serial);box.setAttribute('role','tooltip');
     const controls=node('div','preview-controls'),status=node('span','preview-lock-status','Hover to lock'),close=node('button','square-button');close.type='button';close.setAttribute('aria-label','Close preview');close.append(glyph('close'));controls.append(status,close);box.append(controls);
-    const progress=node('div','preview-progress');progress.setAttribute('aria-hidden','true');box.append(progress);build(box);root.append(box);bind(box);
+    const progress=node('div','preview-progress');progress.setAttribute('aria-hidden','true');box.append(progress);build(box);portal(source).append(box);bind(box);
     const item={box,source,identity,locked:false,closeTimer:null,lockTimer:null};stack.push(item);source.setAttribute('aria-describedby',box.id);source.classList.add('preview-source');close.onclick=()=>closeFrom(stack.indexOf(item));
     box.onpointerenter=()=>{clearTimeout(item.closeTimer);if(item.locked)return;box.classList.add('preview-locking');item.lockTimer=setTimeout(()=>{item.locked=true;box.classList.remove('preview-locking');box.classList.add('preview-locked');status.textContent='Locked';},600);};
     box.onpointerleave=event=>{if(box.contains(event.relatedTarget))return;clearTimeout(item.lockTimer);box.classList.remove('preview-locking');if(!item.locked)leave();};
@@ -36,7 +39,23 @@ const EntryPreviews=(()=>{
   },key(record));}
   function escape(event){if(root.isConnected&&event.key==='Escape'&&stack.length){event.preventDefault();event.stopImmediatePropagation();closeFrom(stack.length-1);}}
   document.addEventListener('keydown',escape,true);
-  return {entry,show,leave,clear,dispose(){disposed=true;clear();root.removeEventListener('pointermove',track);document.removeEventListener('keydown',escape,true);}};
+  const controller={entry,show,leave,clear,prune(){if(stack.some(item=>!item.source.isConnected||!item.source.getClientRects().length||!item.box.isConnected))clear();},dispose(){disposed=true;clear();controllers.delete(controller);root.removeEventListener('pointermove',track);document.removeEventListener('keydown',escape,true);}};controllers.add(controller);return controller;
  }
- return {mount};
+ // Delegate only reference badges; Canvas nodes and Timeline cards keep their existing controllers.
+ function install({getEntries,onRead}){
+  if(application)return application;
+  application=mount(document.body,{getEntries,onRead,portal:source=>source.closest('dialog[open]')||document.body,blocked:()=>!!document.querySelector('.description-link-menu:not([hidden])')});
+  let source=null,world=LocalAPI.worldId,dialogs=[...document.querySelectorAll('dialog[open]')];
+  function badgeAt(target){if(!(target instanceof Element)||target.closest('.entry-preview,.reference-chip-remove,[role=listbox]'))return null;const badge=target.closest('[data-preview-id]');if(!badge||badge.closest('.diagram-node,.timeline-event-card,.timeline-era-band,.timeline-era-card,.timeline-other-entry'))return null;return badge;}
+  function enter(event){const badge=badgeAt(event.target);if(!badge||badge===source)return;const target=DescriptionLinks.targets(getEntries()).find(record=>record.id===badge.dataset.previewId&&(record.referenceKind||'entry')===(badge.dataset.previewKind||'entry'));if(!target)return;source=badge;badge.removeAttribute('title');application.entry(target,badge,event);}
+  function leave(event){if(!source||!source.contains(event.target)||source.contains(event.relatedTarget))return;source=null;application.leave();}
+  document.addEventListener('pointerover',enter);document.addEventListener('pointerout',leave);document.addEventListener('focusin',enter);document.addEventListener('focusout',leave);
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('.entry-preview')){source=null;application.clear();}},true);
+  document.addEventListener('keydown',event=>{if(event.key!=='Escape'&&event.target.closest('input,textarea,select,[contenteditable=true]')){source=null;application.clear();}},true);
+  document.addEventListener('scroll',event=>{if(!(event.target instanceof Element)||!event.target.closest('.entry-preview')){source=null;application.clear();}},true);
+  document.addEventListener('close',()=>{source=null;clearAll();},true);window.addEventListener('resize',()=>{source=null;clearAll();});
+  const watch=new MutationObserver(()=>{const next=[...document.querySelectorAll('dialog[open]')];if(world!==LocalAPI.worldId||next.length!==dialogs.length||next.some((dialog,i)=>dialog!==dialogs[i])){world=LocalAPI.worldId;dialogs=next;source=null;clearAll();}else application.prune();});watch.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','hidden']});
+  return application;
+ }
+ return {mount,install,clearAll};
 })();

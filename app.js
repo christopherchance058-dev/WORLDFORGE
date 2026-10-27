@@ -190,6 +190,7 @@ $('delete-world').append(glyph('trash'));$('delete-world').onclick=async()=>{
  catch(e){if(moved){storageBlocked=true;$('new-entry').disabled=true;$('storage-notice').hidden=false;$('storage-notice').textContent='Your world is safely in Trash, but the next world could not open. Reload WORLDFORGE to continue. '+e.message;}notify(e.message);}
  finally{progress.close();progress.remove();}
 };
+EntryPreviews.install({getEntries:()=>entries,onRead:showDetail});
 Navigation.init();
 EditorKeys.init();
 initialize();
