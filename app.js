@@ -34,11 +34,15 @@ let entries=[],historyTab='events',filter='All',editingId=null,draftFolderId=nul
 function validEntry(e){return e && typeof e.id==='string' && e.id.length>0 && categories.includes(e.category) && typeof e.title==='string' && e.title.trim().length>0 && e.title.length<=120 && (e.summary===undefined||typeof e.summary==='string'&&e.summary.length<=1000000) && typeof e.description==='string' && (e.description.trim().length>0||CharacterModel.isCharacter(e)||GeographyModel.isLocation(e)||CreatureModel.isCreature(e)||MagicModel.isMagic(e)) && e.description.length<=1000000 && Array.isArray(e.tags) && e.tags.length<=30 && e.tags.every(t=>typeof t==='string' && t.length<=100) && (e.year==='' || (Number.isInteger(e.year)&&Math.abs(e.year)<=999999)) && typeof e.image==='string' && (!e.image || /^\/api\/images\/[a-f0-9-]{36}$/.test(e.image)) && typeof e.updatedAt==='string' && Number.isFinite(Date.parse(e.updatedAt));}
 function notify(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),6500);}
 let saving=false,restoring=false;
+function mapPinSnapshot(pin,source){
+ if(!source)return pin;const customText=Maps.usesCustomText(pin),next={...pin,...(customText&&pin.customText===undefined?{customText:true}:{})};if(!customText){for(const key of ['title','summary','description'])next[key]=source[key]||'';next.textReferences={...pin.textReferences};for(const key of ['title','summary','description']){delete next.textReferences[key];if(source.textReferences?.[key])next.textReferences[key]=structuredClone(source.textReferences[key]);}for(const key of ['descriptionReferences','summaryReferences']){delete next[key];if(source[key])next[key]=structuredClone(source[key]);}if(!Object.keys(next.textReferences).length)delete next.textReferences;}
+ if(pin.appearance!=='image')next.image=source.image||'';return next;
+}
 async function persist(next, nextMaps=Maps.data, nextCategories=categoryDefinitions,nextAppearance=LocalAPI.appearance,nextHistory={eras:LocalAPI.eras,chronology:LocalAPI.chronology}){
  if(storageBlocked){notify('Storage is not ready. Resolve the message above or reload before saving.');return false;}
  if(saving){notify('A save is already in progress. Please wait.');return false;}
  saving=true;
- try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return source?{...p,title:source.title,description:source.description,summary:source.summary||'',image:source.image}:p;})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories,nextAppearance,nextHistory);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();renderWorld();return true;}
+ try{const sources=new Map(next.map(e=>[e.id,e]));const mapsWithSnapshots=nextMaps.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>{const source=sources.get(p.entryId);return mapPinSnapshot(p,source);})}))}));const state=await LocalAPI.save(next,mapsWithSnapshots,nextCategories,nextAppearance,nextHistory);entries=state.entries;Maps.data=state.maps;applyCategories(state.categories);Maps.refreshEntries();renderWorld();return true;}
  catch(error){notify('Unable to save. '+error.message);return false;}finally{saving=false;}
 }
 async function initialize(){
@@ -114,7 +118,7 @@ async function deleteEntry(e){
  if(magicPlan.count)message+=` Links in ${magicPlan.count} Magic entries will be removed. Connection notes and former target names will be kept.`;
  message+=' Export a backup first if you want to keep the entry.';
  if(!(await confirmAction('Delete this entry?',message,'Delete entry')))return;notify('Saving entry deletion…');
- const nextMaps=Maps.data.map(m=>({...m,canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>p.entryId===e.id?{...p,entryId:null,image:e.image,title:e.title,description:DescriptionLinks.plain(e,entries),summary:DescriptionLinks.plain(e,entries,'summary')}:p)}))}));
+ const nextMaps=Maps.data.map(m=>({...ConnectionModel.deletion(m,e),canvases:m.canvases.map(c=>({...c,pins:c.pins.map(p=>p.entryId===e.id?{...mapPinSnapshot(p,e),entryId:null}:p)}))}));
  const connected=plan.entries.map(record=>ConnectionModel.deletion(record,e)),eras=LocalAPI.eras.map(record=>ConnectionModel.deletion(record,e));if(await persist(connected,nextMaps,categoryDefinitions,LocalAPI.appearance,{eras,chronology:LocalAPI.chronology,ecosystems:LocalAPI.ecosystems.map(record=>ConnectionModel.deletion(record,e))})){if($('detail').open)$('detail').close();Geography.refresh();Characters.refresh();render();Navigation.sync();notify('Entry deleted.');}
 }
 function confirmAction(title,message,action){$('confirm-title').textContent=title;$('confirm-message').textContent=message;$('confirm-action').textContent=action;$('confirm').returnValue='cancel';$('confirm').showModal();return new Promise(resolve=>$('confirm').addEventListener('close',()=>resolve($('confirm').returnValue==='confirm'),{once:true}));}
