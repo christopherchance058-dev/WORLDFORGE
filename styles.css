@@ -570,3 +570,6 @@ body.atlas-canvas-expanded{overflow:hidden}body.atlas-canvas-expanded>.sidebar,b
 .diagram-control-guide{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;pointer-events:none}
 .diagram-node:not(.diagram-text-node) .diagram-node-title{height:54px;min-height:54px;padding:6px 12px;display:flex;align-items:center;justify-content:center}
 .diagram-layout-body button:disabled{opacity:.45;cursor:default}.diagram-checkbox input{accent-color:var(--green)}
+
+/* Handles use viewport proximity picking so cards and labels retain pointer priority. */
+.diagram-lines .diagram-route-handle{pointer-events:none}.diagram-lines .diagram-route-handle.nearby{fill:var(--surface-soft);stroke-width:3}.diagram-viewport.near-route-handle,.diagram-viewport.near-route-handle *{cursor:grab}

@@ -41,3 +41,28 @@ test('routing and locking validation reject corrupt saves without replacing libr
 test('alignment guides appear during a drag and distribution uses actual mixed card widths',async({page,request})=>{
  await H.seed(page,request);const s=await H.state(request);s.ecosystems[0].diagram.nodes.push({id:'c',kind:'text',label:'Third',x:900,y:40});await H.put(request,s);await page.reload();await page.locator('.canvas-nav').click();const root=await H.open(page);await root.getByRole('button',{name:'Fit canvas',exact:true}).click();await card(root,'a').click();await card(root,'b').click({modifiers:['Shift']});await card(root,'c').click({modifiers:['Shift']});await root.getByRole('button',{name:'Fit canvas',exact:true}).click();await root.locator('summary[aria-label="Layout tools"]').click();await root.getByRole('button',{name:'Distribute horizontally',exact:true}).click();const rects=await root.locator('.diagram-node').evaluateAll(es=>es.map(e=>({x:parseFloat(e.style.left),width:e.offsetWidth})));expect(rects[1].x-rects[0].x-rects[0].width).toBeCloseTo(rects[2].x-rects[1].x-rects[1].width,3);await root.getByRole('button',{name:'Undo',exact:true}).click();expect(await card(root,'b').evaluate(el=>parseFloat(el.style.left))).toBe(460);await root.locator('summary[aria-label="Layout tools"]').click();await root.getByRole('button',{name:'Fit canvas',exact:true}).click();const box=await card(root,'a').boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+25,box.y+box.height/2,{steps:6});expect(await root.locator('.diagram-alignment-guide.horizontal').count()).toBeGreaterThan(0);await page.mouse.up();await expect(root.locator('.diagram-alignment-guide')).toHaveCount(0);
 });
+
+
+test('selected route handles have zoom-independent proximity picking without offset jumps',async({page,request},info)=>{
+ await H.seed(page,request);const root=await H.open(page);await selectLine(root);await root.getByLabel('Path style',{exact:true}).selectOption('curve');
+ for(const zoomedOut of [false,true]){
+  if(zoomedOut){await root.getByRole('button',{name:'Zoom out',exact:true}).click();await root.getByRole('button',{name:'Zoom out',exact:true}).click();}
+  const handle=root.locator('.diagram-route-handle').first(),before=await handle.evaluate(el=>({x:+el.getAttribute('cx'),y:+el.getAttribute('cy'),zoom:el.getScreenCTM().a})),box=await handle.boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2-17;
+  await page.mouse.move(x,y);await expect(handle).toHaveClass(/nearby/);await expect(root.locator('.diagram-viewport')).toHaveCSS('cursor','grab');
+  await page.mouse.down();await page.mouse.move(x+8,y,{steps:4});await page.mouse.up();
+  const after=await root.locator('.diagram-route-handle').first().evaluate(el=>({x:+el.getAttribute('cx'),y:+el.getAttribute('cy')}));expect(after.x-before.x).toBeCloseTo(8/before.zoom,1);expect(after.y).toBeCloseTo(before.y,1);
+  await root.getByRole('button',{name:'Undo',exact:true}).click();await selectLine(root);expect(await root.locator('.diagram-route-handle').first().getAttribute('cx')).toBe(String(before.x));
+ }
+ for(const theme of ['light','dark']){await page.getByLabel('Theme',{exact:true}).selectOption(theme);const box=await root.locator('.diagram-route-handle').first().boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2-17);await expect(root.locator('.diagram-route-handle.nearby')).toHaveCount(1);await page.screenshot({path:info.outputPath('handle-proximity-'+theme+'.png'),animations:'disabled'});}
+});
+
+test('overlapping handle targets choose the nearest and do not steal cards or labels',async({page,request})=>{
+ await H.seed(page,request);const root=await H.open(page);await selectLine(root);await root.getByLabel('Path style',{exact:true}).selectOption('curve');
+ // Put both real control points near each other, then choose the second through its larger target.
+ await H.save(page);let s=await H.state(request);const sizes=await root.locator('.diagram-node').evaluateAll(es=>es.map(el=>[el.dataset.nodeId,{width:el.offsetWidth,height:el.offsetHeight}])),g=s.ecosystems[0].diagram,r=Graph.route(Graph.displayEdges(g)[0],g.nodes,new Map(sizes)),h=r.handles;
+ g.edges[0].routing.controls=h.map((item,i)=>({x:350+i*15-item.anchor.x,y:20-item.anchor.y}));await H.put(request,s);await page.reload();await page.locator('.canvas-nav').click();await H.open(page);await selectLine(root);
+ const handles=root.locator('.diagram-route-handle'),box=await handles.nth(1).boundingBox();await page.mouse.move(box.x+box.width/2+4,box.y+box.height/2-10);await expect(handles.nth(1)).toHaveClass(/nearby/);await expect(handles.first()).not.toHaveClass(/nearby/);
+ // Align one handle with a real card and the other with the label; their usual interactions win.
+ s=await H.state(request);const graph=s.ecosystems[0].diagram,route=Graph.route(Graph.displayEdges(graph)[0],graph.nodes,new Map(sizes)),n=graph.nodes[0],size=new Map(sizes).get(n.id),points=[{x:n.x+size.width/2,y:n.y+size.height/2},route.label];graph.edges[0].routing.controls=route.handles.map((item,i)=>({x:points[i].x-item.anchor.x,y:points[i].y-item.anchor.y}));await H.put(request,s);await page.reload();await page.locator('.canvas-nav').click();await H.open(page);await selectLine(root);
+ await card(root,'a').hover();await expect(root.locator('.diagram-route-handle.nearby')).toHaveCount(0);await card(root,'a').click();await expect(root.locator('.diagram-route-handle')).toHaveCount(0);await selectLine(root);await root.locator('.diagram-edge-label').hover();await expect(root.locator('.diagram-route-handle.nearby')).toHaveCount(0);
+});
